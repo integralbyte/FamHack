@@ -1,11 +1,49 @@
 /* FamHack Custom Styles */
 /* Preserves template color scheme: Red (#fc2f20) / Cream (#ffe9ce) */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap');
+
+/* Bracket tuning */
+:root {
+  --famhack-bracket-offset: 8px;
+}
+
+
+
+
+
 
 /* Navigation Logo */
-.famhack-nav-logo {
-  height: 40px;
-  width: auto;
-  object-fit: contain;
+.nav-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-logo-text {
+  font-family: 'Cinzel Decorative', 'Times New Roman', serif;
+  font-size: 26px;
+  line-height: 1;
+  color: #fc2f20;
+  letter-spacing: 0.04em;
+}
+
+/* Flyout Menu (fallback toggle + animation) */
+.flyout-menu {
+  opacity: 0;
+  transform: translateX(24px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: none;
+}
+
+.flyout-menu.is-open {
+  display: grid;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+body.menu-open {
+  overflow: hidden;
 }
 
 /* Hero Section */
@@ -109,6 +147,64 @@
   padding: 60px;
 }
 
+/* Decorative Brackets */
+.famhack-hero-content,
+.famhack-about-preview-inner,
+.register-content,
+.about-content,
+.contact-content,
+.dashboard-header,
+.members-section {
+  position: relative;
+}
+
+.famhack-hero-content,
+.register-content,
+.about-content,
+.contact-content,
+.dashboard-header,
+.members-section {
+  color: #ffe9ce;
+}
+
+.famhack-about-preview-inner {
+  color: #0d0d0d;
+}
+
+.famhack-hero-content .bracket,
+.famhack-about-preview-inner .bracket,
+.register-content .bracket,
+.about-content .bracket,
+.contact-content .bracket,
+.dashboard-header .bracket,
+.members-section .bracket {
+  position: absolute;
+  top: var(--famhack-bracket-offset);
+  left: var(--famhack-bracket-offset);
+  pointer-events: none;
+}
+
+.famhack-hero-content .bracket[data-wf--bracket--variant="bottom-right"],
+.famhack-about-preview-inner .bracket[data-wf--bracket--variant="bottom-right"],
+.register-content .bracket[data-wf--bracket--variant="bottom-right"],
+.about-content .bracket[data-wf--bracket--variant="bottom-right"],
+.contact-content .bracket[data-wf--bracket--variant="bottom-right"],
+.members-section .bracket[data-wf--bracket--variant="bottom-right"] {
+  top: auto;
+  left: auto;
+  right: var(--famhack-bracket-offset);
+  bottom: var(--famhack-bracket-offset);
+}
+
+.dashboard-header {
+  padding: 24px 0 0 24px;
+  --famhack-bracket-offset: 0px;
+}
+
+.members-section {
+  --famhack-bracket-offset: 24px;
+}
+
 .famhack-section-heading {
   font-family: 'Azeret Mono', monospace;
   font-size: 2.5rem;
@@ -133,6 +229,7 @@
 /* Footer */
 .footer {
   background-color: #0d0d0d;
+  color: #ffe9ce;
   padding: 80px 40px 40px;
 }
 
@@ -141,43 +238,96 @@
   margin: 0 auto;
 }
 
-.footer-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  align-items: start;
+.footer-frame {
+  border: 1px solid rgba(255, 233, 206, 0.18);
+  padding: 48px;
+  position: relative;
 }
 
-.footer-left {
+.footer-header {
   display: flex;
-  flex-direction: column;
-  gap: 30px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
 }
 
-.footer-logo-wrapper {
-  max-width: 200px;
+.footer-brand {
+  max-width: 520px;
 }
 
-.footer-logo {
-  width: 100%;
-  height: auto;
+.footer-kicker {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fc2f20;
+  margin: 0 0 12px;
 }
 
-.footer-buttons {
+.footer-title {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #ffe9ce;
+  margin: 0 0 12px;
+}
+
+.footer-subtitle {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.95rem;
+  color: rgba(255, 233, 206, 0.7);
+  margin: 0;
+}
+
+.footer-actions {
   display: flex;
-  gap: 15px;
+  gap: 16px;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.footer-actions .button-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.footer-actions .button {
+  align-items: center;
+}
+
+.footer-divider {
+  height: 1px;
+  background-color: rgba(255, 233, 206, 0.15);
+  margin: 32px 0;
+}
+
+.footer-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
 }
 
 .footer-right {
   text-align: right;
+  color: #ffe9ce;
+  background-color: transparent !important;
 }
 
 .footer-text {
   font-family: 'Azeret Mono', monospace;
   font-size: 0.875rem;
-  color: #ffe9ce;
+  color: #ffe9ce !important;
   margin: 0 0 10px;
+}
+
+.footer-right .footer-text {
+  color: #fc2f20 !important;
+}
+
+.footer-accent {
+  color: #fc2f20 !important;
 }
 
 .footer-credits-wrapper {
@@ -222,6 +372,7 @@
   color: #ffe9ce;
   margin: 0 0 10px;
   text-align: center;
+  line-height: 1.2;
 }
 
 .register-subheading {
@@ -431,7 +582,7 @@
 /* Team Members Section */
 .members-section {
   position: relative;
-  padding: 30px;
+  padding: 40px;
 }
 
 .members-heading {
@@ -504,6 +655,7 @@
   color: #ffe9ce;
   margin: 0 0 10px;
   text-align: center;
+  line-height: 1.2;
 }
 
 .join-team-name {
@@ -571,6 +723,21 @@
 .contact-item a:hover {
   text-decoration: underline;
 }
+
+/* Button reset for <button> elements using button-link */
+button.button-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+
+button.button-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
 
 /* About Page Styles */
 .about-section {
@@ -684,9 +851,14 @@
     min-width: auto;
   }
 
-  .footer-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
+  .footer-header,
+  .footer-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .footer-actions {
+    justify-content: flex-start;
   }
 
   .footer-right {
@@ -695,6 +867,10 @@
 }
 
 @media screen and (max-width: 767px) {
+  :root {
+    --famhack-bracket-offset: 6px;
+  }
+
   .famhack-hero {
     padding: 100px 20px 60px;
   }
@@ -733,6 +909,14 @@
 
   .dashboard-inner {
     padding: 0 20px;
+  }
+
+  .nav-logo {
+    padding: 0;
+  }
+
+  .nav-logo-text {
+    font-size: 22px;
   }
 }
 
