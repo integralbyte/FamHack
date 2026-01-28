@@ -24,6 +24,7 @@ const FamHack = {
     this.initOTPInputs();
     this.initForms();
     this.initDashboard();
+    this.initNavigation();
     this.checkURLParams();
   },
 
@@ -544,6 +545,42 @@ const FamHack = {
     if (this.isRegistered() && !window.location.pathname.includes('dashboard.html')) {
       window.location.href = 'dashboard.html';
     }
+  },
+
+  /**
+   * Initialize navigation flyout menu
+   */
+  initNavigation() {
+    const burger = document.querySelector('.nav-burger');
+    const flyout = document.querySelector('.flyout-menu');
+    const closeBtn = document.querySelector('.flyout-close');
+    const backdrop = document.querySelector('.nav-blur');
+    const closeClickArea = document.querySelector('.nav-close-click-area');
+
+    if (!burger || !flyout) return;
+
+    const toggleMenu = (open) => {
+      if (open) {
+        flyout.classList.add('is-open');
+        document.body.classList.add('menu-open');
+      } else {
+        flyout.classList.remove('is-open');
+        document.body.classList.remove('menu-open');
+      }
+    };
+
+    burger.addEventListener('click', () => toggleMenu(true));
+
+    if (closeBtn) closeBtn.addEventListener('click', () => toggleMenu(false));
+    if (backdrop) backdrop.addEventListener('click', () => toggleMenu(false));
+    if (closeClickArea) closeClickArea.addEventListener('click', () => toggleMenu(false));
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && flyout.classList.contains('is-open')) {
+        toggleMenu(false);
+      }
+    });
   },
 };
 
