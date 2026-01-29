@@ -548,7 +548,7 @@ const FamHack = {
   },
 
   /**
-   * Initialize navigation flyout menu
+   * Initialize navigation flyout menu with GSAP animations
    */
   initNavigation() {
     const burger = document.querySelector('.nav-burger');
@@ -556,29 +556,109 @@ const FamHack = {
     const closeBtn = document.querySelector('.flyout-close');
     const backdrop = document.querySelector('.nav-blur');
     const closeClickArea = document.querySelector('.nav-close-click-area');
+    const menuItems = flyout ? flyout.querySelectorAll('.menu-item') : [];
+    const menuContent = flyout ? flyout.querySelector('.menu-content') : null;
 
     if (!burger || !flyout) return;
 
-    const toggleMenu = (open) => {
-      if (open) {
-        flyout.classList.add('is-open');
-        document.body.classList.add('menu-open');
+    // Check if GSAP is available
+    const hasGSAP = typeof gsap !== 'undefined';
+
+    // Create animation timeline
+    let menuTimeline = null;
+
+    const openMenu = () => {
+      flyout.classList.add('is-open');
+      document.body.classList.add('menu-open');
+
+      if (hasGSAP) {
+        // Kill any existing animation
+        if (menuTimeline) menuTimeline.kill();
+
+        menuTimeline = gsap.timeline();
+
+        // Animate flyout sliding in from right
+        menuTimeline.fromTo(flyout,
+          { x: '100%', opacity: 0 },
+          { x: '0%', opacity: 1, duration: 0.4, ease: 'power3.out' }
+        );
+
+        // Stagger menu items with a slide-up and fade-in effect
+        if (menuItems.length > 0) {
+          menuTimeline.fromTo(menuItems,
+            { y: 40, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.35,
+              stagger: 0.08,
+              ease: 'power2.out'
+            },
+            '-=0.2' // Start slightly before flyout finishes
+          );
+        }
+
+        // Animate menu content with subtle scale
+        if (menuContent) {
+          menuTimeline.fromTo(menuContent,
+            { scale: 0.95 },
+            { scale: 1, duration: 0.3, ease: 'power2.out' },
+            0
+          );
+        }
+      }
+    };
+
+    const closeMenu = () => {
+      if (hasGSAP) {
+        // Kill any existing animation
+        if (menuTimeline) menuTimeline.kill();
+
+        menuTimeline = gsap.timeline({
+          onComplete: () => {
+            flyout.classList.remove('is-open');
+            document.body.classList.remove('menu-open');
+            // Reset styles for next open
+            gsap.set(flyout, { clearProps: 'all' });
+            gsap.set(menuItems, { clearProps: 'all' });
+            if (menuContent) gsap.set(menuContent, { clearProps: 'all' });
+          }
+        });
+
+        // Fade out menu items quickly
+        if (menuItems.length > 0) {
+          menuTimeline.to(menuItems,
+            {
+              y: -20,
+              opacity: 0,
+              duration: 0.2,
+              stagger: 0.03,
+              ease: 'power2.in'
+            }
+          );
+        }
+
+        // Slide flyout out to right
+        menuTimeline.to(flyout,
+          { x: '100%', opacity: 0, duration: 0.35, ease: 'power3.in' },
+          '-=0.1'
+        );
       } else {
         flyout.classList.remove('is-open');
         document.body.classList.remove('menu-open');
       }
     };
 
-    burger.addEventListener('click', () => toggleMenu(true));
+    burger.addEventListener('click', openMenu);
 
-    if (closeBtn) closeBtn.addEventListener('click', () => toggleMenu(false));
-    if (backdrop) backdrop.addEventListener('click', () => toggleMenu(false));
-    if (closeClickArea) closeClickArea.addEventListener('click', () => toggleMenu(false));
+    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+    if (backdrop) backdrop.addEventListener('click', closeMenu);
+    if (closeClickArea) closeClickArea.addEventListener('click', closeMenu);
 
     // Close on Escape key
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && flyout.classList.contains('is-open')) {
-        toggleMenu(false);
+        closeMenu();
       }
     });
   },

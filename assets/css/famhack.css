@@ -27,19 +27,24 @@
   letter-spacing: 0.04em;
 }
 
-/* Flyout Menu (fallback toggle + animation) */
+/* Flyout Menu (GSAP-enhanced animation) */
 .flyout-menu {
   opacity: 0;
-  transform: translateX(24px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  transform: translateX(100%);
   pointer-events: none;
+  will-change: transform, opacity;
 }
 
 .flyout-menu.is-open {
   display: grid;
+  pointer-events: auto;
+}
+
+/* Fallback for no-JS or no-GSAP */
+.flyout-menu.is-open:not([style*="transform"]) {
   opacity: 1;
   transform: translateX(0);
-  pointer-events: auto;
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
 body.menu-open {
