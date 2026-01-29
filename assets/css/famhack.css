@@ -231,123 +231,110 @@ body.menu-open {
   justify-content: flex-start;
 }
 
-/* Footer */
-.footer {
+/* Revamped Footer Styles */
+.footer-new {
   background-color: #0d0d0d;
   color: #ffe9ce;
-  padding: 80px 40px 40px;
+  padding: 120px 40px 60px;
+  border-top: 1px solid rgba(252, 47, 32, 0.2);
+  position: relative;
+  overflow: hidden;
 }
 
-.footer-inner {
+.footer-container {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.footer-frame {
-  border: 1px solid rgba(255, 233, 206, 0.18);
-  padding: 48px;
-  position: relative;
+.footer-top {
+  margin-bottom: 80px;
 }
 
-.footer-header {
+.footer-logo {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(3rem, 15vw, 10rem);
+  font-weight: 700;
+  color: #fc2f20;
+  line-height: 0.8;
+  margin: 0;
+  letter-spacing: -0.05em;
+  opacity: 0.9;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 80px;
+}
+
+.footer-col h6 {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(255, 233, 206, 0.5);
+  margin-bottom: 24px;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-col a {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 1rem;
+  color: #ffe9ce;
+  text-decoration: none;
+  transition: color 0.3s ease, transform 0.3s ease;
+  display: inline-block;
+  width: fit-content;
+}
+
+.footer-col a:hover {
+  color: #fc2f20;
+  transform: translateX(5px);
+}
+
+.footer-bottom {
+  padding-top: 40px;
+  border-top: 1px solid rgba(255, 233, 206, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 40px;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
-.footer-brand {
-  max-width: 520px;
-}
-
-.footer-kicker {
+.footer-bottom p {
   font-family: 'Azeret Mono', monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #fc2f20;
-  margin: 0 0 12px;
-}
-
-.footer-title {
-  font-family: 'Azeret Mono', monospace;
-  font-size: 2rem;
-  font-weight: 600;
-  color: #ffe9ce;
-  margin: 0 0 12px;
-}
-
-.footer-subtitle {
-  font-family: 'Azeret Mono', monospace;
-  font-size: 0.95rem;
-  color: rgba(255, 233, 206, 0.7);
+  font-size: 0.85rem;
+  color: rgba(255, 233, 206, 0.6);
   margin: 0;
 }
 
-.footer-actions {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
+@media screen and (max-width: 991px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
-.footer-actions .button-link {
-  display: inline-flex;
-  align-items: center;
+@media screen and (max-width: 479px) {
+  .footer-new {
+    padding: 80px 24px 40px;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-logo {
+    font-size: 4rem;
+  }
 }
 
-.footer-actions .button {
-  align-items: center;
-}
-
-.footer-divider {
-  height: 1px;
-  background-color: rgba(255, 233, 206, 0.15);
-  margin: 32px 0;
-}
-
-.footer-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 30px;
-}
-
-.footer-right {
-  text-align: right;
-  color: #ffe9ce;
-  background-color: transparent !important;
-}
-
-.footer-text {
-  font-family: 'Azeret Mono', monospace;
-  font-size: 0.875rem;
-  color: #ffe9ce !important;
-  margin: 0 0 10px;
-}
-
-.footer-right .footer-text {
-  color: #fc2f20 !important;
-}
-
-.footer-accent {
-  color: #fc2f20 !important;
-}
-
-.footer-credits-wrapper {
-  max-width: 1200px;
-  margin: 60px auto 0;
-  padding-top: 30px;
-  border-top: 1px solid rgba(255, 233, 206, 0.2);
-}
-
-.footer-credit {
-  font-family: 'Azeret Mono', monospace;
-  font-size: 0.75rem;
-  color: #ffe9ce;
-  opacity: 0.5;
-}
 
 /* Registration Page Styles */
 .register-section {
@@ -584,6 +571,15 @@ body.menu-open {
   background-color: #4CAF50;
 }
 
+.copy-btn.copy-btn-secondary {
+  background-color: transparent;
+  border: 1px solid rgba(255, 233, 206, 0.25);
+}
+
+.copy-btn.copy-btn-secondary:hover {
+  background-color: rgba(255, 233, 206, 0.08);
+}
+
 /* Team Members Section */
 .members-section {
   position: relative;
@@ -665,6 +661,156 @@ body.menu-open {
 
 .join-team-name {
   color: #fc2f20;
+}
+
+.page-message {
+  min-height: 0;
+  margin-bottom: 20px;
+  color: #ffe9ce;
+}
+
+.helper-copy {
+  margin: -4px 0 0;
+  text-align: left;
+}
+
+.uppercase-input {
+  text-transform: uppercase;
+}
+
+.team-preview {
+  padding: 18px 20px;
+  border: 1px solid rgba(252, 47, 32, 0.35);
+  background-color: rgba(252, 47, 32, 0.08);
+}
+
+.team-preview-label {
+  margin: 0 0 8px;
+  color: rgba(255, 233, 206, 0.55);
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.team-preview-name {
+  margin: 0;
+  color: #ffe9ce;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 1rem;
+}
+
+.team-preview-static {
+  margin-bottom: 4px;
+}
+
+.dashboard-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.invite-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.invite-copy {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.status-banner {
+  margin-bottom: 30px;
+  padding: 18px 20px;
+  background-color: rgba(252, 47, 32, 0.08);
+  border: 1px solid rgba(252, 47, 32, 0.25);
+  color: #ffe9ce;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+.member-card {
+  gap: 20px;
+}
+
+.member-name {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 1rem;
+  color: #ffe9ce;
+  margin: 0;
+}
+
+.member-meta {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.7rem;
+  color: rgba(255, 233, 206, 0.55);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.member-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.action-btn {
+  border: 1px solid rgba(255, 233, 206, 0.25);
+  background-color: transparent;
+  color: #ffe9ce;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.action-btn:hover {
+  background-color: rgba(255, 233, 206, 0.06);
+}
+
+.action-btn.action-approve {
+  border-color: rgba(76, 175, 80, 0.45);
+  color: #a0f0a5;
+}
+
+.action-btn.action-decline {
+  border-color: rgba(252, 47, 32, 0.35);
+  color: #ff8f82;
+}
+
+.member-status.pending {
+  background-color: rgba(252, 47, 32, 0.12);
+  color: #ffb4ab;
+}
+
+.member-status.approved {
+  background-color: rgba(76, 175, 80, 0.15);
+  color: #baf2bc;
+}
+
+.member-status.declined {
+  background-color: rgba(252, 47, 32, 0.12);
+  color: #ff8f82;
+}
+
+.empty-state {
+  margin: 0;
+  padding: 18px 20px;
+  background-color: rgba(255, 233, 206, 0.04);
+  border: 1px dashed rgba(255, 233, 206, 0.14);
+  color: rgba(255, 233, 206, 0.75);
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.875rem;
 }
 
 /* Contact Page Styles */
@@ -942,5 +1088,23 @@ button.button-link:disabled {
     width: 35px;
     height: 45px;
     font-size: 1rem;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .invite-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-header-top,
+  .member-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .member-card-actions {
+    margin-left: 0;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 }

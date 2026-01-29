@@ -1,555 +1,932 @@
-/**
- * FamHack - Hackathon Registration System
- * Handles email validation, OTP verification, and team management
- */
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const FamHack = {
   config: {
-    emailDomain: '@ed.ac.uk',
     otpLength: 6,
-    otpResendDelay: 30, // seconds
+    otpResendDelay: 30,
   },
 
-  // State
   state: {
-    currentEmail: null,
-    teamId: null,
-    isTeamLeader: false,
+    page: null,
+    session: null,
+    pendingEmail: '',
+    teamPreview: null,
+    resendTimer: null,
+    joinLookupTimer: null,
   },
 
-  /**
-   * Initialize the application
-   */
-  init() {
+  async init() {
+    this.state.page = this.getPage();
     this.initOTPInputs();
-    this.initForms();
-    this.initDashboard();
     this.initNavigation();
-    this.checkURLParams();
-  },
 
-  /**
-   * Validate email against @ed.ac.uk domain
-   */
-  validateEmail(email) {
-    if (!email || typeof email !== 'string') return false;
-    const trimmed = email.trim().toLowerCase();
-    return trimmed.endsWith(this.config.emailDomain) && trimmed.length > this.config.emailDomain.length;
-  },
-
-  /**
-   * Mock send OTP (simulates API call)
-   */
-  async sendOTP(email) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log(`OTP sent to ${email}`);
-        resolve({ success: true, message: 'OTP sent successfully' });
-      }, 1500);
-    });
-  },
-
-  /**
-   * Mock verify OTP (accepts any 6-digit code)
-   */
-  async verifyOTP(otp) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const isValid = otp && otp.length === this.config.otpLength && /^\d+$/.test(otp);
-        if (isValid) {
-          // Generate team ID if not joining a team
-          if (!this.state.teamId) {
-            this.state.teamId = this.generateTeamId();
-            this.state.isTeamLeader = true;
-          }
-          // Store registration in localStorage
-          this.saveRegistration();
-          resolve({ success: true, teamId: this.state.teamId });
-        } else {
-          resolve({ success: false, message: 'Invalid OTP' });
-        }
-      }, 1000);
-    });
-  },
-
-  /**
-   * Generate a random team ID
-   */
-  generateTeamId() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    if (!this.state.page) {
+      return;
     }
-    return result;
-  },
 
-  /**
-   * Generate invite link for team
-   */
-  generateInviteLink() {
-    const teamId = this.state.teamId || this.getStoredTeamId();
-    if (!teamId) return null;
-    return `${window.location.origin}/join.html?t=${teamId}`;
-  },
-
-  /**
-   * Copy text to clipboard
-   */
-  async copyToClipboard(text) {
     try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch (err) {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        return true;
-      } catch (err) {
-        document.body.removeChild(textArea);
-        return false;
+      const publicConfig = await this.fetchConfig();
+      this.config = {
+        ...this.config,
+        ...publicConfig,
+      };
+
+      this.supabase = createClient(publicConfig.supabaseUrl, publicConfig.supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: false,
+          storageKey: 'famhack-auth',
+        },
+      });
+
+      this.supabase.auth.onAuthStateChange((_event, session) => {
+        this.state.session = session;
+      });
+
+      await this.hydrateSession();
+
+      if (this.state.page === 'register') {
+        await this.initRegisterPage();
+      } else if (this.state.page === 'join') {
+        await this.initJoinPage();
+      } else if (this.state.page === 'dashboard') {
+        await this.initDashboardPage();
       }
+    } catch (error) {
+      console.error(error);
+      this.showFatalError(error.message || 'Unable to load the registration flow right now.');
     }
   },
 
-  /**
-   * Initialize OTP input fields with auto-advance
-   */
-  initOTPInputs() {
-    const otpContainer = document.querySelector('.otp-inputs');
-    if (!otpContainer) return;
-
-    const inputs = otpContainer.querySelectorAll('.otp-digit');
-
-    inputs.forEach((input, index) => {
-      // Handle input
-      input.addEventListener('input', (e) => {
-        const value = e.target.value;
-
-        // Only allow digits
-        e.target.value = value.replace(/\D/g, '').slice(0, 1);
-
-        // Auto-advance to next input
-        if (e.target.value && index < inputs.length - 1) {
-          inputs[index + 1].focus();
-        }
-
-        // Check if all fields are filled
-        this.checkOTPComplete(inputs);
-      });
-
-      // Handle backspace
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !e.target.value && index > 0) {
-          inputs[index - 1].focus();
-        }
-      });
-
-      // Handle paste
-      input.addEventListener('paste', (e) => {
-        e.preventDefault();
-        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, this.config.otpLength);
-
-        pastedData.split('').forEach((char, i) => {
-          if (inputs[i]) {
-            inputs[i].value = char;
-          }
-        });
-
-        // Focus last filled input or next empty
-        const lastFilledIndex = Math.min(pastedData.length - 1, inputs.length - 1);
-        if (lastFilledIndex >= 0) {
-          inputs[lastFilledIndex].focus();
-        }
-
-        this.checkOTPComplete(inputs);
-      });
-    });
+  getPage() {
+    const path = window.location.pathname;
+    if (path.endsWith('register.html')) return 'register';
+    if (path.endsWith('join.html')) return 'join';
+    if (path.endsWith('dashboard.html')) return 'dashboard';
+    return null;
   },
 
-  /**
-   * Check if OTP is complete and enable verify button
-   */
-  checkOTPComplete(inputs) {
-    const otp = Array.from(inputs).map(i => i.value).join('');
-    const verifyBtn = document.getElementById('verify-otp-btn');
-    if (verifyBtn) {
-      verifyBtn.disabled = otp.length !== this.config.otpLength;
+  async fetchConfig() {
+    const response = await fetch('/api/config');
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error || 'Unable to load app configuration');
+    }
+
+    return payload;
+  },
+
+  async hydrateSession() {
+    const { data, error } = await this.supabase.auth.getSession();
+    if (error) {
+      throw error;
+    }
+
+    this.state.session = data.session;
+  },
+
+  normalizeEmail(email) {
+    return String(email || '').trim().toLowerCase();
+  },
+
+  validateEmail(email) {
+    const normalizedEmail = this.normalizeEmail(email);
+    if (!normalizedEmail) {
+      return false;
+    }
+
+    const allowedDomain = String(this.config.allowedEmailDomain || '').trim().toLowerCase();
+    if (!allowedDomain) {
+      return true;
+    }
+
+    return normalizedEmail.endsWith(`@${allowedDomain}`);
+  },
+
+  getEmailValidationMessage() {
+    const allowedDomain = String(this.config.allowedEmailDomain || '').trim().toLowerCase();
+    return allowedDomain ? `Please use your @${allowedDomain} email address` : 'Please enter a valid email address';
+  },
+
+  normalizeJoinCode(joinCode) {
+    return String(joinCode || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  },
+
+  setText(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = value || '';
     }
   },
 
-  /**
-   * Get OTP value from inputs
-   */
-  getOTPValue() {
-    const inputs = document.querySelectorAll('.otp-digit');
-    return Array.from(inputs).map(i => i.value).join('');
+  showFieldError(id, message = '') {
+    this.setText(id, message);
   },
 
-  /**
-   * Clear OTP inputs
-   */
-  clearOTPInputs() {
-    const inputs = document.querySelectorAll('.otp-digit');
-    inputs.forEach(input => input.value = '');
-    if (inputs[0]) inputs[0].focus();
+  showPageMessage(id, message = '') {
+    this.setText(id, message);
   },
 
-  /**
-   * Show a specific step in the registration flow
-   */
   showStep(stepName) {
     const steps = document.querySelectorAll('.register-step');
-    steps.forEach(step => {
-      step.classList.remove('active');
-      if (step.dataset.step === stepName) {
-        step.classList.add('active');
-        // Use GSAP for animation if available
-        if (typeof gsap !== 'undefined') {
-          gsap.fromTo(step,
-            { opacity: 0, y: 20 },
-            { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }
-          );
-        }
+    steps.forEach((step) => {
+      step.classList.toggle('active', step.dataset.step === stepName);
+
+      if (step.dataset.step === stepName && typeof window.gsap !== 'undefined') {
+        window.gsap.fromTo(
+          step,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }
+        );
       }
     });
   },
 
-  /**
-   * Initialize form handlers
-   */
-  initForms() {
-    // Email form
-    const sendOtpBtn = document.getElementById('send-otp-btn');
-    if (sendOtpBtn) {
-      sendOtpBtn.addEventListener('click', () => this.handleSendOTP());
+  getButtonLabel(button) {
+    return button?.querySelector('.button-label') || button;
+  },
+
+  setButtonState(button, { busy, label, idleLabel }) {
+    if (!button) return;
+
+    button.disabled = Boolean(busy);
+    button.classList.toggle('btn-loading', Boolean(busy));
+
+    const labelNode = this.getButtonLabel(button);
+    if (labelNode && label) {
+      labelNode.textContent = busy ? label : idleLabel || labelNode.dataset.idleLabel || labelNode.textContent;
+      if (!labelNode.dataset.idleLabel) {
+        labelNode.dataset.idleLabel = idleLabel || labelNode.textContent;
+      }
+    }
+  },
+
+  setButtonLabel(button, label) {
+    const labelNode = this.getButtonLabel(button);
+    if (!labelNode) return;
+    labelNode.textContent = label;
+    labelNode.dataset.idleLabel = label;
+  },
+
+  initOTPInputs() {
+    const otpInputs = document.querySelectorAll('.otp-digit');
+    if (!otpInputs.length) {
+      return;
     }
 
-    // Email input enter key
-    const emailInput = document.getElementById('email-input');
-    if (emailInput) {
-      emailInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          this.handleSendOTP();
+    otpInputs.forEach((input, index) => {
+      input.addEventListener('input', (event) => {
+        event.target.value = event.target.value.replace(/\D/g, '').slice(0, 1);
+        if (event.target.value && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
+        this.checkOTPComplete();
+      });
+
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Backspace' && !event.target.value && index > 0) {
+          otpInputs[index - 1].focus();
         }
       });
-    }
 
-    // OTP verification
-    const verifyOtpBtn = document.getElementById('verify-otp-btn');
-    if (verifyOtpBtn) {
-      verifyOtpBtn.addEventListener('click', () => this.handleVerifyOTP());
-    }
+      input.addEventListener('paste', (event) => {
+        event.preventDefault();
+        const digits = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, this.config.otpLength);
+        digits.split('').forEach((digit, digitIndex) => {
+          if (otpInputs[digitIndex]) {
+            otpInputs[digitIndex].value = digit;
+          }
+        });
+        this.checkOTPComplete();
+      });
+    });
+  },
 
-    // Resend OTP
-    const resendBtn = document.getElementById('resend-otp-btn');
-    if (resendBtn) {
-      resendBtn.addEventListener('click', () => this.handleResendOTP());
+  checkOTPComplete() {
+    const verifyButton = document.getElementById('verify-otp-btn');
+    if (!verifyButton) return;
+    verifyButton.disabled = this.getOTPValue().length !== this.config.otpLength;
+  },
+
+  getOTPValue() {
+    return Array.from(document.querySelectorAll('.otp-digit')).map((input) => input.value).join('');
+  },
+
+  clearOTPInputs() {
+    document.querySelectorAll('.otp-digit').forEach((input) => {
+      input.value = '';
+    });
+    this.checkOTPComplete();
+  },
+
+  async initRegisterPage() {
+    document.getElementById('send-otp-btn')?.addEventListener('click', () => this.handleSendOTP());
+    document.getElementById('verify-otp-btn')?.addEventListener('click', () => this.handleVerifyOTP());
+    document.getElementById('resend-otp-btn')?.addEventListener('click', () => this.handleResendOTP());
+    document.getElementById('create-team-btn')?.addEventListener('click', () => this.handleCreateTeam());
+
+    const emailInput = document.getElementById('email-input');
+    emailInput?.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        this.handleSendOTP();
+      }
+    });
+
+    if (this.state.session) {
+      const dashboard = await this.fetchDashboard({ suppressMissing: true });
+      if (dashboard) {
+        this.redirectToDashboard();
+        return;
+      }
+
+      this.showStep('create-team');
+      this.showPageMessage('register-page-message', 'You are already signed in. Create your family to continue.');
     }
   },
 
-  /**
-   * Handle send OTP button click
-   */
-  async handleSendOTP() {
+  async initJoinPage() {
+    document.getElementById('send-otp-btn')?.addEventListener('click', () => this.handleSendOTP());
+    document.getElementById('verify-otp-btn')?.addEventListener('click', () => this.handleVerifyOTP());
+    document.getElementById('resend-otp-btn')?.addEventListener('click', () => this.handleResendOTP());
+    document.getElementById('request-join-btn')?.addEventListener('click', () => this.handleJoinRequest());
+
+    const joinCodeInput = document.getElementById('join-code-input');
     const emailInput = document.getElementById('email-input');
-    const errorEl = document.getElementById('email-error');
-    const sendBtn = document.getElementById('send-otp-btn');
+    const codeFromUrl = new URLSearchParams(window.location.search).get('code')
+      || new URLSearchParams(window.location.search).get('t');
 
-    if (!emailInput) return;
+    if (joinCodeInput && codeFromUrl) {
+      joinCodeInput.value = this.normalizeJoinCode(codeFromUrl);
+      await this.lookupTeam(joinCodeInput.value, { showErrors: false });
+    }
 
-    const email = emailInput.value.trim().toLowerCase();
+    joinCodeInput?.addEventListener('input', () => {
+      joinCodeInput.value = this.normalizeJoinCode(joinCodeInput.value);
+      this.showFieldError('join-code-error', '');
+      clearTimeout(this.state.joinLookupTimer);
+      if (!joinCodeInput.value) {
+        this.renderTeamPreview(null);
+        return;
+      }
+      this.state.joinLookupTimer = window.setTimeout(() => {
+        this.lookupTeam(joinCodeInput.value, { showErrors: false }).catch((error) => console.error(error));
+      }, 250);
+    });
 
-    // Validate email
-    if (!this.validateEmail(email)) {
-      if (errorEl) {
-        errorEl.textContent = `Please enter a valid ${this.config.emailDomain} email address`;
+    joinCodeInput?.addEventListener('blur', () => {
+      if (joinCodeInput.value) {
+        this.lookupTeam(joinCodeInput.value, { showErrors: false }).catch((error) => console.error(error));
+      }
+    });
+
+    emailInput?.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        this.handleSendOTP();
+      }
+    });
+
+    if (this.state.session) {
+      const dashboard = await this.fetchDashboard({ suppressMissing: true });
+      if (dashboard) {
+        this.redirectToDashboard();
+        return;
+      }
+
+      if (emailInput && this.state.session.user?.email) {
+        emailInput.value = this.state.session.user.email;
+        emailInput.disabled = true;
+      }
+
+      this.setButtonLabel(document.getElementById('send-otp-btn'), 'Continue');
+      this.showPageMessage('join-page-message', 'You are already signed in. Enter a family code to continue.');
+
+      if (this.state.teamPreview) {
+        this.showStep('join-team');
+      }
+    }
+  },
+
+  async initDashboardPage() {
+    document.getElementById('copy-invite-btn')?.addEventListener('click', () => this.copyFieldValue('invite-link-input', 'copy-invite-btn'));
+    document.getElementById('copy-code-btn')?.addEventListener('click', () => this.copyFieldValue('join-code-display', 'copy-code-btn'));
+    document.getElementById('sign-out-btn')?.addEventListener('click', () => this.handleSignOut());
+
+    if (!this.state.session) {
+      this.redirect('register.html');
+      return;
+    }
+
+    await this.loadDashboard();
+  },
+
+  async handleSendOTP() {
+    const sendButton = document.getElementById('send-otp-btn');
+    const emailInput = document.getElementById('email-input');
+    const email = this.normalizeEmail(emailInput?.value);
+
+    this.showFieldError('email-error', '');
+    this.showFieldError('join-code-error', '');
+
+    if (this.state.page === 'join') {
+      const joinCodeInput = document.getElementById('join-code-input');
+      const joinCode = this.normalizeJoinCode(joinCodeInput?.value);
+
+      if (joinCodeInput) {
+        joinCodeInput.value = joinCode;
+      }
+
+      if (!joinCode) {
+        this.showFieldError('join-code-error', 'Enter a valid family code');
+        return;
+      }
+
+      const team = await this.lookupTeam(joinCode, { showErrors: true });
+      if (!team) {
+        return;
+      }
+    }
+
+    if (this.state.session) {
+      if (this.state.page === 'register') {
+        this.showStep('create-team');
+      } else if (this.state.page === 'join') {
+        this.showStep('join-team');
       }
       return;
     }
 
-    // Clear error
-    if (errorEl) errorEl.textContent = '';
-
-    // Show loading state
-    if (sendBtn) {
-      sendBtn.disabled = true;
-      sendBtn.classList.add('btn-loading');
-      sendBtn.dataset.originalText = sendBtn.textContent;
-      sendBtn.textContent = 'Sending...';
+    if (!this.validateEmail(email)) {
+      this.showFieldError('email-error', this.getEmailValidationMessage());
+      return;
     }
 
-    // Store email and send OTP
-    this.state.currentEmail = email;
-    const result = await this.sendOTP(email);
+    this.setButtonState(sendButton, {
+      busy: true,
+      label: 'Sending...',
+      idleLabel: this.state.page === 'join' && this.state.session ? 'Continue' : 'Send OTP',
+    });
 
-    // Reset button
-    if (sendBtn) {
-      sendBtn.disabled = false;
-      sendBtn.classList.remove('btn-loading');
-      sendBtn.textContent = sendBtn.dataset.originalText || 'Send OTP';
-    }
+    try {
+      const { error } = await this.supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+        },
+      });
 
-    if (result.success) {
-      // Show OTP step
+      if (error) {
+        throw error;
+      }
+
+      this.state.pendingEmail = email;
       this.showStep('otp');
-      // Focus first OTP input
-      const firstOtpInput = document.querySelector('.otp-digit');
-      if (firstOtpInput) firstOtpInput.focus();
-      // Start resend countdown
       this.startResendCountdown();
-    } else {
-      if (errorEl) errorEl.textContent = result.message || 'Failed to send OTP';
+      document.querySelector('.otp-digit')?.focus();
+      this.showPageMessage(
+        this.state.page === 'register' ? 'register-page-message' : 'join-page-message',
+        'Verification code sent. Check your inbox.'
+      );
+    } catch (error) {
+      console.error(error);
+      this.showFieldError('email-error', error.message || 'Unable to send verification code');
+    } finally {
+      this.setButtonState(sendButton, {
+        busy: false,
+        label: 'Sending...',
+        idleLabel: this.state.page === 'join' && this.state.session ? 'Continue' : 'Send OTP',
+      });
     }
   },
 
-  /**
-   * Handle verify OTP button click
-   */
   async handleVerifyOTP() {
+    const verifyButton = document.getElementById('verify-otp-btn');
+    const emailInput = document.getElementById('email-input');
     const otp = this.getOTPValue();
-    const errorEl = document.getElementById('otp-error');
-    const verifyBtn = document.getElementById('verify-otp-btn');
+    const email = this.state.pendingEmail || this.normalizeEmail(emailInput?.value);
+
+    this.showFieldError('otp-error', '');
 
     if (otp.length !== this.config.otpLength) {
-      if (errorEl) errorEl.textContent = 'Please enter the complete OTP';
+      this.showFieldError('otp-error', 'Enter the full 6-digit code');
       return;
     }
 
-    // Clear error
-    if (errorEl) errorEl.textContent = '';
+    this.setButtonState(verifyButton, {
+      busy: true,
+      label: 'Verifying...',
+      idleLabel: 'Verify',
+    });
 
-    // Show loading state
-    if (verifyBtn) {
-      verifyBtn.disabled = true;
-      verifyBtn.classList.add('btn-loading');
-      verifyBtn.textContent = 'Verifying...';
-    }
+    try {
+      const { data, error } = await this.supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'email',
+      });
 
-    const result = await this.verifyOTP(otp);
-
-    if (result.success) {
-      // Redirect to dashboard
-      window.location.href = 'dashboard.html';
-    } else {
-      // Reset button
-      if (verifyBtn) {
-        verifyBtn.disabled = false;
-        verifyBtn.classList.remove('btn-loading');
-        verifyBtn.textContent = 'Verify';
+      if (error) {
+        throw error;
       }
-      if (errorEl) errorEl.textContent = result.message || 'Invalid OTP';
+
+      this.state.session = data.session;
+      const dashboard = await this.fetchDashboard({ suppressMissing: true });
+      if (dashboard) {
+        this.redirectToDashboard();
+        return;
+      }
+
+      if (this.state.page === 'register') {
+        this.showStep('create-team');
+        this.showPageMessage('register-page-message', 'Verified. Finish creating your family.');
+      } else if (this.state.page === 'join') {
+        const joinCode = this.normalizeJoinCode(document.getElementById('join-code-input')?.value);
+        const team = this.state.teamPreview || await this.lookupTeam(joinCode, { showErrors: true });
+        if (!team) {
+          this.showStep('email');
+          return;
+        }
+
+        this.showStep('join-team');
+        this.showPageMessage('join-page-message', 'Verified. Submit your request and your parent can review it.');
+      }
+    } catch (error) {
+      console.error(error);
+      this.showFieldError('otp-error', error.message || 'Unable to verify that code');
       this.clearOTPInputs();
+    } finally {
+      this.setButtonState(verifyButton, {
+        busy: false,
+        label: 'Verifying...',
+        idleLabel: 'Verify',
+      });
     }
   },
 
-  /**
-   * Handle resend OTP
-   */
   async handleResendOTP() {
-    const resendBtn = document.getElementById('resend-otp-btn');
-    if (resendBtn && resendBtn.disabled) return;
+    const resendButton = document.getElementById('resend-otp-btn');
+    if (!resendButton || resendButton.disabled || !this.state.pendingEmail) {
+      return;
+    }
 
-    this.clearOTPInputs();
-    await this.sendOTP(this.state.currentEmail);
-    this.startResendCountdown();
+    resendButton.disabled = true;
+    try {
+      const { error } = await this.supabase.auth.signInWithOtp({
+        email: this.state.pendingEmail,
+        options: {
+          shouldCreateUser: true,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      this.clearOTPInputs();
+      this.startResendCountdown();
+    } catch (error) {
+      console.error(error);
+      this.showFieldError('otp-error', error.message || 'Unable to resend code');
+      resendButton.disabled = false;
+      resendButton.textContent = 'Resend OTP';
+    }
   },
 
-  /**
-   * Start resend countdown timer
-   */
   startResendCountdown() {
-    const resendBtn = document.getElementById('resend-otp-btn');
-    if (!resendBtn) return;
+    const resendButton = document.getElementById('resend-otp-btn');
+    if (!resendButton) {
+      return;
+    }
 
-    let seconds = this.config.otpResendDelay;
-    resendBtn.disabled = true;
-    resendBtn.textContent = `Resend in ${seconds}s`;
+    clearInterval(this.state.resendTimer);
 
-    const interval = setInterval(() => {
-      seconds--;
-      if (seconds <= 0) {
-        clearInterval(interval);
-        resendBtn.disabled = false;
-        resendBtn.textContent = 'Resend OTP';
+    let remaining = this.config.otpResendDelay;
+    resendButton.disabled = true;
+    resendButton.textContent = `Resend in ${remaining}s`;
+
+    this.state.resendTimer = window.setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(this.state.resendTimer);
+        resendButton.disabled = false;
+        resendButton.textContent = 'Resend OTP';
       } else {
-        resendBtn.textContent = `Resend in ${seconds}s`;
+        resendButton.textContent = `Resend in ${remaining}s`;
       }
     }, 1000);
   },
 
-  /**
-   * Initialize dashboard functionality
-   */
-  initDashboard() {
-    const copyBtn = document.getElementById('copy-invite-btn');
-    const inviteInput = document.getElementById('invite-link-input');
+  async lookupTeam(joinCode, { showErrors }) {
+    const normalizedCode = this.normalizeJoinCode(joinCode);
+    if (!normalizedCode) {
+      this.renderTeamPreview(null);
+      return null;
+    }
 
-    if (copyBtn && inviteInput) {
-      // Generate and display invite link
-      const inviteLink = this.generateInviteLink();
-      if (inviteLink) {
-        inviteInput.value = inviteLink;
-      }
+    try {
+      const response = await fetch(`/api/team/lookup?code=${encodeURIComponent(normalizedCode)}`);
+      const payload = await response.json();
 
-      // Copy button handler
-      copyBtn.addEventListener('click', async () => {
-        const success = await this.copyToClipboard(inviteInput.value);
-        if (success) {
-          copyBtn.textContent = 'Copied!';
-          copyBtn.classList.add('copied');
-          setTimeout(() => {
-            copyBtn.textContent = 'Copy';
-            copyBtn.classList.remove('copied');
-          }, 2000);
+      if (!response.ok) {
+        if (response.status === 404) {
+          this.renderTeamPreview(null);
+          if (showErrors) {
+            this.showFieldError('join-code-error', payload.error || 'That family code was not found');
+          }
+          return null;
         }
-      });
-    }
-
-    // Load team members
-    this.loadTeamMembers();
-  },
-
-  /**
-   * Check URL parameters for team join flow
-   */
-  checkURLParams() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const teamId = urlParams.get('t');
-
-    if (teamId && window.location.pathname.includes('join.html')) {
-      this.state.teamId = teamId;
-      this.state.isTeamLeader = false;
-
-      // Update UI to show team ID
-      const teamIdDisplay = document.getElementById('join-team-id');
-      if (teamIdDisplay) {
-        teamIdDisplay.textContent = teamId;
+        throw new Error(payload.error || 'Unable to verify that family code');
       }
+
+      this.state.teamPreview = payload.team;
+      this.renderTeamPreview(payload.team);
+      return payload.team;
+    } catch (error) {
+      console.error(error);
+      if (showErrors) {
+        this.showFieldError('join-code-error', error.message || 'Unable to verify that family code');
+      }
+      return null;
     }
   },
 
-  /**
-   * Save registration to localStorage
-   */
-  saveRegistration() {
-    const registration = {
-      email: this.state.currentEmail,
-      teamId: this.state.teamId,
-      isTeamLeader: this.state.isTeamLeader,
-      timestamp: Date.now(),
-    };
-    localStorage.setItem('famhack_registration', JSON.stringify(registration));
+  renderTeamPreview(team) {
+    const preview = document.getElementById('team-preview');
+    const previewName = document.getElementById('team-preview-name');
+    const joinTeamName = document.getElementById('join-team-id');
 
-    // Also save to team members list
-    this.addTeamMember(registration);
-  },
+    this.state.teamPreview = team || null;
 
-  /**
-   * Get stored team ID
-   */
-  getStoredTeamId() {
-    const stored = localStorage.getItem('famhack_registration');
-    if (stored) {
-      const data = JSON.parse(stored);
-      return data.teamId;
+    if (preview) {
+      preview.hidden = !team;
     }
-    return null;
-  },
 
-  /**
-   * Get stored registration
-   */
-  getStoredRegistration() {
-    const stored = localStorage.getItem('famhack_registration');
-    return stored ? JSON.parse(stored) : null;
-  },
+    if (previewName) {
+      previewName.textContent = team?.name || '';
+    }
 
-  /**
-   * Add team member to storage
-   */
-  addTeamMember(member) {
-    const teamId = member.teamId;
-    const teamKey = `famhack_team_${teamId}`;
-    const existing = localStorage.getItem(teamKey);
-    const members = existing ? JSON.parse(existing) : [];
-
-    // Check if member already exists
-    if (!members.find(m => m.email === member.email)) {
-      members.push({
-        email: member.email,
-        isLeader: member.isTeamLeader,
-        joinedAt: member.timestamp,
-      });
-      localStorage.setItem(teamKey, JSON.stringify(members));
+    if (joinTeamName) {
+      joinTeamName.textContent = team?.name || '';
     }
   },
 
-  /**
-   * Load team members for dashboard
-   */
-  loadTeamMembers() {
-    const membersList = document.getElementById('members-list');
-    if (!membersList) return;
+  async handleCreateTeam() {
+    const createButton = document.getElementById('create-team-btn');
+    const fullName = document.getElementById('full-name-input')?.value?.trim() || '';
+    const teamName = document.getElementById('team-name-input')?.value?.trim() || '';
 
-    const teamId = this.getStoredTeamId();
-    if (!teamId) return;
+    this.showFieldError('team-error', '');
 
-    const teamKey = `famhack_team_${teamId}`;
-    const stored = localStorage.getItem(teamKey);
-    const members = stored ? JSON.parse(stored) : [];
-
-    // Clear existing
-    membersList.innerHTML = '';
-
-    if (members.length === 0) {
-      membersList.innerHTML = '<p class="no-members">No team members yet. Share your invite link!</p>';
+    if (!fullName) {
+      this.showFieldError('team-error', 'Your name is required');
       return;
     }
 
-    members.forEach(member => {
-      const card = document.createElement('div');
-      card.className = 'member-card';
-      card.innerHTML = `
-        <div class="member-info">
-          <p class="member-email">${member.email}</p>
-          <p class="member-role">${member.isLeader ? 'Team Leader' : 'Team Member'}</p>
-        </div>
-        <span class="member-status ${member.isLeader ? 'leader' : 'member'}">
-          ${member.isLeader ? 'Leader' : 'Member'}
-        </span>
-      `;
-      membersList.appendChild(card);
+    if (teamName.length < 3) {
+      this.showFieldError('team-error', 'Choose a team name with at least 3 characters');
+      return;
+    }
+
+    this.setButtonState(createButton, {
+      busy: true,
+      label: 'Creating...',
+      idleLabel: 'Create Family',
     });
-  },
 
-  /**
-   * Check if user is registered
-   */
-  isRegistered() {
-    return !!this.getStoredRegistration();
-  },
+    try {
+      await this.apiRequest('/api/team/create', {
+        method: 'POST',
+        body: {
+          fullName,
+          teamName,
+        },
+      });
 
-  /**
-   * Redirect to dashboard if already registered
-   */
-  redirectIfRegistered() {
-    if (this.isRegistered() && !window.location.pathname.includes('dashboard.html')) {
-      window.location.href = 'dashboard.html';
+      this.redirectToDashboard();
+    } catch (error) {
+      console.error(error);
+      this.showFieldError('team-error', error.message || 'Unable to create your family');
+    } finally {
+      this.setButtonState(createButton, {
+        busy: false,
+        label: 'Creating...',
+        idleLabel: 'Create Family',
+      });
     }
   },
 
-  /**
-   * Initialize navigation flyout menu with GSAP animations
-   */
+  async handleJoinRequest() {
+    const joinButton = document.getElementById('request-join-btn');
+    const fullName = document.getElementById('full-name-input')?.value?.trim() || '';
+    const joinCode = this.normalizeJoinCode(document.getElementById('join-code-input')?.value || this.state.teamPreview?.joinCode);
+
+    this.showFieldError('join-request-error', '');
+    this.showFieldError('join-code-error', '');
+
+    if (!fullName) {
+      this.showFieldError('join-request-error', 'Your name is required');
+      return;
+    }
+
+    if (!joinCode) {
+      this.showFieldError('join-code-error', 'Enter a valid family code');
+      this.showStep('email');
+      return;
+    }
+
+    if (!this.state.teamPreview) {
+      const team = await this.lookupTeam(joinCode, { showErrors: true });
+      if (!team) {
+        this.showStep('email');
+        return;
+      }
+    }
+
+    this.setButtonState(joinButton, {
+      busy: true,
+      label: 'Submitting...',
+      idleLabel: 'Request to Join',
+    });
+
+    try {
+      await this.apiRequest('/api/team/join', {
+        method: 'POST',
+        body: {
+          fullName,
+          joinCode,
+        },
+      });
+
+      this.redirectToDashboard();
+    } catch (error) {
+      console.error(error);
+      this.showFieldError('join-request-error', error.message || 'Unable to submit join request');
+    } finally {
+      this.setButtonState(joinButton, {
+        busy: false,
+        label: 'Submitting...',
+        idleLabel: 'Request to Join',
+      });
+    }
+  },
+
+  async apiRequest(path, options = {}) {
+    const headers = {};
+    if (options.body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    if (this.state.session?.access_token) {
+      headers.Authorization = `Bearer ${this.state.session.access_token}`;
+    }
+
+    const response = await fetch(path, {
+      method: options.method || 'GET',
+      headers,
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    });
+
+    const text = await response.text();
+    const payload = text ? JSON.parse(text) : {};
+
+    if (!response.ok) {
+      const error = new Error(payload.error || 'Request failed');
+      error.status = response.status;
+      throw error;
+    }
+
+    return payload;
+  },
+
+  async fetchDashboard({ suppressMissing } = {}) {
+    try {
+      return await this.apiRequest('/api/team/dashboard');
+    } catch (error) {
+      if (suppressMissing && (error.status === 404 || error.status === 401)) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  async loadDashboard() {
+    try {
+      const dashboard = await this.fetchDashboard({ suppressMissing: true });
+      if (!dashboard) {
+        this.redirect('register.html');
+        return;
+      }
+
+      this.renderDashboard(dashboard);
+    } catch (error) {
+      console.error(error);
+      this.showFatalError(error.message || 'Unable to load your dashboard right now.');
+    }
+  },
+
+  renderDashboard(dashboard) {
+    const roleCopy = document.getElementById('dashboard-role-copy');
+    const teamName = document.getElementById('dashboard-team-name');
+    const joinCodeDisplay = document.getElementById('join-code-display');
+    const inviteLinkInput = document.getElementById('invite-link-input');
+    const statusBanner = document.getElementById('dashboard-status-banner');
+    const pendingSection = document.getElementById('pending-section');
+    const pendingList = document.getElementById('pending-list');
+    const membersList = document.getElementById('members-list');
+
+    if (teamName) {
+      teamName.textContent = dashboard.team.name;
+    }
+
+    if (roleCopy) {
+      roleCopy.textContent = dashboard.viewer.role === 'parent'
+        ? 'Parent dashboard. Share the code and review join requests.'
+        : 'Track your team status here.';
+    }
+
+    if (joinCodeDisplay) {
+      joinCodeDisplay.value = dashboard.team.joinCode;
+    }
+
+    if (inviteLinkInput) {
+      inviteLinkInput.value = `${window.location.origin}/join.html?code=${encodeURIComponent(dashboard.team.joinCode)}`;
+    }
+
+    if (statusBanner) {
+      if (dashboard.viewer.role === 'child' && dashboard.viewer.status === 'pending') {
+        statusBanner.hidden = false;
+        statusBanner.textContent = 'Your join request is pending parent approval. You will appear in the member list once approved.';
+      } else if (dashboard.viewer.role === 'child') {
+        statusBanner.hidden = false;
+        statusBanner.textContent = `You are approved as a child in ${dashboard.team.name}.`;
+      } else {
+        statusBanner.hidden = false;
+        statusBanner.textContent = `Share code ${dashboard.team.joinCode} or the invite link below with your children.`;
+      }
+    }
+
+    this.renderApprovedMembers(membersList, dashboard.members);
+
+    if (dashboard.viewer.role === 'parent') {
+      pendingSection.hidden = false;
+      this.renderPendingMembers(pendingList, dashboard.pendingRequests);
+    } else if (pendingSection) {
+      pendingSection.hidden = true;
+    }
+  },
+
+  renderApprovedMembers(container, members) {
+    if (!container) return;
+
+    container.innerHTML = '';
+    if (!members.length) {
+      container.innerHTML = '<p class="empty-state">No approved members yet.</p>';
+      return;
+    }
+
+    members.forEach((member) => {
+      container.insertAdjacentHTML('beforeend', this.memberCardTemplate(member));
+    });
+  },
+
+  renderPendingMembers(container, members) {
+    if (!container) return;
+
+    container.innerHTML = '';
+    if (!members.length) {
+      container.innerHTML = '<p class="empty-state">No pending requests right now.</p>';
+      return;
+    }
+
+    members.forEach((member) => {
+      container.insertAdjacentHTML('beforeend', this.memberCardTemplate(member, { reviewable: true }));
+    });
+
+    container.querySelectorAll('[data-review-membership]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const membershipId = button.dataset.reviewMembership;
+        const decision = button.dataset.reviewDecision;
+        await this.reviewRequest(button, membershipId, decision);
+      });
+    });
+  },
+
+  memberCardTemplate(member, options = {}) {
+    const displayName = this.escapeHtml(member.fullName || member.email || 'Unknown member');
+    const email = this.escapeHtml(member.email || '');
+    const roleLabel = member.role === 'parent' ? 'Parent' : 'Child';
+    const statusLabel = member.status.charAt(0).toUpperCase() + member.status.slice(1);
+
+    if (options.reviewable) {
+      return `
+        <div class="member-card">
+          <div class="member-info">
+            <p class="member-name">${displayName}</p>
+            <p class="member-email">${email}</p>
+            <p class="member-meta">${roleLabel} Request</p>
+          </div>
+          <div class="member-card-actions">
+            <button class="action-btn action-approve" data-review-membership="${member.id}" data-review-decision="approved">Approve</button>
+            <button class="action-btn action-decline" data-review-membership="${member.id}" data-review-decision="declined">Decline</button>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="member-card">
+        <div class="member-info">
+          <p class="member-name">${displayName}</p>
+          <p class="member-email">${email}</p>
+          <p class="member-meta">${roleLabel}</p>
+        </div>
+        <span class="member-status ${this.escapeHtml(member.status)}">${statusLabel}</span>
+      </div>
+    `;
+  },
+
+  async reviewRequest(button, membershipId, decision) {
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = decision === 'approved' ? 'Approving...' : 'Declining...';
+
+    try {
+      await this.apiRequest('/api/team/approve', {
+        method: 'POST',
+        body: {
+          membershipId,
+          decision,
+        },
+      });
+
+      await this.loadDashboard();
+    } catch (error) {
+      console.error(error);
+      window.alert(error.message || 'Unable to review this request');
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  },
+
+  async copyFieldValue(inputId, buttonId) {
+    const input = document.getElementById(inputId);
+    const button = document.getElementById(buttonId);
+    if (!input || !button) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(input.value);
+      button.textContent = 'Copied!';
+      button.classList.add('copied');
+      window.setTimeout(() => {
+        button.textContent = buttonId === 'sign-out-btn' ? 'Sign out' : 'Copy';
+        button.classList.remove('copied');
+      }, 1500);
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  async handleSignOut() {
+    await this.supabase.auth.signOut();
+    this.redirect('register.html');
+  },
+
+  redirectToDashboard() {
+    this.redirect('dashboard.html');
+  },
+
+  redirect(path) {
+    window.location.href = path;
+  },
+
+  showFatalError(message) {
+    if (this.state.page === 'register') {
+      this.showPageMessage('register-page-message', message);
+    } else if (this.state.page === 'join') {
+      this.showPageMessage('join-page-message', message);
+    } else {
+      const banner = document.getElementById('dashboard-status-banner');
+      if (banner) {
+        banner.hidden = false;
+        banner.textContent = message;
+      }
+    }
+  },
+
+  escapeHtml(value) {
+    return String(value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  },
+
   initNavigation() {
     const burger = document.querySelector('.nav-burger');
     const flyout = document.querySelector('.flyout-menu');
@@ -559,115 +936,86 @@ const FamHack = {
     const menuItems = flyout ? flyout.querySelectorAll('.menu-item') : [];
     const menuContent = flyout ? flyout.querySelector('.menu-content') : null;
 
-    if (!burger || !flyout) return;
+    if (!burger || !flyout) {
+      return;
+    }
 
-    // Check if GSAP is available
-    const hasGSAP = typeof gsap !== 'undefined';
-
-    // Create animation timeline
+    const hasGSAP = typeof window.gsap !== 'undefined';
     let menuTimeline = null;
 
     const openMenu = () => {
       flyout.classList.add('is-open');
       document.body.classList.add('menu-open');
 
-      if (hasGSAP) {
-        // Kill any existing animation
-        if (menuTimeline) menuTimeline.kill();
+      if (!hasGSAP) {
+        return;
+      }
 
-        menuTimeline = gsap.timeline();
+      if (menuTimeline) menuTimeline.kill();
+      menuTimeline = window.gsap.timeline();
 
-        // Animate flyout sliding in from right
-        menuTimeline.fromTo(flyout,
-          { x: '100%', opacity: 0 },
-          { x: '0%', opacity: 1, duration: 0.4, ease: 'power3.out' }
+      menuTimeline.fromTo(
+        flyout,
+        { x: '100%', opacity: 0 },
+        { x: '0%', opacity: 1, duration: 0.4, ease: 'power3.out' }
+      );
+
+      if (menuItems.length) {
+        menuTimeline.fromTo(
+          menuItems,
+          { y: 40, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.35, stagger: 0.08, ease: 'power2.out' },
+          '-=0.2'
         );
+      }
 
-        // Stagger menu items with a slide-up and fade-in effect
-        if (menuItems.length > 0) {
-          menuTimeline.fromTo(menuItems,
-            { y: 40, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.35,
-              stagger: 0.08,
-              ease: 'power2.out'
-            },
-            '-=0.2' // Start slightly before flyout finishes
-          );
-        }
-
-        // Animate menu content with subtle scale
-        if (menuContent) {
-          menuTimeline.fromTo(menuContent,
-            { scale: 0.95 },
-            { scale: 1, duration: 0.3, ease: 'power2.out' },
-            0
-          );
-        }
+      if (menuContent) {
+        menuTimeline.fromTo(menuContent, { scale: 0.95 }, { scale: 1, duration: 0.3, ease: 'power2.out' }, 0);
       }
     };
 
     const closeMenu = () => {
-      if (hasGSAP) {
-        // Kill any existing animation
-        if (menuTimeline) menuTimeline.kill();
-
-        menuTimeline = gsap.timeline({
-          onComplete: () => {
-            flyout.classList.remove('is-open');
-            document.body.classList.remove('menu-open');
-            // Reset styles for next open
-            gsap.set(flyout, { clearProps: 'all' });
-            gsap.set(menuItems, { clearProps: 'all' });
-            if (menuContent) gsap.set(menuContent, { clearProps: 'all' });
-          }
-        });
-
-        // Fade out menu items quickly
-        if (menuItems.length > 0) {
-          menuTimeline.to(menuItems,
-            {
-              y: -20,
-              opacity: 0,
-              duration: 0.2,
-              stagger: 0.03,
-              ease: 'power2.in'
-            }
-          );
-        }
-
-        // Slide flyout out to right
-        menuTimeline.to(flyout,
-          { x: '100%', opacity: 0, duration: 0.35, ease: 'power3.in' },
-          '-=0.1'
-        );
-      } else {
+      if (!hasGSAP) {
         flyout.classList.remove('is-open');
         document.body.classList.remove('menu-open');
+        return;
       }
+
+      if (menuTimeline) menuTimeline.kill();
+      menuTimeline = window.gsap.timeline({
+        onComplete: () => {
+          flyout.classList.remove('is-open');
+          document.body.classList.remove('menu-open');
+          window.gsap.set(flyout, { clearProps: 'all' });
+          window.gsap.set(menuItems, { clearProps: 'all' });
+          if (menuContent) {
+            window.gsap.set(menuContent, { clearProps: 'all' });
+          }
+        },
+      });
+
+      if (menuItems.length) {
+        menuTimeline.to(menuItems, { y: -20, opacity: 0, duration: 0.2, stagger: 0.03, ease: 'power2.in' });
+      }
+
+      menuTimeline.to(flyout, { x: '100%', opacity: 0, duration: 0.35, ease: 'power3.in' }, '-=0.1');
     };
 
     burger.addEventListener('click', openMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    backdrop?.addEventListener('click', closeMenu);
+    closeClickArea?.addEventListener('click', closeMenu);
 
-    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
-    if (backdrop) backdrop.addEventListener('click', closeMenu);
-    if (closeClickArea) closeClickArea.addEventListener('click', closeMenu);
-
-    // Close on Escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && flyout.classList.contains('is-open')) {
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && flyout.classList.contains('is-open')) {
         closeMenu();
       }
     });
   },
 };
 
-// Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   FamHack.init();
 });
 
-// Export for use in other scripts
 window.FamHack = FamHack;

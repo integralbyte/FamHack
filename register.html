@@ -246,14 +246,14 @@
                 </div>
               </div>
 
-              <h1 class="register-heading">Register for FamHack</h1>
-              <p class="register-subheading">Use your University of Edinburgh email</p>
+              <h1 class="register-heading">Create Your Academic Family</h1>
+              <p class="register-subheading">Parents register first, get a join code, then approve children later.</p>
+              <p id="register-page-message" class="success-message page-message"></p>
 
-              <!-- Step 1: Email Entry -->
               <div class="register-step active" data-step="email">
                 <div class="register-form">
                   <div class="form-group">
-                    <label class="form-label" for="email-input">Email Address</label>
+                    <label class="form-label" for="email-input">Parent Email Address</label>
                     <input type="email" id="email-input" class="form-input" placeholder="s1234567@ed.ac.uk"
                       autocomplete="email" />
                     <p class="error-message" id="email-error"></p>
@@ -275,7 +275,6 @@
                 </div>
               </div>
 
-              <!-- Step 2: OTP Verification -->
               <div class="register-step" data-step="otp">
                 <div class="register-form">
                   <p class="form-label" style="text-align: center; margin-bottom: 20px;">Enter the 6-digit code sent to
@@ -308,6 +307,38 @@
                 </div>
               </div>
 
+              <div class="register-step" data-step="create-team">
+                <div class="register-form">
+                  <div class="form-group">
+                    <label class="form-label" for="full-name-input">Your Name</label>
+                    <input type="text" id="full-name-input" class="form-input" placeholder="Alex Morgan"
+                      autocomplete="name" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="team-name-input">Family / Team Name</label>
+                    <input type="text" id="team-name-input" class="form-input" placeholder="House Lovelace"
+                      autocomplete="organization" />
+                  </div>
+                  <p class="register-subheading helper-copy">Your children will use the join code from the dashboard to
+                    request access.</p>
+                  <p class="error-message" id="team-error"></p>
+                  <button id="create-team-btn" class="button-link w-inline-block" style="width: 100%;">
+                    <div class="button" style="width: 100%; justify-content: center;">
+                      <p class="button-label">Create Family</p>
+                      <div class="button-icon">
+                        <div class="button-icon-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                            <path
+                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                              fill="currentColor" stroke-width="0.155153" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               <div data-wf--bracket--variant="bottom-right"
                 class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
                 <div class="bracket-svg w-embed">
@@ -320,6 +351,44 @@
             </div>
           </div>
         </section>
+
+        <!-- Footer -->
+        <footer class="footer-new">
+          <div class="footer-container">
+            <div class="footer-top">
+              <h1 class="footer-logo">FAMHACK</h1>
+            </div>
+            <div class="footer-grid">
+              <div class="footer-col">
+                <h6>Navigation</h6>
+                <a href="index.html">Home</a>
+                <a href="about.html">About</a>
+                <a href="register.html">Register</a>
+                <a href="contact.html">Contact</a>
+              </div>
+              <div class="footer-col">
+                <h6>Community</h6>
+                <a href="#">Discord</a>
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
+              </div>
+              <div class="footer-col">
+                <h6>Legal</h6>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+              </div>
+              <div class="footer-col">
+                <h6>Location</h6>
+                <p
+                  style="color: #ffe9ce; font-family: 'Azeret Mono', monospace; font-size: 0.9rem; line-height: 1.6; margin: 0;">
+                  University of Edinburgh<br>Edinburgh, Scotland</p>
+              </div>
+            </div>
+            <div class="footer-bottom">
+              <p>&copy; 2026 FamHack | University of Edinburgh</p>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   </div>
@@ -398,7 +467,7 @@
     });
   </script>
 
-  <script src="assets/js/famhack.js"></script>
+  <script type="module" src="assets/js/famhack.js"></script>
 </body>
 
 </html>

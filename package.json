@@ -1,0 +1,11 @@
+{
+  "name": "famhack",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx vercel dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4"
+  }
+}
