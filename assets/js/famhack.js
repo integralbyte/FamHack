@@ -422,15 +422,7 @@ const FamHack = {
     });
 
     try {
-      const { data, error } = await this.supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'email',
-      });
-
-      if (error) {
-        throw error;
-      }
+      const data = await this.verifyEmailOtp(email, otp);
 
       this.state.session = data.session;
       const dashboard = await this.fetchDashboard({ suppressMissing: true });
@@ -464,6 +456,27 @@ const FamHack = {
         idleLabel: 'Verify',
       });
     }
+  },
+
+  async verifyEmailOtp(email, token) {
+    const verificationTypes = ['email', 'signup'];
+    let lastError = null;
+
+    for (const type of verificationTypes) {
+      const { data, error } = await this.supabase.auth.verifyOtp({
+        email,
+        token,
+        type,
+      });
+
+      if (!error) {
+        return data;
+      }
+
+      lastError = error;
+    }
+
+    throw lastError || new Error('Unable to verify that code');
   },
 
   async handleResendOTP() {
