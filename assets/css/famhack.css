@@ -465,6 +465,29 @@ body.menu-open {
   border-color: #fc2f20;
 }
 
+.register-step[data-step="otp"] .register-form {
+  align-items: center;
+  text-align: center;
+}
+
+.register-step[data-step="otp"] .form-label,
+.register-step[data-step="otp"] .error-message,
+.register-step[data-step="otp"] .button-link,
+.register-step[data-step="otp"] .resend-link {
+  width: 100%;
+}
+
+.register-step[data-step="otp"] .otp-inputs {
+  margin-inline: auto;
+}
+
+.register-step[data-step="otp"] .error-message {
+  line-height: 1.5;
+  max-width: 30ch;
+  margin-inline: auto;
+  text-align: center;
+}
+
 .resend-link {
   font-family: 'Azeret Mono', monospace;
   font-size: 0.75rem;

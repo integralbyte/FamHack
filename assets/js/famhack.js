@@ -129,6 +129,21 @@ const FamHack = {
     this.setText(id, message);
   },
 
+  getFriendlyOtpErrorMessage(error) {
+    const message = String(error?.message || '').toLowerCase();
+
+    if (
+      message.includes('token has expired or is invalid')
+      || message.includes('email link is invalid or has expired')
+      || message.includes('invalid token')
+      || message.includes('otp')
+    ) {
+      return `That ${this.config.otpLength}-digit code is incorrect, expired, or from an older email. Use the latest code or request a new one.`;
+    }
+
+    return error?.message || 'Unable to verify that code';
+  },
+
   showStep(stepName) {
     const steps = document.querySelectorAll('.register-step');
     steps.forEach((step) => {
@@ -411,7 +426,7 @@ const FamHack = {
     this.showFieldError('otp-error', '');
 
     if (otp.length !== this.config.otpLength) {
-      this.showFieldError('otp-error', 'Enter the full 6-digit code');
+      this.showFieldError('otp-error', `Enter the full ${this.config.otpLength}-digit code`);
       return;
     }
 
@@ -447,7 +462,7 @@ const FamHack = {
       }
     } catch (error) {
       console.error(error);
-      this.showFieldError('otp-error', error.message || 'Unable to verify that code');
+      this.showFieldError('otp-error', this.getFriendlyOtpErrorMessage(error));
       this.clearOTPInputs();
     } finally {
       this.setButtonState(verifyButton, {
