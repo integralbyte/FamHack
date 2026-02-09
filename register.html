@@ -5,10 +5,10 @@
   <meta charset="utf-8" />
   <title>Register | FamHack</title>
   <meta
-    content="Register for FamHack - the premier hackathon at the University of Edinburgh. Sign up with your @ed.ac.uk email."
+    content="Register for FamHack. Academic parents create family teams first, and children join later with a family code."
     name="description" />
   <meta content="Register | FamHack" property="og:title" />
-  <meta content="Register for FamHack - the premier hackathon at the University of Edinburgh."
+  <meta content="Academic parents create family teams first, and children join later with a family code."
     property="og:description" />
   <meta content="assets/images/famhack-logo.png" property="og:image" />
   <meta property="og:type" content="website" />
@@ -149,8 +149,8 @@
                 </a>
               </div>
               <div class="menu-item">
-                <a href="contact.html" class="menu-item-layout w-inline-block">
-                  <h4>Contact</h4>
+                <a href="dashboard.html" class="menu-item-layout w-inline-block">
+                  <h4>Dashboard</h4>
                 </a>
               </div>
             </div>
@@ -246,11 +246,51 @@
                 </div>
               </div>
 
-              <h1 class="register-heading">Create Your Academic Family</h1>
-              <p class="register-subheading">Parents register first, get a join code, then approve children later.</p>
+              <h1 class="register-heading">Join FamHack</h1>
+              <p class="register-subheading">Parents create the family. Children join with a family code or invite link.</p>
               <p id="register-page-message" class="success-message page-message"></p>
 
-              <div class="register-step active" data-step="email">
+              <div class="register-step active" data-step="role">
+                <div class="register-form">
+                  <div class="role-grid">
+                    <button id="choose-parent-btn" type="button" class="role-card">
+                      <p class="role-card-eyebrow">Parent</p>
+                      <h2 class="role-card-heading">Create your academic family</h2>
+                      <p class="role-card-copy">Academic parents register first, verify their email, and create the family dashboard that children join later.</p>
+                      <p class="role-card-note">You will create the family name, get the join code, and review join requests.</p>
+                    </button>
+
+                    <div class="role-card">
+                      <p class="role-card-eyebrow">Child</p>
+                      <h2 class="role-card-heading">Join an existing family</h2>
+                      <p class="role-card-copy">Ask your academic parent for the family code or invite link. If you already have the invite link, paste it directly into your browser.</p>
+                      <div class="form-group">
+                        <label class="form-label" for="role-family-code-input">Family Code</label>
+                        <input type="text" id="role-family-code-input" class="form-input uppercase-input" placeholder="ABCD23"
+                          autocapitalize="characters" autocomplete="off" />
+                      </div>
+                      <button id="continue-child-btn" type="button" class="button-link w-inline-block" style="width: 100%;">
+                        <div class="button" style="width: 100%; justify-content: center;">
+                          <p class="button-label">Continue as Child</p>
+                          <div class="button-icon">
+                            <div class="button-icon-svg w-embed">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                                <path
+                                  d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                                  fill="currentColor" stroke-width="0.155153" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                      <p class="role-card-note">No code yet? Your parent needs to create the family first, then send you the code.</p>
+                    </div>
+                  </div>
+                  <p class="error-message" id="role-error"></p>
+                </div>
+              </div>
+
+              <div class="register-step" data-step="email">
                 <div class="register-form">
                   <div class="form-group">
                     <label class="form-label" for="email-input">Parent Email Address</label>
@@ -364,7 +404,7 @@
                 <a href="index.html">Home</a>
                 <a href="about.html">About</a>
                 <a href="register.html">Register</a>
-                <a href="contact.html">Contact</a>
+                <a href="dashboard.html">Dashboard</a>
               </div>
               <div class="footer-col">
                 <h6>Community</h6>

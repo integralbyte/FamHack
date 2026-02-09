@@ -237,16 +237,31 @@ const FamHack = {
   },
 
   async initRegisterPage() {
+    document.getElementById('choose-parent-btn')?.addEventListener('click', () => this.handleChooseParent());
+    document.getElementById('continue-child-btn')?.addEventListener('click', () => this.handleChooseChild());
     document.getElementById('send-otp-btn')?.addEventListener('click', () => this.handleSendOTP());
     document.getElementById('verify-otp-btn')?.addEventListener('click', () => this.handleVerifyOTP());
     document.getElementById('resend-otp-btn')?.addEventListener('click', () => this.handleResendOTP());
     document.getElementById('create-team-btn')?.addEventListener('click', () => this.handleCreateTeam());
 
     const emailInput = document.getElementById('email-input');
+    const childJoinCodeInput = document.getElementById('role-family-code-input');
     emailInput?.addEventListener('keypress', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
         this.handleSendOTP();
+      }
+    });
+
+    childJoinCodeInput?.addEventListener('input', () => {
+      childJoinCodeInput.value = this.normalizeJoinCode(childJoinCodeInput.value);
+      this.showFieldError('role-error', '');
+    });
+
+    childJoinCodeInput?.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        this.handleChooseChild();
       }
     });
 
@@ -257,8 +272,11 @@ const FamHack = {
         return;
       }
 
-      this.showStep('create-team');
-      this.showPageMessage('register-page-message', 'You are already signed in. Create your family to continue.');
+      this.showStep('role');
+      this.showPageMessage(
+        'register-page-message',
+        'You are already signed in. Choose whether you are creating a family or joining one.'
+      );
     }
   },
 
@@ -336,6 +354,34 @@ const FamHack = {
     }
 
     await this.loadDashboard();
+  },
+
+  handleChooseParent() {
+    this.showFieldError('role-error', '');
+
+    if (this.state.session) {
+      this.showStep('create-team');
+      this.showPageMessage('register-page-message', 'You are signed in. Finish creating your family.');
+      return;
+    }
+
+    this.showStep('email');
+    this.showPageMessage('register-page-message', '');
+    document.getElementById('email-input')?.focus();
+  },
+
+  handleChooseChild() {
+    this.showFieldError('role-error', '');
+
+    const joinCodeInput = document.getElementById('role-family-code-input');
+    const joinCode = this.normalizeJoinCode(joinCodeInput?.value);
+
+    if (joinCodeInput) {
+      joinCodeInput.value = joinCode;
+    }
+
+    const target = joinCode ? `join.html?code=${encodeURIComponent(joinCode)}` : 'join.html';
+    this.redirect(target);
   },
 
   async handleSendOTP() {
