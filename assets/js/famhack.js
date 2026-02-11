@@ -250,6 +250,7 @@ const FamHack = {
     document.getElementById('choose-student-btn')?.addEventListener('click', () => this.handleChooseStudent());
     document.getElementById('continue-child-btn')?.addEventListener('click', () => this.handleChooseChild());
     document.getElementById('back-to-role-btn')?.addEventListener('click', () => this.handleBackToRole());
+    document.getElementById('back-from-parent-btn')?.addEventListener('click', () => this.handleBackToRole());
     document.getElementById('send-otp-btn')?.addEventListener('click', () => this.handleSendOTP());
     document.getElementById('verify-otp-btn')?.addEventListener('click', () => this.handleVerifyOTP());
     document.getElementById('resend-otp-btn')?.addEventListener('click', () => this.handleResendOTP());

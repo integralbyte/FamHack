@@ -347,7 +347,7 @@ body.menu-open {
 }
 
 .register-inner {
-  max-width: 500px;
+  max-width: 780px;
   width: 100%;
   margin: 0 auto;
 }
@@ -389,6 +389,12 @@ body.menu-open {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.register-step:not([data-step="role"]) .register-form {
+  max-width: 500px;
+  margin-inline: auto;
+  width: 100%;
 }
 
 .role-grid {
