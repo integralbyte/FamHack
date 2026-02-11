@@ -129,6 +129,15 @@ const FamHack = {
     this.setText(id, message);
   },
 
+  setRegisterIntro(heading, subheading) {
+    if (this.state.page !== 'register') {
+      return;
+    }
+
+    this.setText('register-heading', heading);
+    this.setText('register-subheading', subheading);
+  },
+
   getFriendlyOtpErrorMessage(error) {
     const message = String(error?.message || '').toLowerCase();
 
@@ -238,7 +247,9 @@ const FamHack = {
 
   async initRegisterPage() {
     document.getElementById('choose-parent-btn')?.addEventListener('click', () => this.handleChooseParent());
+    document.getElementById('choose-student-btn')?.addEventListener('click', () => this.handleChooseStudent());
     document.getElementById('continue-child-btn')?.addEventListener('click', () => this.handleChooseChild());
+    document.getElementById('back-to-role-btn')?.addEventListener('click', () => this.handleBackToRole());
     document.getElementById('send-otp-btn')?.addEventListener('click', () => this.handleSendOTP());
     document.getElementById('verify-otp-btn')?.addEventListener('click', () => this.handleVerifyOTP());
     document.getElementById('resend-otp-btn')?.addEventListener('click', () => this.handleResendOTP());
@@ -264,6 +275,8 @@ const FamHack = {
         this.handleChooseChild();
       }
     });
+
+    this.setRegisterIntro('What are you?', 'Choose how you want to enter FamHack.');
 
     if (this.state.session) {
       const dashboard = await this.fetchDashboard({ suppressMissing: true });
@@ -358,6 +371,10 @@ const FamHack = {
 
   handleChooseParent() {
     this.showFieldError('role-error', '');
+    this.setRegisterIntro(
+      'Create your academic family',
+      'Academic parents verify their email first, then create the family dashboard.'
+    );
 
     if (this.state.session) {
       this.showStep('create-team');
@@ -368,6 +385,16 @@ const FamHack = {
     this.showStep('email');
     this.showPageMessage('register-page-message', '');
     document.getElementById('email-input')?.focus();
+  },
+
+  handleChooseStudent() {
+    this.showFieldError('role-error', '');
+    this.setRegisterIntro(
+      'Join an existing family',
+      'Enter the family code from your academic parent, or open the invite link they sent you.'
+    );
+    this.showStep('child');
+    document.getElementById('role-family-code-input')?.focus();
   },
 
   handleChooseChild() {
@@ -382,6 +409,12 @@ const FamHack = {
 
     const target = joinCode ? `join.html?code=${encodeURIComponent(joinCode)}` : 'join.html';
     this.redirect(target);
+  },
+
+  handleBackToRole() {
+    this.showFieldError('role-error', '');
+    this.setRegisterIntro('What are you?', 'Choose how you want to enter FamHack.');
+    this.showStep('role');
   },
 
   async handleSendOTP() {

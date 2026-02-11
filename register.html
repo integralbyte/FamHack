@@ -246,8 +246,8 @@
                 </div>
               </div>
 
-              <h1 class="register-heading">Join FamHack</h1>
-              <p class="register-subheading">Parents create the family. Children join with a family code or invite link.</p>
+              <h1 id="register-heading" class="register-heading">What are you?</h1>
+              <p id="register-subheading" class="register-subheading">Choose how you want to enter FamHack.</p>
               <p id="register-page-message" class="success-message page-message"></p>
 
               <div class="register-step active" data-step="role">
@@ -255,38 +255,43 @@
                   <div class="role-grid">
                     <button id="choose-parent-btn" type="button" class="role-card">
                       <p class="role-card-eyebrow">Parent</p>
-                      <h2 class="role-card-heading">Create your academic family</h2>
-                      <p class="role-card-copy">Academic parents register first, verify their email, and create the family dashboard that children join later.</p>
-                      <p class="role-card-note">You will create the family name, get the join code, and review join requests.</p>
+                      <h2 class="role-card-heading">Create a family</h2>
+                      <p class="role-card-copy">Start the family, get the code, and approve join requests.</p>
                     </button>
 
-                    <div class="role-card">
-                      <p class="role-card-eyebrow">Child</p>
-                      <h2 class="role-card-heading">Join an existing family</h2>
-                      <p class="role-card-copy">Ask your academic parent for the family code or invite link. If you already have the invite link, paste it directly into your browser.</p>
-                      <div class="form-group">
-                        <label class="form-label" for="role-family-code-input">Family Code</label>
-                        <input type="text" id="role-family-code-input" class="form-input uppercase-input" placeholder="ABCD23"
-                          autocapitalize="characters" autocomplete="off" />
-                      </div>
-                      <button id="continue-child-btn" type="button" class="button-link w-inline-block" style="width: 100%;">
-                        <div class="button" style="width: 100%; justify-content: center;">
-                          <p class="button-label">Continue as Child</p>
-                          <div class="button-icon">
-                            <div class="button-icon-svg w-embed">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                                <path
-                                  d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                                  fill="currentColor" stroke-width="0.155153" />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                      <p class="role-card-note">No code yet? Your parent needs to create the family first, then send you the code.</p>
-                    </div>
+                    <button id="choose-student-btn" type="button" class="role-card">
+                      <p class="role-card-eyebrow">Student</p>
+                      <h2 class="role-card-heading">Join a family</h2>
+                      <p class="role-card-copy">Continue if your academic parent already has a code or invite link.</p>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="register-step" data-step="child">
+                <div class="register-form">
+                  <p class="register-subheading helper-copy">Ask your academic parent for the family code. If they sent you an invite link instead, open that link directly in your browser.</p>
+                  <div class="form-group">
+                    <label class="form-label" for="role-family-code-input">Family Code</label>
+                    <input type="text" id="role-family-code-input" class="form-input uppercase-input" placeholder="ABCD23"
+                      autocapitalize="characters" autocomplete="off" />
                   </div>
                   <p class="error-message" id="role-error"></p>
+                  <button id="continue-child-btn" type="button" class="button-link w-inline-block" style="width: 100%;">
+                    <div class="button" style="width: 100%; justify-content: center;">
+                      <p class="button-label">Continue</p>
+                      <div class="button-icon">
+                        <div class="button-icon-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                            <path
+                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                              fill="currentColor" stroke-width="0.155153" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                  <button id="back-to-role-btn" type="button" class="resend-link">Back</button>
                 </div>
               </div>
 
