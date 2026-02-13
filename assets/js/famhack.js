@@ -60,10 +60,10 @@ const FamHack = {
   },
 
   getPage() {
-    const path = window.location.pathname;
-    if (path.endsWith('register.html')) return 'register';
-    if (path.endsWith('join.html')) return 'join';
-    if (path.endsWith('dashboard.html')) return 'dashboard';
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    if (path === '/register' || path.endsWith('/register.html')) return 'register';
+    if (path === '/join' || path.endsWith('/join.html')) return 'join';
+    if (path === '/dashboard' || path.endsWith('/dashboard.html')) return 'dashboard';
     return null;
   },
 
@@ -363,7 +363,7 @@ const FamHack = {
     document.getElementById('sign-out-btn')?.addEventListener('click', () => this.handleSignOut());
 
     if (!this.state.session) {
-      this.redirect('register.html');
+      this.redirect('/register');
       return;
     }
 
@@ -408,7 +408,7 @@ const FamHack = {
       joinCodeInput.value = joinCode;
     }
 
-    const target = joinCode ? `join.html?code=${encodeURIComponent(joinCode)}` : 'join.html';
+    const target = joinCode ? `/join?code=${encodeURIComponent(joinCode)}` : '/join';
     this.redirect(target);
   },
 
@@ -824,7 +824,7 @@ const FamHack = {
     try {
       const dashboard = await this.fetchDashboard({ suppressMissing: true });
       if (!dashboard) {
-        this.redirect('register.html');
+        this.redirect('/register');
         return;
       }
 
@@ -860,7 +860,7 @@ const FamHack = {
     }
 
     if (inviteLinkInput) {
-      inviteLinkInput.value = `${window.location.origin}/join.html?code=${encodeURIComponent(dashboard.team.joinCode)}`;
+      inviteLinkInput.value = `${window.location.origin}/join?code=${encodeURIComponent(dashboard.team.joinCode)}`;
     }
 
     if (statusBanner) {
@@ -1001,11 +1001,11 @@ const FamHack = {
 
   async handleSignOut() {
     await this.supabase.auth.signOut();
-    this.redirect('register.html');
+    this.redirect('/register');
   },
 
   redirectToDashboard() {
-    this.redirect('dashboard.html');
+    this.redirect('/dashboard');
   },
 
   redirect(path) {

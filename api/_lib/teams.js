@@ -30,7 +30,7 @@ export function sanitizeTeamName(teamName) {
 }
 
 export function makeInviteLink(origin, joinCode) {
-  return `${origin.replace(/\/$/, '')}/join.html?code=${encodeURIComponent(joinCode)}`;
+  return `${origin.replace(/\/$/, '')}/join?code=${encodeURIComponent(joinCode)}`;
 }
 
 export async function upsertProfile(user, fullName) {
