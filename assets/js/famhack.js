@@ -13,6 +13,8 @@ const FamHack = {
     teamPreview: null,
     resendTimer: null,
     joinLookupTimer: null,
+    participateDestination: null,
+    participateCheckPromise: null,
   },
 
   async init() {
@@ -46,7 +48,9 @@ const FamHack = {
 
       await this.hydrateSession();
 
-      if (this.state.page === 'register') {
+      if (this.state.page === 'home') {
+        await this.initHomePage();
+      } else if (this.state.page === 'register') {
         await this.initRegisterPage();
       } else if (this.state.page === 'join') {
         await this.initJoinPage();
@@ -61,6 +65,7 @@ const FamHack = {
 
   getPage() {
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    if (path === '/' || path.endsWith('/index.html')) return 'home';
     if (path === '/register' || path.endsWith('/register.html')) return 'register';
     if (path === '/join' || path.endsWith('/join.html')) return 'join';
     if (path === '/dashboard' || path.endsWith('/dashboard.html')) return 'dashboard';
@@ -243,6 +248,70 @@ const FamHack = {
       input.value = '';
     });
     this.checkOTPComplete();
+  },
+
+  async initHomePage() {
+    const participateLink = document.getElementById('participate-link');
+    if (!participateLink) {
+      return;
+    }
+
+    participateLink.href = '/register';
+    participateLink.addEventListener('click', async (event) => {
+      event.preventDefault();
+
+      const button = participateLink.querySelector('.button');
+      const labelNode = participateLink.querySelector('.button-label');
+      const originalLabel = labelNode?.textContent || 'Participate';
+
+      participateLink.style.pointerEvents = 'none';
+      button?.classList.add('btn-loading');
+      if (labelNode) {
+        labelNode.textContent = 'Opening...';
+      }
+
+      try {
+        const destination = await this.resolveParticipateDestination();
+        participateLink.href = destination;
+        this.redirect(destination);
+      } finally {
+        participateLink.style.pointerEvents = '';
+        button?.classList.remove('btn-loading');
+        if (labelNode) {
+          labelNode.textContent = originalLabel;
+        }
+      }
+    });
+
+    const destination = await this.resolveParticipateDestination();
+    this.state.participateDestination = destination;
+    participateLink.href = destination;
+  },
+
+  async resolveParticipateDestination() {
+    if (this.state.participateDestination) {
+      return this.state.participateDestination;
+    }
+
+    if (this.state.participateCheckPromise) {
+      return this.state.participateCheckPromise;
+    }
+
+    this.state.participateCheckPromise = (async () => {
+      if (!this.state.session) {
+        return '/register';
+      }
+
+      const dashboard = await this.fetchDashboard({ suppressMissing: true });
+      return dashboard ? '/dashboard' : '/register';
+    })();
+
+    try {
+      this.state.participateDestination = await this.state.participateCheckPromise;
+      return this.state.participateDestination;
+    } finally {
+      this.state.participateCheckPromise = null;
+    }
   },
 
   async initRegisterPage() {
