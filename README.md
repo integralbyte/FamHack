@@ -6,7 +6,7 @@ This version keeps the static site theme and adds a real registration backend:
 - Supabase Postgres stores teams, join codes, and approval state.
 - Vercel Functions handle secure team creation, join requests, and parent approvals.
 - Resend is the recommended free SMTP provider for the OTP emails.
-- Teams are capped at 6 approved members.
+- Teams are capped at 15 approved members.
 - Children can cancel pending requests or leave an approved family from the dashboard.
 - Parents can transfer ownership to an approved child before leaving.
 
@@ -35,4 +35,4 @@ This version keeps the static site theme and adds a real registration backend:
 - `register.html`: parent logs in with email OTP, creates a family/team, receives a join code.
 - `join.html`: child logs in, enters the join code, and submits a join request.
 - `dashboard.html`: parent approves or declines requests; children can see pending status.
-- Team limits and parent transfers are enforced on the server. The frontend cannot bypass the 6-person cap.
+- Team limits and parent transfers are enforced on the server. The frontend cannot bypass the 15-person cap.

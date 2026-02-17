@@ -3,7 +3,7 @@ import { getServiceClient } from './supabase.js';
 
 const JOIN_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const JOIN_CODE_LENGTH = 6;
-export const MAX_TEAM_SIZE = 6;
+export const MAX_TEAM_SIZE = 15;
 export const TEAM_LIMIT_ERROR_CODE = 'team_member_limit_reached';
 export const PARENT_TRANSFER_ERROR_CODE = 'parent_transfer_failed';
 

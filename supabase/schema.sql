@@ -77,7 +77,7 @@ begin
   where team_id = new.team_id
     and status = 'approved';
 
-  if approved_count >= 6 then
+  if approved_count >= 15 then
     raise exception 'team_member_limit_reached';
   end if;
 

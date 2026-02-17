@@ -4,7 +4,7 @@ const FamHack = {
   config: {
     otpLength: 6,
     otpResendDelay: 30,
-    maxTeamSize: 6,
+    maxTeamSize: 15,
   },
 
   state: {
