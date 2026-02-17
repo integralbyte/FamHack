@@ -14,6 +14,7 @@ const FamHack = {
     resendTimer: null,
     joinLookupTimer: null,
     participateDestination: null,
+    participateLabel: null,
     participateCheckPromise: null,
   },
 
@@ -44,6 +45,8 @@ const FamHack = {
 
       this.supabase.auth.onAuthStateChange((_event, session) => {
         this.state.session = session;
+        this.state.participateDestination = null;
+        this.state.participateLabel = null;
       });
 
       await this.hydrateSession();
@@ -271,26 +274,37 @@ const FamHack = {
       }
 
       try {
-        const destination = await this.resolveParticipateDestination();
+        const { destination } = await this.resolveParticipateState();
         participateLink.href = destination;
         this.redirect(destination);
       } finally {
         participateLink.style.pointerEvents = '';
         button?.classList.remove('btn-loading');
         if (labelNode) {
-          labelNode.textContent = originalLabel;
+          labelNode.textContent = this.state.participateLabel || originalLabel;
         }
       }
     });
 
-    const destination = await this.resolveParticipateDestination();
-    this.state.participateDestination = destination;
+    const { destination, label } = await this.resolveParticipateState();
     participateLink.href = destination;
+    const labelNode = participateLink.querySelector('.button-label');
+    if (labelNode) {
+      labelNode.textContent = label;
+    }
   },
 
   async resolveParticipateDestination() {
-    if (this.state.participateDestination) {
-      return this.state.participateDestination;
+    const { destination } = await this.resolveParticipateState();
+    return destination;
+  },
+
+  async resolveParticipateState() {
+    if (this.state.participateDestination && this.state.participateLabel) {
+      return {
+        destination: this.state.participateDestination,
+        label: this.state.participateLabel,
+      };
     }
 
     if (this.state.participateCheckPromise) {
@@ -299,16 +313,31 @@ const FamHack = {
 
     this.state.participateCheckPromise = (async () => {
       if (!this.state.session) {
-        return '/register';
+        return {
+          destination: '/register',
+          label: 'Participate',
+        };
       }
 
       const dashboard = await this.fetchDashboard({ suppressMissing: true });
-      return dashboard ? '/dashboard' : '/register';
+      if (!dashboard) {
+        return {
+          destination: '/register',
+          label: 'Participate',
+        };
+      }
+
+      return {
+        destination: '/dashboard',
+        label: dashboard.viewer?.role === 'parent' ? 'Manage My Team' : 'View My Team',
+      };
     })();
 
     try {
-      this.state.participateDestination = await this.state.participateCheckPromise;
-      return this.state.participateDestination;
+      const resolvedState = await this.state.participateCheckPromise;
+      this.state.participateDestination = resolvedState.destination;
+      this.state.participateLabel = resolvedState.label;
+      return resolvedState;
     } finally {
       this.state.participateCheckPromise = null;
     }

@@ -231,6 +231,12 @@ body.menu-open {
   justify-content: flex-start;
 }
 
+.famhack-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
 /* Revamped Footer Styles */
 .footer-new {
   background-color: #0d0d0d;
@@ -1015,18 +1021,52 @@ button.button-link:disabled {
   margin: 0 0 20px;
 }
 
-.about-highlight {
-  background-color: rgba(255, 233, 206, 0.05);
-  padding: 40px;
-  margin: 40px 0;
+.about-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin: 42px 0 0;
 }
 
-.about-highlight-heading {
+.about-panel {
+  padding: 32px;
+  border: 1px solid rgba(255, 233, 206, 0.12);
+  background:
+    radial-gradient(circle at top right, rgba(252, 47, 32, 0.15), transparent 46%),
+    rgba(255, 233, 206, 0.04);
+}
+
+.about-panel-wide {
+  grid-column: 1 / -1;
+  background:
+    linear-gradient(135deg, rgba(252, 47, 32, 0.18), rgba(255, 233, 206, 0.04) 58%),
+    rgba(255, 233, 206, 0.05);
+}
+
+.about-panel-kicker {
+  margin: 0 0 14px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.72rem;
+  color: #fc2f20;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.about-highlight-heading,
+.about-panel-title {
   font-family: 'Azeret Mono', monospace;
   font-size: 1.25rem;
   font-weight: 500;
-  color: #fc2f20;
+  color: #ffe9ce;
   margin: 0 0 15px;
+}
+
+.about-panel-copy {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: rgba(255, 233, 206, 0.78);
+  margin: 0;
 }
 
 .about-list {
@@ -1045,6 +1085,279 @@ button.button-link:disabled {
 
 .about-list li:last-child {
   border-bottom: none;
+}
+
+.about-section-divider {
+  height: 1px;
+  margin: 52px 0;
+  background: linear-gradient(90deg, rgba(255, 233, 206, 0.06), rgba(252, 47, 32, 0.5), rgba(255, 233, 206, 0.06));
+}
+
+.about-team-block {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.about-team-heading {
+  font-family: 'Azeret Mono', monospace;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 600;
+  color: #ffe9ce;
+  margin: 0 0 14px;
+}
+
+.organizer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.organizer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid rgba(255, 233, 206, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 233, 206, 0.05), rgba(255, 233, 206, 0.02)),
+    #121212;
+}
+
+.organizer-avatar {
+  aspect-ratio: 1;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 233, 206, 0.22), transparent 30%),
+    linear-gradient(135deg, rgba(252, 47, 32, 0.24), rgba(255, 233, 206, 0.08));
+  border: 1px solid rgba(255, 233, 206, 0.14);
+  color: #ffe9ce;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.organizer-name {
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.95rem;
+  color: #ffe9ce;
+}
+
+.organizer-role {
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.76rem;
+  color: rgba(255, 233, 206, 0.58);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* Tracks Page Styles */
+.tracks-section {
+  padding: 120px 40px 80px;
+  background:
+    radial-gradient(circle at top left, rgba(252, 47, 32, 0.16), transparent 34%),
+    radial-gradient(circle at 85% 18%, rgba(255, 233, 206, 0.1), transparent 26%),
+    #0d0d0d;
+}
+
+.tracks-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.tracks-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 32px;
+}
+
+.tracks-eyebrow {
+  margin: 0 0 14px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.72rem;
+  color: #fc2f20;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.tracks-heading {
+  margin: 0 0 16px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  line-height: 1.05;
+  color: #ffe9ce;
+}
+
+.tracks-lede {
+  max-width: 760px;
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: rgba(255, 233, 206, 0.76);
+}
+
+.tracks-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.95fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.tracks-side-stack {
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.track-card {
+  position: relative;
+  overflow: hidden;
+  padding: 34px;
+  border: 1px solid rgba(255, 233, 206, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 233, 206, 0.05), rgba(255, 233, 206, 0.02)),
+    #121212;
+}
+
+.track-card::before {
+  content: '';
+  position: absolute;
+  inset: auto auto -80px -40px;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: rgba(252, 47, 32, 0.12);
+  filter: blur(4px);
+}
+
+.track-card-main {
+  min-height: 560px;
+  background:
+    radial-gradient(circle at 82% 16%, rgba(252, 47, 32, 0.24), transparent 34%),
+    linear-gradient(145deg, rgba(255, 233, 206, 0.09), rgba(255, 233, 206, 0.02)),
+    #111111;
+}
+
+.track-card-comp {
+  background:
+    linear-gradient(160deg, rgba(255, 233, 206, 0.1), rgba(252, 47, 32, 0.06)),
+    #131313;
+}
+
+.track-card-scavenger {
+  background:
+    radial-gradient(circle at 10% 12%, rgba(252, 47, 32, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(255, 233, 206, 0.05), rgba(255, 233, 206, 0.02)),
+    #101010;
+}
+
+.track-pill {
+  margin: 0 0 18px;
+  display: inline-flex;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 233, 206, 0.18);
+  background: rgba(13, 13, 13, 0.32);
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.68rem;
+  color: #fc2f20;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.track-title {
+  margin: 0 0 18px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.08;
+  color: #ffe9ce;
+}
+
+.track-card-main .track-title {
+  max-width: 10ch;
+}
+
+.track-copy {
+  margin: 0;
+  max-width: 58ch;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.94rem;
+  line-height: 1.8;
+  color: rgba(255, 233, 206, 0.76);
+}
+
+.track-points {
+  list-style: none;
+  padding: 0;
+  margin: 28px 0 0;
+  display: grid;
+  gap: 14px;
+}
+
+.track-points li {
+  position: relative;
+  padding-left: 18px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: #ffe9ce;
+}
+
+.track-points li::before {
+  content: '';
+  position: absolute;
+  top: 0.65rem;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #fc2f20;
+}
+
+.tracks-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 24px;
+}
+
+.track-meta,
+.track-route {
+  padding: 30px;
+  border: 1px solid rgba(255, 233, 206, 0.12);
+  background: rgba(255, 233, 206, 0.03);
+}
+
+.track-meta-title,
+.track-route-title {
+  margin: 0 0 14px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 1.2rem;
+  color: #ffe9ce;
+}
+
+.track-meta-copy,
+.track-route-copy {
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.88rem;
+  line-height: 1.75;
+  color: rgba(255, 233, 206, 0.74);
+}
+
+.track-route-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
 }
 
 /* Loading States */
@@ -1108,6 +1421,27 @@ button.button-link:disabled {
   .footer-right {
     text-align: left;
   }
+
+  .about-panel-grid,
+  .tracks-grid,
+  .tracks-lower {
+    grid-template-columns: 1fr;
+  }
+
+  .tracks-side-stack,
+  .track-route-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .tracks-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .organizer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media screen and (max-width: 767px) {
@@ -1165,6 +1499,27 @@ button.button-link:disabled {
 
   .nav-logo-text {
     font-size: 22px;
+  }
+
+  .tracks-section,
+  .about-section {
+    padding: 100px 20px 60px;
+  }
+
+  .track-card,
+  .about-panel,
+  .organizer-card,
+  .track-meta,
+  .track-route {
+    padding: 24px 20px;
+  }
+
+  .track-card-main {
+    min-height: 420px;
+  }
+
+  .organizer-grid {
+    grid-template-columns: 1fr;
   }
 }
 
