@@ -810,6 +810,14 @@ button.role-card {
   gap: 20px;
 }
 
+.dashboard-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .invite-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -885,6 +893,16 @@ button.role-card {
 .action-btn.action-decline {
   border-color: rgba(252, 47, 32, 0.35);
   color: #ff8f82;
+}
+
+.action-btn.action-transfer {
+  border-color: rgba(255, 233, 206, 0.28);
+  color: #ffe9ce;
+}
+
+.action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .member-status.pending {

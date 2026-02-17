@@ -4,6 +4,7 @@ const FamHack = {
   config: {
     otpLength: 6,
     otpResendDelay: 30,
+    maxTeamSize: 6,
   },
 
   state: {
@@ -16,6 +17,7 @@ const FamHack = {
     participateDestination: null,
     participateLabel: null,
     participateCheckPromise: null,
+    dashboard: null,
   },
 
   async init() {
@@ -459,6 +461,7 @@ const FamHack = {
     document.getElementById('copy-invite-btn')?.addEventListener('click', () => this.copyFieldValue('invite-link-input', 'copy-invite-btn'));
     document.getElementById('copy-code-btn')?.addEventListener('click', () => this.copyFieldValue('join-code-display', 'copy-code-btn'));
     document.getElementById('sign-out-btn')?.addEventListener('click', () => this.handleSignOut());
+    document.getElementById('leave-team-btn')?.addEventListener('click', () => this.handleLeaveTeam());
 
     if (!this.state.session) {
       this.redirect('/register');
@@ -934,10 +937,15 @@ const FamHack = {
   },
 
   renderDashboard(dashboard) {
+    this.state.dashboard = dashboard;
+    const approvedChildren = dashboard.members.filter((member) => member.role === 'child');
     const roleCopy = document.getElementById('dashboard-role-copy');
+    const capacityCopy = document.getElementById('dashboard-capacity-copy');
     const teamName = document.getElementById('dashboard-team-name');
     const joinCodeDisplay = document.getElementById('join-code-display');
     const inviteLinkInput = document.getElementById('invite-link-input');
+    const inviteGrid = document.getElementById('invite-grid');
+    const leaveTeamButton = document.getElementById('leave-team-btn');
     const statusBanner = document.getElementById('dashboard-status-banner');
     const pendingSection = document.getElementById('pending-section');
     const pendingList = document.getElementById('pending-list');
@@ -953,6 +961,19 @@ const FamHack = {
         : 'Track your team status here.';
     }
 
+    if (capacityCopy) {
+      capacityCopy.textContent = `${dashboard.team.approvedCount} / ${dashboard.team.maxMembers} approved members`;
+    }
+
+    if (leaveTeamButton) {
+      if (dashboard.viewer.role === 'child') {
+        leaveTeamButton.hidden = false;
+        leaveTeamButton.textContent = dashboard.viewer.status === 'pending' ? 'Cancel Request' : 'Leave Family';
+      } else {
+        leaveTeamButton.hidden = true;
+      }
+    }
+
     if (joinCodeDisplay) {
       joinCodeDisplay.value = dashboard.team.joinCode;
     }
@@ -961,30 +982,40 @@ const FamHack = {
       inviteLinkInput.value = `${window.location.origin}/join?code=${encodeURIComponent(dashboard.team.joinCode)}`;
     }
 
+    if (inviteGrid) {
+      inviteGrid.hidden = dashboard.viewer.role !== 'parent';
+    }
+
     if (statusBanner) {
       if (dashboard.viewer.role === 'child' && dashboard.viewer.status === 'pending') {
         statusBanner.hidden = false;
-        statusBanner.textContent = 'Your join request is pending parent approval. You will appear in the member list once approved.';
+        statusBanner.textContent = 'Your join request is pending parent approval. You can cancel it from this page if you picked the wrong family.';
       } else if (dashboard.viewer.role === 'child') {
         statusBanner.hidden = false;
         statusBanner.textContent = `You are approved as a child in ${dashboard.team.name}.`;
+      } else if (dashboard.team.isFull) {
+        statusBanner.hidden = false;
+        statusBanner.textContent = `This family is full at ${dashboard.team.approvedCount}/${dashboard.team.maxMembers}. Pending requests can be declined, but no further approvals can go through until someone leaves.`;
+      } else if (!approvedChildren.length) {
+        statusBanner.hidden = false;
+        statusBanner.textContent = `Share code ${dashboard.team.joinCode} or the invite link below with your children. You will need at least one approved child before parent ownership can be transferred.`;
       } else {
         statusBanner.hidden = false;
-        statusBanner.textContent = `Share code ${dashboard.team.joinCode} or the invite link below with your children.`;
+        statusBanner.textContent = `Share code ${dashboard.team.joinCode} or the invite link below with your children. ${dashboard.team.slotsRemaining} spot${dashboard.team.slotsRemaining === 1 ? '' : 's'} remaining.`;
       }
     }
 
-    this.renderApprovedMembers(membersList, dashboard.members);
+    this.renderApprovedMembers(membersList, dashboard.members, dashboard);
 
     if (dashboard.viewer.role === 'parent') {
       pendingSection.hidden = false;
-      this.renderPendingMembers(pendingList, dashboard.pendingRequests);
+      this.renderPendingMembers(pendingList, dashboard.pendingRequests, dashboard);
     } else if (pendingSection) {
       pendingSection.hidden = true;
     }
   },
 
-  renderApprovedMembers(container, members) {
+  renderApprovedMembers(container, members, dashboard) {
     if (!container) return;
 
     container.innerHTML = '';
@@ -994,11 +1025,18 @@ const FamHack = {
     }
 
     members.forEach((member) => {
-      container.insertAdjacentHTML('beforeend', this.memberCardTemplate(member));
+      container.insertAdjacentHTML('beforeend', this.memberCardTemplate(member, { dashboard }));
+    });
+
+    container.querySelectorAll('[data-transfer-parent]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const membershipId = button.dataset.transferParent;
+        await this.handleTransferParent(button, membershipId);
+      });
     });
   },
 
-  renderPendingMembers(container, members) {
+  renderPendingMembers(container, members, dashboard) {
     if (!container) return;
 
     container.innerHTML = '';
@@ -1008,7 +1046,7 @@ const FamHack = {
     }
 
     members.forEach((member) => {
-      container.insertAdjacentHTML('beforeend', this.memberCardTemplate(member, { reviewable: true }));
+      container.insertAdjacentHTML('beforeend', this.memberCardTemplate(member, { reviewable: true, dashboard }));
     });
 
     container.querySelectorAll('[data-review-membership]').forEach((button) => {
@@ -1025,8 +1063,14 @@ const FamHack = {
     const email = this.escapeHtml(member.email || '');
     const roleLabel = member.role === 'parent' ? 'Parent' : 'Child';
     const statusLabel = member.status.charAt(0).toUpperCase() + member.status.slice(1);
+    const dashboard = options.dashboard || this.state.dashboard;
+    const canTransferParent = dashboard?.viewer?.role === 'parent'
+      && member.role === 'child'
+      && member.status === 'approved';
 
     if (options.reviewable) {
+      const approveDisabled = Boolean(dashboard?.team?.isFull);
+      const approveLabel = approveDisabled ? 'Family Full' : 'Approve';
       return `
         <div class="member-card">
           <div class="member-info">
@@ -1035,12 +1079,16 @@ const FamHack = {
             <p class="member-meta">${roleLabel} Request</p>
           </div>
           <div class="member-card-actions">
-            <button class="action-btn action-approve" data-review-membership="${member.id}" data-review-decision="approved">Approve</button>
+            <button class="action-btn action-approve" data-review-membership="${member.id}" data-review-decision="approved" ${approveDisabled ? 'disabled' : ''}>${approveLabel}</button>
             <button class="action-btn action-decline" data-review-membership="${member.id}" data-review-decision="declined">Decline</button>
           </div>
         </div>
       `;
     }
+
+    const trailingMarkup = canTransferParent
+      ? `<div class="member-card-actions"><button class="action-btn action-transfer" data-transfer-parent="${member.id}">Make Parent</button><span class="member-status ${this.escapeHtml(member.status)}">${statusLabel}</span></div>`
+      : `<span class="member-status ${this.escapeHtml(member.status)}">${statusLabel}</span>`;
 
     return `
       <div class="member-card">
@@ -1049,7 +1097,7 @@ const FamHack = {
           <p class="member-email">${email}</p>
           <p class="member-meta">${roleLabel}</p>
         </div>
-        <span class="member-status ${this.escapeHtml(member.status)}">${statusLabel}</span>
+        ${trailingMarkup}
       </div>
     `;
   },
@@ -1072,6 +1120,33 @@ const FamHack = {
     } catch (error) {
       console.error(error);
       window.alert(error.message || 'Unable to review this request');
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  },
+
+  async handleTransferParent(button, membershipId) {
+    const confirmed = window.confirm('Make this approved child the new parent for the family?');
+    if (!confirmed) {
+      return;
+    }
+
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Transferring...';
+
+    try {
+      await this.apiRequest('/api/team/transfer-parent', {
+        method: 'POST',
+        body: {
+          membershipId,
+        },
+      });
+
+      await this.loadDashboard();
+    } catch (error) {
+      console.error(error);
+      window.alert(error.message || 'Unable to transfer parent ownership');
       button.disabled = false;
       button.textContent = originalText;
     }
@@ -1100,6 +1175,48 @@ const FamHack = {
   async handleSignOut() {
     await this.supabase.auth.signOut();
     this.redirect('/register');
+  },
+
+  async handleLeaveTeam() {
+    const leaveTeamButton = document.getElementById('leave-team-btn');
+    const dashboard = this.state.dashboard;
+    if (!leaveTeamButton || !dashboard) {
+      return;
+    }
+
+    const isPending = dashboard.viewer.role === 'child' && dashboard.viewer.status === 'pending';
+    const confirmed = window.confirm(
+      isPending
+        ? 'Cancel this join request?'
+        : 'Leave this family? You will need a new family code or invite link to join again.'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.setButtonState(leaveTeamButton, {
+      busy: true,
+      label: isPending ? 'Cancelling...' : 'Leaving...',
+      idleLabel: isPending ? 'Cancel Request' : 'Leave Family',
+    });
+
+    try {
+      await this.apiRequest('/api/team/leave', {
+        method: 'POST',
+      });
+
+      this.state.dashboard = null;
+      this.redirect('/register');
+    } catch (error) {
+      console.error(error);
+      window.alert(error.message || 'Unable to leave this family');
+      this.setButtonState(leaveTeamButton, {
+        busy: false,
+        label: isPending ? 'Cancelling...' : 'Leaving...',
+        idleLabel: isPending ? 'Cancel Request' : 'Leave Family',
+      });
+    }
   },
 
   redirectToDashboard() {

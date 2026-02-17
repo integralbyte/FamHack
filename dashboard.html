@@ -250,14 +250,18 @@
                 <div>
                   <h1 class="dashboard-heading" id="dashboard-team-name">Team Dashboard</h1>
                   <p class="dashboard-subheading" id="dashboard-role-copy">Manage your FamHack team</p>
+                  <p class="dashboard-subheading" id="dashboard-capacity-copy">Loading family size...</p>
                 </div>
-                <button id="sign-out-btn" class="copy-btn copy-btn-secondary">Sign out</button>
+                <div class="dashboard-header-actions">
+                  <button id="leave-team-btn" class="copy-btn copy-btn-secondary" hidden>Leave Family</button>
+                  <button id="sign-out-btn" class="copy-btn copy-btn-secondary">Sign out</button>
+                </div>
               </div>
             </div>
 
             <div id="dashboard-status-banner" class="status-banner" hidden></div>
 
-            <div class="invite-grid">
+            <div id="invite-grid" class="invite-grid">
               <div class="invite-section">
                 <p class="invite-label">Family Code</p>
                 <p class="register-subheading invite-copy">Share this code with children who want to join</p>

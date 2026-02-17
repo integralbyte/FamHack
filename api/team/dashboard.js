@@ -5,6 +5,7 @@ import {
   getMembershipByUserId,
   getTeamById,
   getTeamMembers,
+  MAX_TEAM_SIZE,
   serializeMembership,
 } from '../_lib/teams.js';
 
@@ -45,6 +46,10 @@ export default async function handler(req, res) {
         name: team.name,
         joinCode: team.join_code,
         createdAt: team.created_at,
+        maxMembers: MAX_TEAM_SIZE,
+        approvedCount: approvedMembers.length,
+        slotsRemaining: Math.max(0, MAX_TEAM_SIZE - approvedMembers.length),
+        isFull: approvedMembers.length >= MAX_TEAM_SIZE,
       },
       members: approvedMembers,
       pendingRequests: pendingMembers,

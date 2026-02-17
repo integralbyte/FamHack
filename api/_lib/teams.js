@@ -3,6 +3,9 @@ import { getServiceClient } from './supabase.js';
 
 const JOIN_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const JOIN_CODE_LENGTH = 6;
+export const MAX_TEAM_SIZE = 6;
+export const TEAM_LIMIT_ERROR_CODE = 'team_member_limit_reached';
+export const PARENT_TRANSFER_ERROR_CODE = 'parent_transfer_failed';
 
 export function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -56,6 +59,21 @@ export async function getMembershipByUserId(userId) {
     .from('team_memberships')
     .select('id, team_id, user_id, role, status, reviewed_by, reviewed_at, created_at')
     .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+export async function getMembershipById(membershipId) {
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from('team_memberships')
+    .select('id, team_id, user_id, role, status, reviewed_by, reviewed_at, created_at')
+    .eq('id', membershipId)
     .maybeSingle();
 
   if (error) {
@@ -127,6 +145,33 @@ export async function getTeamMembers(teamId) {
     ...membership,
     profile: profileMap.get(membership.user_id) || null,
   }));
+}
+
+export async function getApprovedMemberCount(teamId) {
+  const supabase = getServiceClient();
+  const { count, error } = await supabase
+    .from('team_memberships')
+    .select('id', { count: 'exact', head: true })
+    .eq('team_id', teamId)
+    .eq('status', 'approved');
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return count || 0;
+}
+
+export function getTeamLimitMessage(maxTeamSize = MAX_TEAM_SIZE) {
+  return `This family is full. Families can have at most ${maxTeamSize} people.`;
+}
+
+export function isTeamLimitError(error) {
+  return String(error?.message || '') === TEAM_LIMIT_ERROR_CODE;
+}
+
+export function isParentTransferError(error) {
+  return String(error?.message || '') === PARENT_TRANSFER_ERROR_CODE;
 }
 
 function generateJoinCode() {

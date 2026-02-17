@@ -1,6 +1,13 @@
 import { requireUser } from '../_lib/auth.js';
 import { allowMethods, readJsonBody, sendError, statusFromError } from '../_lib/http.js';
-import { assertAllowedEmail, getMembershipByUserId } from '../_lib/teams.js';
+import {
+  assertAllowedEmail,
+  getApprovedMemberCount,
+  getMembershipByUserId,
+  getTeamLimitMessage,
+  isTeamLimitError,
+  MAX_TEAM_SIZE,
+} from '../_lib/teams.js';
 import { getServiceClient } from '../_lib/supabase.js';
 
 export default async function handler(req, res) {
@@ -48,6 +55,14 @@ export default async function handler(req, res) {
       return;
     }
 
+    if (decision === 'approved') {
+      const approvedCount = await getApprovedMemberCount(actingMembership.team_id);
+      if (approvedCount >= MAX_TEAM_SIZE) {
+        sendError(res, 409, getTeamLimitMessage());
+        return;
+      }
+    }
+
     const { error } = await supabase
       .from('team_memberships')
       .update({
@@ -58,6 +73,10 @@ export default async function handler(req, res) {
       .eq('id', membershipId);
 
     if (error) {
+      if (isTeamLimitError(error)) {
+        sendError(res, 409, getTeamLimitMessage());
+        return;
+      }
       throw new Error(error.message);
     }
 

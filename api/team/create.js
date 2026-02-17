@@ -35,7 +35,12 @@ export default async function handler(req, res) {
 
     const existingMembership = await getMembershipByUserId(user.id);
     if (existingMembership && existingMembership.status !== 'declined') {
-      sendError(res, 409, 'You already belong to a team');
+      if (existingMembership.status === 'pending') {
+        sendError(res, 409, 'Cancel your current join request before creating a family');
+        return;
+      }
+
+      sendError(res, 409, 'Leave your current family before creating another one');
       return;
     }
 

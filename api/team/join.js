@@ -2,8 +2,11 @@ import { requireUser } from '../_lib/auth.js';
 import { allowMethods, readJsonBody, sendError, statusFromError } from '../_lib/http.js';
 import {
   assertAllowedEmail,
+  getApprovedMemberCount,
   getMembershipByUserId,
+  getTeamLimitMessage,
   getTeamByCode,
+  MAX_TEAM_SIZE,
   sanitizeFullName,
   upsertProfile,
 } from '../_lib/teams.js';
@@ -40,12 +43,38 @@ export default async function handler(req, res) {
 
     const existingMembership = await getMembershipByUserId(user.id);
     if (existingMembership?.role === 'parent' && existingMembership.status === 'approved') {
-      sendError(res, 409, 'Parents cannot join another team');
+      if (existingMembership.team_id === team.id) {
+        sendError(res, 409, 'You already manage this family');
+        return;
+      }
+
+      sendError(res, 409, 'Parents cannot join another family until they transfer ownership and leave their current one');
       return;
     }
 
     if (existingMembership?.status === 'approved') {
-      sendError(res, 409, 'You already belong to a team');
+      if (existingMembership.team_id === team.id) {
+        sendError(res, 409, 'You are already in this family');
+        return;
+      }
+
+      sendError(res, 409, 'Leave your current family before joining another one');
+      return;
+    }
+
+    if (existingMembership?.status === 'pending') {
+      if (existingMembership.team_id === team.id) {
+        sendError(res, 409, 'Your request to join this family is already pending');
+        return;
+      }
+
+      sendError(res, 409, 'Cancel your current join request before requesting another family');
+      return;
+    }
+
+    const approvedCount = await getApprovedMemberCount(team.id);
+    if (approvedCount >= MAX_TEAM_SIZE) {
+      sendError(res, 409, getTeamLimitMessage());
       return;
     }
 
@@ -75,6 +104,8 @@ export default async function handler(req, res) {
         id: team.id,
         name: team.name,
         joinCode: team.join_code,
+        approvedCount,
+        maxMembers: MAX_TEAM_SIZE,
       },
       status: 'pending',
     });

@@ -54,6 +54,94 @@ create table if not exists public.team_memberships (
   unique (user_id)
 );
 
+create or replace function public.enforce_team_member_limit()
+returns trigger
+language plpgsql
+as $$
+declare
+  approved_count integer;
+begin
+  if new.status <> 'approved' then
+    return new;
+  end if;
+
+  if tg_op = 'UPDATE'
+     and old.status = 'approved'
+     and old.team_id = new.team_id then
+    return new;
+  end if;
+
+  select count(*)
+    into approved_count
+  from public.team_memberships
+  where team_id = new.team_id
+    and status = 'approved';
+
+  if approved_count >= 6 then
+    raise exception 'team_member_limit_reached';
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.transfer_team_parent(
+  p_team_id uuid,
+  p_current_parent_id uuid,
+  p_new_parent_membership_id uuid
+)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  current_parent_membership public.team_memberships%rowtype;
+  new_parent_membership public.team_memberships%rowtype;
+begin
+  select *
+    into current_parent_membership
+  from public.team_memberships
+  where team_id = p_team_id
+    and user_id = p_current_parent_id
+    and role = 'parent'
+    and status = 'approved'
+  for update;
+
+  if not found then
+    raise exception 'parent_transfer_failed';
+  end if;
+
+  select *
+    into new_parent_membership
+  from public.team_memberships
+  where id = p_new_parent_membership_id
+    and team_id = p_team_id
+    and role = 'child'
+    and status = 'approved'
+  for update;
+
+  if not found then
+    raise exception 'parent_transfer_failed';
+  end if;
+
+  update public.team_memberships
+  set role = 'child',
+      reviewed_by = p_current_parent_id,
+      reviewed_at = timezone('utc', now())
+  where id = current_parent_membership.id;
+
+  update public.team_memberships
+  set role = 'parent',
+      reviewed_by = p_current_parent_id,
+      reviewed_at = timezone('utc', now())
+  where id = new_parent_membership.id;
+
+  update public.teams
+  set created_by = new_parent_membership.user_id
+  where id = p_team_id;
+end;
+$$;
+
 create index if not exists team_memberships_team_id_idx on public.team_memberships (team_id);
 create index if not exists team_memberships_status_idx on public.team_memberships (status);
 
@@ -74,6 +162,12 @@ create trigger set_team_memberships_updated_at
 before update on public.team_memberships
 for each row
 execute procedure public.set_updated_at();
+
+drop trigger if exists enforce_team_member_limit on public.team_memberships;
+create trigger enforce_team_member_limit
+before insert or update on public.team_memberships
+for each row
+execute procedure public.enforce_team_member_limit();
 
 alter table public.profiles enable row level security;
 alter table public.teams enable row level security;
