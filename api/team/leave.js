@@ -12,6 +12,7 @@ export default async function handler(req, res) {
     const user = await requireUser(req);
     assertAllowedEmail(user.email);
 
+    const supabase = getServiceClient();
     const membership = await getMembershipByUserId(user.id);
     if (!membership) {
       sendError(res, 404, 'No family found for this account');
@@ -20,10 +21,23 @@ export default async function handler(req, res) {
 
     if (membership.role === 'parent' && membership.status === 'approved') {
       const members = await getTeamMembers(membership.team_id);
-      const approvedChildren = members.filter((member) => member.role === 'child' && member.status === 'approved');
+      const otherActiveMembers = members.filter(
+        (member) => member.user_id !== user.id && member.status !== 'declined'
+      );
 
-      if (!approvedChildren.length) {
-        sendError(res, 409, 'You must transfer parent ownership to an approved child before leaving this family');
+      if (!otherActiveMembers.length) {
+        const { error: deleteTeamError } = await supabase
+          .from('teams')
+          .delete()
+          .eq('id', membership.team_id);
+
+        if (deleteTeamError) {
+          throw new Error(deleteTeamError.message);
+        }
+
+        res.status(200).json({
+          status: 'deleted',
+        });
         return;
       }
 
@@ -31,7 +45,6 @@ export default async function handler(req, res) {
       return;
     }
 
-    const supabase = getServiceClient();
     const { error } = await supabase.from('team_memberships').delete().eq('id', membership.id);
 
     if (error) {

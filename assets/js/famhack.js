@@ -938,7 +938,9 @@ const FamHack = {
 
   renderDashboard(dashboard) {
     this.state.dashboard = dashboard;
-    const approvedChildren = dashboard.members.filter((member) => member.role === 'child');
+    const canDeleteFamily = dashboard.viewer.role === 'parent'
+      && dashboard.members.length === 1
+      && dashboard.pendingRequests.length === 0;
     const roleCopy = document.getElementById('dashboard-role-copy');
     const capacityCopy = document.getElementById('dashboard-capacity-copy');
     const teamName = document.getElementById('dashboard-team-name');
@@ -969,6 +971,9 @@ const FamHack = {
       if (dashboard.viewer.role === 'child') {
         leaveTeamButton.hidden = false;
         leaveTeamButton.textContent = dashboard.viewer.status === 'pending' ? 'Cancel Request' : 'Leave Family';
+      } else if (canDeleteFamily) {
+        leaveTeamButton.hidden = false;
+        leaveTeamButton.textContent = 'Delete Family';
       } else {
         leaveTeamButton.hidden = true;
       }
@@ -996,9 +1001,6 @@ const FamHack = {
       } else if (dashboard.team.isFull) {
         statusBanner.hidden = false;
         statusBanner.textContent = `This family is full at ${dashboard.team.approvedCount}/${dashboard.team.maxMembers}. Pending requests can be declined, but no further approvals can go through until someone leaves.`;
-      } else if (!approvedChildren.length) {
-        statusBanner.hidden = false;
-        statusBanner.textContent = `Share code ${dashboard.team.joinCode} or the invite link below with your children. You will need at least one approved child before parent ownership can be transferred.`;
       } else {
         statusBanner.hidden = false;
         statusBanner.textContent = `Share code ${dashboard.team.joinCode} or the invite link below with your children. ${dashboard.team.slotsRemaining} spot${dashboard.team.slotsRemaining === 1 ? '' : 's'} remaining.`;
@@ -1184,9 +1186,14 @@ const FamHack = {
       return;
     }
 
+    const isDeletingFamily = dashboard.viewer.role === 'parent'
+      && dashboard.members.length === 1
+      && dashboard.pendingRequests.length === 0;
     const isPending = dashboard.viewer.role === 'child' && dashboard.viewer.status === 'pending';
     const confirmed = window.confirm(
-      isPending
+      isDeletingFamily
+        ? 'Delete this family? This will remove the family and its code entirely.'
+        : isPending
         ? 'Cancel this join request?'
         : 'Leave this family? You will need a new family code or invite link to join again.'
     );
@@ -1197,8 +1204,8 @@ const FamHack = {
 
     this.setButtonState(leaveTeamButton, {
       busy: true,
-      label: isPending ? 'Cancelling...' : 'Leaving...',
-      idleLabel: isPending ? 'Cancel Request' : 'Leave Family',
+      label: isDeletingFamily ? 'Deleting...' : isPending ? 'Cancelling...' : 'Leaving...',
+      idleLabel: isDeletingFamily ? 'Delete Family' : isPending ? 'Cancel Request' : 'Leave Family',
     });
 
     try {
@@ -1213,8 +1220,8 @@ const FamHack = {
       window.alert(error.message || 'Unable to leave this family');
       this.setButtonState(leaveTeamButton, {
         busy: false,
-        label: isPending ? 'Cancelling...' : 'Leaving...',
-        idleLabel: isPending ? 'Cancel Request' : 'Leave Family',
+        label: isDeletingFamily ? 'Deleting...' : isPending ? 'Cancelling...' : 'Leaving...',
+        idleLabel: isDeletingFamily ? 'Delete Family' : isPending ? 'Cancel Request' : 'Leave Family',
       });
     }
   },
