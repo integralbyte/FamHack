@@ -1043,7 +1043,7 @@ const FamHack = {
         statusBanner.textContent = `This family is full at ${dashboard.team.approvedCount}/${dashboard.team.maxMembers}. Pending requests can be declined, but no further approvals can go through until someone leaves.`;
       } else {
         statusBanner.hidden = false;
-        statusBanner.textContent = `Share code ${dashboard.team.joinCode} or the invite link below with your children. ${dashboard.team.slotsRemaining} spot${dashboard.team.slotsRemaining === 1 ? '' : 's'} remaining.`;
+        statusBanner.textContent = `Share code ${dashboard.team.joinCode} or the invite link below with your children.`;
       }
     }
 
