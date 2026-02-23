@@ -462,12 +462,14 @@ const FamHack = {
     document.getElementById('copy-code-btn')?.addEventListener('click', () => this.copyFieldValue('join-code-display', 'copy-code-btn'));
     document.getElementById('sign-out-btn')?.addEventListener('click', () => this.handleSignOut());
     document.getElementById('leave-team-btn')?.addEventListener('click', () => this.handleLeaveTeam());
+    document.getElementById('danger-toggle-btn')?.addEventListener('click', () => this.toggleDangerPanel());
 
     if (!this.state.session) {
       this.redirect('/register');
       return;
     }
 
+    this.setDashboardLoading(true);
     await this.loadDashboard();
   },
 
@@ -923,6 +925,7 @@ const FamHack = {
 
   async loadDashboard() {
     try {
+      this.setDashboardLoading(true);
       const dashboard = await this.fetchDashboard({ suppressMissing: true });
       if (!dashboard) {
         this.redirect('/register');
@@ -930,8 +933,10 @@ const FamHack = {
       }
 
       this.renderDashboard(dashboard);
+      this.setDashboardLoading(false);
     } catch (error) {
       console.error(error);
+      this.setDashboardLoading(false);
       this.showFatalError(error.message || 'Unable to load your dashboard right now.');
     }
   },
@@ -948,6 +953,9 @@ const FamHack = {
     const inviteLinkInput = document.getElementById('invite-link-input');
     const inviteGrid = document.getElementById('invite-grid');
     const dangerSection = document.getElementById('danger-section');
+    const dangerToggleWrap = document.getElementById('danger-toggle-wrap');
+    const dangerToggleButton = document.getElementById('danger-toggle-btn');
+    const dangerPanel = document.getElementById('danger-panel');
     const dangerCopy = document.getElementById('danger-copy');
     const deleteTeamConfirmGroup = document.getElementById('delete-team-confirm-group');
     const deleteTeamConfirmInput = document.getElementById('delete-team-confirm-input');
@@ -976,8 +984,10 @@ const FamHack = {
       leaveTeamButton.hidden = true;
     }
 
-    if (dangerSection && dangerCopy && deleteTeamConfirmGroup && leaveTeamButton) {
+    if (dangerSection && dangerCopy && deleteTeamConfirmGroup && leaveTeamButton && dangerToggleWrap && dangerToggleButton && dangerPanel) {
       dangerSection.hidden = true;
+      dangerToggleWrap.hidden = true;
+      dangerToggleButton.hidden = true;
       deleteTeamConfirmGroup.hidden = true;
       this.showFieldError('delete-team-confirm-error', '');
 
@@ -987,13 +997,17 @@ const FamHack = {
 
       if (dashboard.viewer.role === 'child') {
         dangerSection.hidden = false;
+        dangerPanel.hidden = false;
         leaveTeamButton.hidden = false;
         leaveTeamButton.textContent = dashboard.viewer.status === 'pending' ? 'Cancel Request' : 'Leave Family';
         dangerCopy.textContent = dashboard.viewer.status === 'pending'
           ? 'Cancel this join request if you selected the wrong family.'
           : 'Leave this family. You will need a new family code or invite link to join again.';
+        this.setDangerPanelOpen(true, { instant: true });
       } else if (canDeleteFamily) {
         dangerSection.hidden = false;
+        dangerToggleWrap.hidden = false;
+        dangerToggleButton.hidden = false;
         leaveTeamButton.hidden = false;
         leaveTeamButton.textContent = 'Delete Family';
         deleteTeamConfirmGroup.hidden = false;
@@ -1001,6 +1015,7 @@ const FamHack = {
         if (deleteTeamConfirmHint) {
           deleteTeamConfirmHint.textContent = `Type "${dashboard.team.name}" exactly to confirm deletion.`;
         }
+        this.setDangerPanelOpen(false, { instant: true });
       }
     }
 
@@ -1204,6 +1219,89 @@ const FamHack = {
     this.redirect('/register');
   },
 
+  setDashboardLoading(isLoading) {
+    const loader = document.getElementById('dashboard-loading');
+    const body = document.getElementById('dashboard-body');
+
+    if (loader) {
+      loader.hidden = !isLoading;
+    }
+
+    if (body) {
+      body.hidden = isLoading;
+    }
+
+    if (!isLoading && body && typeof window.gsap !== 'undefined') {
+      window.gsap.fromTo(body, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
+    }
+  },
+
+  setDangerPanelOpen(isOpen, { instant = false } = {}) {
+    const dangerPanel = document.getElementById('danger-panel');
+    const dangerToggleButton = document.getElementById('danger-toggle-btn');
+    const deleteTeamConfirmInput = document.getElementById('delete-team-confirm-input');
+
+    if (!dangerPanel) {
+      return;
+    }
+
+    if (dangerToggleButton) {
+      dangerToggleButton.setAttribute('aria-expanded', String(isOpen));
+    }
+
+    if (instant || typeof window.gsap === 'undefined') {
+      dangerPanel.hidden = !isOpen;
+      if (isOpen) {
+        dangerPanel.style.opacity = '1';
+        dangerPanel.style.transform = 'translateY(0)';
+      } else {
+        dangerPanel.style.opacity = '';
+        dangerPanel.style.transform = '';
+        this.showFieldError('delete-team-confirm-error', '');
+        if (deleteTeamConfirmInput) {
+          deleteTeamConfirmInput.value = '';
+        }
+      }
+      return;
+    }
+
+    window.gsap.killTweensOf(dangerPanel);
+
+    if (isOpen) {
+      dangerPanel.hidden = false;
+      window.gsap.fromTo(
+        dangerPanel,
+        { height: 0, opacity: 0, y: -10 },
+        { height: 'auto', opacity: 1, y: 0, duration: 0.28, ease: 'power2.out' }
+      );
+    } else {
+      window.gsap.to(dangerPanel, {
+        height: 0,
+        opacity: 0,
+        y: -10,
+        duration: 0.22,
+        ease: 'power2.in',
+        onComplete: () => {
+          dangerPanel.hidden = true;
+          window.gsap.set(dangerPanel, { clearProps: 'all' });
+          this.showFieldError('delete-team-confirm-error', '');
+          if (deleteTeamConfirmInput) {
+            deleteTeamConfirmInput.value = '';
+          }
+        },
+      });
+    }
+  },
+
+  toggleDangerPanel() {
+    const dangerPanel = document.getElementById('danger-panel');
+    if (!dangerPanel) {
+      return;
+    }
+
+    this.setDangerPanelOpen(dangerPanel.hidden);
+  },
+
   async handleLeaveTeam() {
     const leaveTeamButton = document.getElementById('leave-team-btn');
     const deleteTeamConfirmInput = document.getElementById('delete-team-confirm-input');
@@ -1276,6 +1374,7 @@ const FamHack = {
     } else if (this.state.page === 'join') {
       this.showPageMessage('join-page-message', message);
     } else {
+      this.setDashboardLoading(false);
       const banner = document.getElementById('dashboard-status-banner');
       if (banner) {
         banner.hidden = false;

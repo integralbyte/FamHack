@@ -825,6 +825,116 @@ button.role-card {
   margin-bottom: 40px;
 }
 
+.dashboard-loading {
+  margin-bottom: 40px;
+  padding: 34px;
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  gap: 30px;
+  align-items: center;
+  border: 1px solid rgba(255, 233, 206, 0.12);
+  background:
+    radial-gradient(circle at top left, rgba(252, 47, 32, 0.16), transparent 28%),
+    linear-gradient(180deg, rgba(255, 233, 206, 0.05), rgba(255, 233, 206, 0.02)),
+    #121212;
+}
+
+.dashboard-loading-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboard-loading-orbit {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+
+.dashboard-loading-core {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 74px;
+  height: 74px;
+  margin: -37px 0 0 -37px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 233, 206, 0.18);
+  background:
+    linear-gradient(135deg, rgba(252, 47, 32, 0.85), rgba(252, 47, 32, 0.28));
+  color: #ffe9ce;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 1rem;
+  letter-spacing: 0.18em;
+  box-shadow: 0 0 32px rgba(252, 47, 32, 0.18);
+}
+
+.dashboard-loading-node {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 999px;
+  background: #ffe9ce;
+  box-shadow: 0 0 0 6px rgba(252, 47, 32, 0.08);
+  animation: dashboard-orbit 3.2s linear infinite, dashboard-node-pulse 1.2s ease-in-out infinite;
+}
+
+.dashboard-loading-node-a {
+  --orbit-radius: 68px;
+  animation-delay: 0s, 0s;
+}
+
+.dashboard-loading-node-b {
+  --orbit-radius: 54px;
+  animation-delay: -0.8s, -0.25s;
+}
+
+.dashboard-loading-node-c {
+  --orbit-radius: 82px;
+  animation-delay: -1.6s, -0.5s;
+}
+
+.dashboard-loading-node-d {
+  --orbit-radius: 96px;
+  animation-delay: -2.4s, -0.75s;
+}
+
+.dashboard-loading-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-loading-kicker {
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.72rem;
+  color: #fc2f20;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.dashboard-loading-heading {
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: clamp(1.5rem, 3vw, 2.3rem);
+  line-height: 1.15;
+  color: #ffe9ce;
+}
+
+.dashboard-loading-text {
+  margin: 0;
+  max-width: 48ch;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: rgba(255, 233, 206, 0.72);
+}
+
 .invite-copy {
   margin-bottom: 15px;
   text-align: left;
@@ -849,6 +959,21 @@ button.role-card {
     rgba(255, 233, 206, 0.02);
 }
 
+.danger-toggle-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.danger-toggle-btn {
+  min-width: 220px;
+}
+
+.danger-panel {
+  margin-top: 22px;
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
 .danger-copy {
   margin: 0 0 18px;
   font-family: 'Azeret Mono', monospace;
@@ -868,7 +993,7 @@ button.role-card {
 .danger-actions {
   margin-top: 24px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .danger-btn {
@@ -879,6 +1004,29 @@ button.role-card {
 
 .danger-btn:hover {
   background-color: #e02a1c;
+}
+
+@keyframes dashboard-orbit {
+  from {
+    transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
+  }
+}
+
+@keyframes dashboard-node-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 6px rgba(252, 47, 32, 0.08);
+  }
+
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 0 10px rgba(252, 47, 32, 0.16);
+  }
 }
 
 .member-card {
@@ -1497,6 +1645,10 @@ button.button-link:disabled {
     flex-direction: column;
   }
 
+  .dashboard-loading {
+    grid-template-columns: 1fr;
+  }
+
   .organizer-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1564,6 +1716,15 @@ button.button-link:disabled {
     padding: 100px 20px 60px;
   }
 
+  .dashboard-loading {
+    padding: 26px 20px;
+  }
+
+  .dashboard-loading-orbit {
+    width: 150px;
+    height: 150px;
+  }
+
   .track-card,
   .about-panel,
   .organizer-card,
@@ -1578,6 +1739,11 @@ button.button-link:disabled {
 
   .organizer-grid {
     grid-template-columns: 1fr;
+  }
+
+  .danger-toggle-btn,
+  .danger-btn {
+    width: 100%;
   }
 }
 
