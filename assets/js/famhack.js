@@ -947,6 +947,11 @@ const FamHack = {
     const joinCodeDisplay = document.getElementById('join-code-display');
     const inviteLinkInput = document.getElementById('invite-link-input');
     const inviteGrid = document.getElementById('invite-grid');
+    const dangerSection = document.getElementById('danger-section');
+    const dangerCopy = document.getElementById('danger-copy');
+    const deleteTeamConfirmGroup = document.getElementById('delete-team-confirm-group');
+    const deleteTeamConfirmInput = document.getElementById('delete-team-confirm-input');
+    const deleteTeamConfirmHint = document.getElementById('delete-team-confirm-hint');
     const leaveTeamButton = document.getElementById('leave-team-btn');
     const statusBanner = document.getElementById('dashboard-status-banner');
     const pendingSection = document.getElementById('pending-section');
@@ -968,14 +973,34 @@ const FamHack = {
     }
 
     if (leaveTeamButton) {
+      leaveTeamButton.hidden = true;
+    }
+
+    if (dangerSection && dangerCopy && deleteTeamConfirmGroup && leaveTeamButton) {
+      dangerSection.hidden = true;
+      deleteTeamConfirmGroup.hidden = true;
+      this.showFieldError('delete-team-confirm-error', '');
+
+      if (deleteTeamConfirmInput) {
+        deleteTeamConfirmInput.value = '';
+      }
+
       if (dashboard.viewer.role === 'child') {
+        dangerSection.hidden = false;
         leaveTeamButton.hidden = false;
         leaveTeamButton.textContent = dashboard.viewer.status === 'pending' ? 'Cancel Request' : 'Leave Family';
+        dangerCopy.textContent = dashboard.viewer.status === 'pending'
+          ? 'Cancel this join request if you selected the wrong family.'
+          : 'Leave this family. You will need a new family code or invite link to join again.';
       } else if (canDeleteFamily) {
+        dangerSection.hidden = false;
         leaveTeamButton.hidden = false;
         leaveTeamButton.textContent = 'Delete Family';
-      } else {
-        leaveTeamButton.hidden = true;
+        deleteTeamConfirmGroup.hidden = false;
+        dangerCopy.textContent = 'You are the only active member in this family. Deleting it will permanently remove the family and its join code.';
+        if (deleteTeamConfirmHint) {
+          deleteTeamConfirmHint.textContent = `Type "${dashboard.team.name}" exactly to confirm deletion.`;
+        }
       }
     }
 
@@ -1181,6 +1206,7 @@ const FamHack = {
 
   async handleLeaveTeam() {
     const leaveTeamButton = document.getElementById('leave-team-btn');
+    const deleteTeamConfirmInput = document.getElementById('delete-team-confirm-input');
     const dashboard = this.state.dashboard;
     if (!leaveTeamButton || !dashboard) {
       return;
@@ -1190,16 +1216,26 @@ const FamHack = {
       && dashboard.members.length === 1
       && dashboard.pendingRequests.length === 0;
     const isPending = dashboard.viewer.role === 'child' && dashboard.viewer.status === 'pending';
-    const confirmed = window.confirm(
-      isDeletingFamily
-        ? 'Delete this family? This will remove the family and its code entirely.'
-        : isPending
-        ? 'Cancel this join request?'
-        : 'Leave this family? You will need a new family code or invite link to join again.'
-    );
 
-    if (!confirmed) {
-      return;
+    this.showFieldError('delete-team-confirm-error', '');
+
+    if (isDeletingFamily) {
+      const typedName = String(deleteTeamConfirmInput?.value || '').trim();
+      if (typedName !== dashboard.team.name) {
+        this.showFieldError('delete-team-confirm-error', 'Type your family name exactly before deleting it.');
+        deleteTeamConfirmInput?.focus();
+        return;
+      }
+    } else {
+      const confirmed = window.confirm(
+        isPending
+          ? 'Cancel this join request?'
+          : 'Leave this family? You will need a new family code or invite link to join again.'
+      );
+
+      if (!confirmed) {
+        return;
+      }
     }
 
     this.setButtonState(leaveTeamButton, {

@@ -841,6 +841,46 @@ button.role-card {
   line-height: 1.7;
 }
 
+.dashboard-danger {
+  margin-top: 40px;
+  border: 1px solid rgba(252, 47, 32, 0.28);
+  background:
+    linear-gradient(180deg, rgba(252, 47, 32, 0.08), rgba(252, 47, 32, 0.03)),
+    rgba(255, 233, 206, 0.02);
+}
+
+.danger-copy {
+  margin: 0 0 18px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  color: rgba(255, 233, 206, 0.78);
+}
+
+.danger-hint {
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.72rem;
+  line-height: 1.7;
+  color: rgba(255, 233, 206, 0.54);
+}
+
+.danger-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.danger-btn {
+  background-color: #fc2f20;
+  border: 1px solid rgba(252, 47, 32, 0.65);
+  color: #ffe9ce;
+}
+
+.danger-btn:hover {
+  background-color: #e02a1c;
+}
+
 .member-card {
   gap: 20px;
 }
