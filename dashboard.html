@@ -248,7 +248,19 @@
               </div>
               <div class="dashboard-header-top">
                 <div>
-                  <h1 class="dashboard-heading" id="dashboard-team-name">Team Dashboard</h1>
+                  <h1 class="dashboard-heading dashboard-heading-signal" id="dashboard-team-name" data-heading="Team Dashboard">
+                    <span id="dashboard-team-name-text" class="dashboard-heading-text">Team Dashboard</span>
+                    <span class="dashboard-heading-particles" aria-hidden="true">
+                      <span class="dashboard-particle dashboard-particle-1"></span>
+                      <span class="dashboard-particle dashboard-particle-2"></span>
+                      <span class="dashboard-particle dashboard-particle-3"></span>
+                      <span class="dashboard-particle dashboard-particle-4"></span>
+                      <span class="dashboard-particle dashboard-particle-5"></span>
+                      <span class="dashboard-particle dashboard-particle-6"></span>
+                      <span class="dashboard-particle dashboard-particle-7"></span>
+                      <span class="dashboard-particle dashboard-particle-8"></span>
+                    </span>
+                  </h1>
                   <p class="dashboard-subheading" id="dashboard-capacity-copy">Loading family size...</p>
                 </div>
                 <div class="dashboard-header-actions">
@@ -344,40 +356,61 @@
               </div>
 
               <div id="danger-section" class="members-section dashboard-danger" hidden>
-                <div data-wf--bracket--variant="top-left" class="bracket">
-                  <div class="bracket-svg w-embed">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
-                      <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
-                        stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
-                    </svg>
+                <div id="danger-shell" class="danger-shell">
+                  <div data-wf--bracket--variant="top-left" class="bracket danger-shell-bracket">
+                    <div class="bracket-svg w-embed">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                        <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                          stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
-                <div id="danger-toggle-wrap" class="danger-toggle-wrap" hidden>
-                  <button id="danger-toggle-btn" class="copy-btn danger-btn danger-toggle-btn" hidden
-                    aria-expanded="false" aria-controls="danger-panel">
-                    Delete Family
-                  </button>
-                </div>
-                <div id="danger-panel" class="danger-panel" hidden>
-                  <h2 class="members-heading">Danger Zone</h2>
-                  <p id="danger-copy" class="danger-copy"></p>
-                  <div id="delete-team-confirm-group" class="form-group" hidden>
-                    <label class="form-label" for="delete-team-confirm-input">Type your family name to confirm</label>
-                    <input type="text" id="delete-team-confirm-input" class="form-input" autocomplete="off" />
-                    <p id="delete-team-confirm-hint" class="danger-hint"></p>
-                    <p id="delete-team-confirm-error" class="error-message"></p>
+                  <div id="danger-toggle-wrap" class="danger-toggle-wrap" hidden>
+                    <div class="danger-toggle-frame">
+                      <div data-wf--bracket--variant="top-left" class="bracket danger-toggle-bracket">
+                        <div class="bracket-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                            <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                              stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                          </svg>
+                        </div>
+                      </div>
+                      <button id="danger-toggle-btn" class="copy-btn danger-toggle-btn" hidden
+                        aria-expanded="false" aria-controls="danger-panel">
+                        Delete Family
+                      </button>
+                      <div data-wf--bracket--variant="bottom-right"
+                        class="bracket danger-toggle-bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                        <div class="bracket-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                            <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                              stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="danger-actions">
-                    <button id="leave-team-btn" class="copy-btn danger-btn" hidden>Leave Family</button>
+                  <div id="danger-panel" class="danger-panel" hidden>
+                    <h2 class="members-heading">Danger Zone</h2>
+                    <p id="danger-copy" class="danger-copy"></p>
+                    <div id="delete-team-confirm-group" class="form-group" hidden>
+                      <label class="form-label" for="delete-team-confirm-input">Type your family name to confirm</label>
+                      <input type="text" id="delete-team-confirm-input" class="form-input" autocomplete="off" />
+                      <p id="delete-team-confirm-hint" class="danger-hint"></p>
+                      <p id="delete-team-confirm-error" class="error-message"></p>
+                    </div>
+                    <div class="danger-actions">
+                      <button id="leave-team-btn" class="copy-btn danger-btn" hidden>Leave Family</button>
+                    </div>
                   </div>
-                </div>
-                <div data-wf--bracket--variant="bottom-right"
-                  class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
-                  <div class="bracket-svg w-embed">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
-                      <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
-                        stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
-                    </svg>
+                  <div data-wf--bracket--variant="bottom-right"
+                    class="bracket danger-shell-bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                    <div class="bracket-svg w-embed">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                        <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                          stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>

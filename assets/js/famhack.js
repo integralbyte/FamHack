@@ -948,6 +948,7 @@ const FamHack = {
       && dashboard.pendingRequests.length === 0;
     const capacityCopy = document.getElementById('dashboard-capacity-copy');
     const teamName = document.getElementById('dashboard-team-name');
+    const teamNameText = document.getElementById('dashboard-team-name-text');
     const joinCodeDisplay = document.getElementById('join-code-display');
     const inviteLinkInput = document.getElementById('invite-link-input');
     const inviteGrid = document.getElementById('invite-grid');
@@ -966,7 +967,11 @@ const FamHack = {
     const membersList = document.getElementById('members-list');
 
     if (teamName) {
-      teamName.textContent = dashboard.team.name;
+      teamName.dataset.heading = dashboard.team.name;
+    }
+
+    if (teamNameText || teamName) {
+      (teamNameText || teamName).textContent = dashboard.team.name;
     }
 
     if (capacityCopy) {
@@ -979,6 +984,7 @@ const FamHack = {
 
     if (dangerSection && dangerCopy && deleteTeamConfirmGroup && leaveTeamButton && dangerToggleWrap && dangerToggleButton && dangerPanel) {
       dangerSection.hidden = true;
+      dangerSection.classList.remove('is-expanded');
       dangerToggleWrap.hidden = true;
       dangerToggleButton.hidden = true;
       deleteTeamConfirmGroup.hidden = true;
@@ -1036,7 +1042,7 @@ const FamHack = {
         statusBanner.textContent = `This family is full at ${dashboard.team.approvedCount}/${dashboard.team.maxMembers}. Pending requests can be declined, but no further approvals can go through until someone leaves.`;
       } else {
         statusBanner.hidden = false;
-        statusBanner.textContent = `Share code ${dashboard.team.joinCode} or the invite link below with your children.`;
+        statusBanner.textContent = 'Share the family code or the invite link below with your children.';
       }
     }
 
@@ -1230,6 +1236,7 @@ const FamHack = {
   },
 
   setDangerPanelOpen(isOpen, { instant = false } = {}) {
+    const dangerSection = document.getElementById('danger-section');
     const dangerPanel = document.getElementById('danger-panel');
     const dangerToggleButton = document.getElementById('danger-toggle-btn');
     const deleteTeamConfirmInput = document.getElementById('delete-team-confirm-input');
@@ -1238,11 +1245,19 @@ const FamHack = {
       return;
     }
 
-    if (dangerToggleButton) {
-      dangerToggleButton.setAttribute('aria-expanded', String(isOpen));
-    }
+    const syncDangerToggleState = (open) => {
+      if (!dangerToggleButton) {
+        return;
+      }
+
+      dangerToggleButton.setAttribute('aria-expanded', String(open));
+      dangerToggleButton.textContent = open ? 'Nevermind' : 'Delete Family';
+      dangerToggleButton.classList.toggle('is-open', open);
+    };
 
     if (instant || typeof window.gsap === 'undefined') {
+      dangerSection?.classList.toggle('is-expanded', isOpen);
+      syncDangerToggleState(isOpen);
       dangerPanel.hidden = !isOpen;
       if (isOpen) {
         dangerPanel.style.opacity = '1';
@@ -1261,6 +1276,8 @@ const FamHack = {
     window.gsap.killTweensOf(dangerPanel);
 
     if (isOpen) {
+      syncDangerToggleState(true);
+      dangerSection?.classList.add('is-expanded');
       dangerPanel.hidden = false;
       window.gsap.fromTo(
         dangerPanel,
@@ -1276,6 +1293,8 @@ const FamHack = {
         ease: 'power2.in',
         onComplete: () => {
           dangerPanel.hidden = true;
+          dangerSection?.classList.remove('is-expanded');
+          syncDangerToggleState(false);
           window.gsap.set(dangerPanel, { clearProps: 'all' });
           this.showFieldError('delete-team-confirm-error', '');
           if (deleteTeamConfirmInput) {
