@@ -7,6 +7,10 @@
   --famhack-bracket-offset: 8px;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 
 
 
