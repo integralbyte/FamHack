@@ -249,7 +249,6 @@
               <div class="dashboard-header-top">
                 <div>
                   <h1 class="dashboard-heading" id="dashboard-team-name">Team Dashboard</h1>
-                  <p class="dashboard-subheading" id="dashboard-role-copy">Manage your FamHack team</p>
                   <p class="dashboard-subheading" id="dashboard-capacity-copy">Loading family size...</p>
                 </div>
                 <div class="dashboard-header-actions">
@@ -298,7 +297,7 @@
                 </div>
               </div>
 
-              <div id="pending-section" class="members-section" hidden>
+              <div class="members-section members-section-primary">
                 <div data-wf--bracket--variant="top-left" class="bracket">
                   <div class="bracket-svg w-embed">
                     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
@@ -307,8 +306,10 @@
                     </svg>
                   </div>
                 </div>
-                <h2 class="members-heading">Pending Requests</h2>
-                <div id="pending-list" class="members-list"></div>
+                <h2 class="members-heading members-heading-primary">Current Members</h2>
+                <div id="members-list" class="members-list">
+                  <!-- Members will be populated by JavaScript -->
+                </div>
                 <div data-wf--bracket--variant="bottom-right"
                   class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
                   <div class="bracket-svg w-embed">
@@ -320,7 +321,7 @@
                 </div>
               </div>
 
-              <div class="members-section">
+              <div id="pending-section" class="members-section" hidden>
                 <div data-wf--bracket--variant="top-left" class="bracket">
                   <div class="bracket-svg w-embed">
                     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
@@ -329,10 +330,8 @@
                     </svg>
                   </div>
                 </div>
-                <h2 class="members-heading">Current Members</h2>
-                <div id="members-list" class="members-list">
-                  <!-- Members will be populated by JavaScript -->
-                </div>
+                <h2 class="members-heading">Pending Requests</h2>
+                <div id="pending-list" class="members-list"></div>
                 <div data-wf--bracket--variant="bottom-right"
                   class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
                   <div class="bracket-svg w-embed">

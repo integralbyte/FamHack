@@ -697,6 +697,16 @@ button.role-card {
   margin: 0 0 20px;
 }
 
+.members-section-primary {
+  padding-top: 18px;
+}
+
+.members-heading-primary {
+  font-size: clamp(1.65rem, 3vw, 2.1rem);
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
 .members-list {
   display: flex;
   flex-direction: column;
@@ -826,7 +836,7 @@ button.role-card {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
-  margin-bottom: 40px;
+  margin-bottom: 12px;
 }
 
 .dashboard-loading {

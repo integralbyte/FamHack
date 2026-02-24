@@ -946,7 +946,6 @@ const FamHack = {
     const canDeleteFamily = dashboard.viewer.role === 'parent'
       && dashboard.members.length === 1
       && dashboard.pendingRequests.length === 0;
-    const roleCopy = document.getElementById('dashboard-role-copy');
     const capacityCopy = document.getElementById('dashboard-capacity-copy');
     const teamName = document.getElementById('dashboard-team-name');
     const joinCodeDisplay = document.getElementById('join-code-display');
@@ -968,12 +967,6 @@ const FamHack = {
 
     if (teamName) {
       teamName.textContent = dashboard.team.name;
-    }
-
-    if (roleCopy) {
-      roleCopy.textContent = dashboard.viewer.role === 'parent'
-        ? 'Parent dashboard. Share the code and review join requests.'
-        : 'Track your team status here.';
     }
 
     if (capacityCopy) {
