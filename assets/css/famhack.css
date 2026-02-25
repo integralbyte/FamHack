@@ -79,67 +79,14 @@ body.menu-open {
 
 .famhack-hero-logo-wrapper {
   margin-bottom: 12px;
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.famhack-hero-logo-wrapper::before,
-.famhack-hero-logo-wrapper::after {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-  transition:
-    opacity 0.24s ease,
-    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.famhack-hero-logo-wrapper::before {
-  inset: -28px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(252, 47, 32, 0.24), transparent 62%);
-  filter: blur(18px);
-  opacity: 0;
-  transform: scale(0.78);
-}
-
-.famhack-hero-logo-wrapper::after {
-  inset: -14px 16px;
-  border: 1px solid rgba(252, 47, 32, 0.2);
-  border-radius: 999px;
-  opacity: 0;
-  transform: scale(0.92) rotate(-3deg);
 }
 
 .famhack-hero-logo {
-  position: relative;
-  z-index: 1;
   max-width: 400px;
   width: 100%;
   height: auto;
   transform-origin: 50% 52%;
-  transition: filter 0.24s ease;
-}
-
-.famhack-hero-logo-wrapper:hover::before,
-.famhack-hero-logo-wrapper:focus-within::before {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.famhack-hero-logo-wrapper:hover::after,
-.famhack-hero-logo-wrapper:focus-within::after {
-  opacity: 1;
-  transform: scale(1) rotate(0deg);
-}
-
-.famhack-hero-logo-wrapper:hover .famhack-hero-logo,
-.famhack-hero-logo-wrapper:focus-within .famhack-hero-logo {
-  filter:
-    drop-shadow(0 0 24px rgba(252, 47, 32, 0.28))
-    drop-shadow(0 0 46px rgba(252, 47, 32, 0.12));
-  animation: famhack-logo-rattle 0.42s steps(2, end) infinite;
+  animation: famhack-logo-rattle 3.6s ease-in-out infinite;
 }
 
 .famhack-hero-title {
@@ -671,7 +618,7 @@ button.role-card {
   display: inline-block;
   isolation: isolate;
   cursor: default;
-  transition: color 0.18s ease, text-shadow 0.18s ease;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 
 .dashboard-heading-signal::before,
@@ -684,11 +631,11 @@ button.role-card {
 }
 
 .dashboard-heading-signal::before {
-  color: rgba(252, 47, 32, 0.7);
+  color: rgba(252, 47, 32, 0.52);
 }
 
 .dashboard-heading-signal::after {
-  color: rgba(255, 233, 206, 0.42);
+  color: rgba(255, 233, 206, 0.26);
   mix-blend-mode: screen;
 }
 
@@ -696,21 +643,21 @@ button.role-card {
 .dashboard-heading-signal:focus-visible {
   color: #fff4e4;
   text-shadow:
-    0 0 18px rgba(252, 47, 32, 0.22),
-    0 0 34px rgba(252, 47, 32, 0.14);
-  animation: dashboard-heading-jitter 0.36s steps(2, end) infinite;
+    0 0 14px rgba(252, 47, 32, 0.18),
+    0 0 24px rgba(252, 47, 32, 0.1);
+  animation: dashboard-heading-jitter 0.88s ease-in-out infinite;
 }
 
 .dashboard-heading-signal:hover::before,
 .dashboard-heading-signal:focus-visible::before {
-  opacity: 0.82;
-  animation: dashboard-heading-echo-left 0.36s steps(2, end) infinite;
+  opacity: 0.5;
+  animation: dashboard-heading-echo-left 0.88s ease-in-out infinite;
 }
 
 .dashboard-heading-signal:hover::after,
 .dashboard-heading-signal:focus-visible::after {
-  opacity: 0.54;
-  animation: dashboard-heading-echo-right 0.36s steps(2, end) infinite;
+  opacity: 0.34;
+  animation: dashboard-heading-echo-right 0.88s ease-in-out infinite;
 }
 
 .dashboard-subheading {
@@ -1094,7 +1041,7 @@ button.role-card {
   background: transparent;
   box-shadow: none;
   --famhack-bracket-offset: 0px;
-  --danger-shell-bracket-inset: 16px;
+  --danger-shell-bracket-inset: 26px;
   transition:
     padding 0.7s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.45s ease,
@@ -1246,41 +1193,36 @@ button.role-card {
 }
 
 @keyframes famhack-logo-rattle {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-  14% { transform: translate3d(-3px, -1px, 0) rotate(-0.9deg) scale(1.01); }
-  28% { transform: translate3d(4px, 1px, 0) rotate(1deg) scale(1.015); }
-  42% { transform: translate3d(-4px, 2px, 0) rotate(-1.15deg) scale(1.02); }
-  56% { transform: translate3d(3px, -2px, 0) rotate(0.85deg) scale(1.016); }
-  70% { transform: translate3d(-2px, 2px, 0) rotate(-0.55deg) scale(1.012); }
-  84% { transform: translate3d(2px, -1px, 0) rotate(0.45deg) scale(1.008); }
-  100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  0%, 18%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  21% { transform: translate3d(-1.5px, -0.5px, 0) rotate(-0.35deg) scale(1.005); }
+  24% { transform: translate3d(2px, 0.75px, 0) rotate(0.4deg) scale(1.008); }
+  27% { transform: translate3d(-2px, 1px, 0) rotate(-0.45deg) scale(1.01); }
+  30% { transform: translate3d(1.5px, -0.75px, 0) rotate(0.3deg) scale(1.006); }
+  33% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  58% { transform: translate3d(0.5px, 0, 0) rotate(0.12deg) scale(1.003); }
+  62% { transform: translate3d(-0.75px, 0.25px, 0) rotate(-0.16deg) scale(1.004); }
+  66% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
 }
 
 @keyframes dashboard-heading-jitter {
-  0% { transform: translate3d(0, 0, 0); }
-  20% { transform: translate3d(-1px, -1px, 0); }
-  40% { transform: translate3d(2px, 0, 0); }
-  60% { transform: translate3d(-2px, 1px, 0); }
-  80% { transform: translate3d(1px, -1px, 0); }
-  100% { transform: translate3d(0, 0, 0); }
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(-0.5px, -0.25px, 0); }
+  50% { transform: translate3d(1px, 0, 0); }
+  75% { transform: translate3d(-0.75px, 0.35px, 0); }
 }
 
 @keyframes dashboard-heading-echo-left {
-  0% { transform: translate3d(0, 0, 0); }
-  20% { transform: translate3d(-3px, -1px, 0); }
-  40% { transform: translate3d(2px, 0, 0); }
-  60% { transform: translate3d(-4px, 1px, 0); }
-  80% { transform: translate3d(1px, -1px, 0); }
-  100% { transform: translate3d(0, 0, 0); }
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(-1.2px, -0.2px, 0); }
+  50% { transform: translate3d(-0.4px, 0, 0); }
+  75% { transform: translate3d(-1.6px, 0.3px, 0); }
 }
 
 @keyframes dashboard-heading-echo-right {
-  0% { transform: translate3d(0, 0, 0); }
-  20% { transform: translate3d(2px, 1px, 0); }
-  40% { transform: translate3d(-1px, 0, 0); }
-  60% { transform: translate3d(3px, -1px, 0); }
-  80% { transform: translate3d(-2px, 1px, 0); }
-  100% { transform: translate3d(0, 0, 0); }
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(0.8px, 0.15px, 0); }
+  50% { transform: translate3d(1.4px, 0, 0); }
+  75% { transform: translate3d(0.6px, -0.2px, 0); }
 }
 
 @keyframes dashboard-orbit {
