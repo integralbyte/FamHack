@@ -78,11 +78,11 @@ body.menu-open {
 }
 
 .famhack-hero-logo-wrapper {
-  margin-bottom: 30px;
+  margin-bottom: 12px;
 }
 
 .famhack-hero-logo {
-  max-width: 300px;
+  max-width: 400px;
   width: 100%;
   height: auto;
 }
@@ -1932,7 +1932,7 @@ button.button-link:disabled {
   }
 
   .famhack-hero-logo {
-    max-width: 200px;
+    max-width: 260px;
   }
 
   .famhack-section-heading {
