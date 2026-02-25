@@ -948,7 +948,6 @@ const FamHack = {
       && dashboard.pendingRequests.length === 0;
     const capacityCopy = document.getElementById('dashboard-capacity-copy');
     const teamName = document.getElementById('dashboard-team-name');
-    const teamNameText = document.getElementById('dashboard-team-name-text');
     const joinCodeDisplay = document.getElementById('join-code-display');
     const inviteLinkInput = document.getElementById('invite-link-input');
     const inviteGrid = document.getElementById('invite-grid');
@@ -968,10 +967,7 @@ const FamHack = {
 
     if (teamName) {
       teamName.dataset.heading = dashboard.team.name;
-    }
-
-    if (teamNameText || teamName) {
-      (teamNameText || teamName).textContent = dashboard.team.name;
+      teamName.textContent = dashboard.team.name;
     }
 
     if (capacityCopy) {
