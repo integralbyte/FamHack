@@ -86,7 +86,7 @@ body.menu-open {
   width: 100%;
   height: auto;
   transform-origin: 50% 52%;
-  animation: famhack-logo-rattle 0.72s linear infinite;
+  animation: famhack-logo-rattle 1.28s linear infinite;
 }
 
 .famhack-hero-title {
@@ -1214,16 +1214,16 @@ button.role-card {
 
 @keyframes famhack-logo-rattle {
   0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-  10% { transform: translate3d(-3px, -1.2px, 0) rotate(-0.52deg) scale(1.012); }
-  20% { transform: translate3d(3.5px, 1.3px, 0) rotate(0.58deg) scale(1.016); }
-  30% { transform: translate3d(-4.5px, 1.6px, 0) rotate(-0.72deg) scale(1.02); }
-  40% { transform: translate3d(4.2px, -1.4px, 0) rotate(0.66deg) scale(1.018); }
-  50% { transform: translate3d(-3.6px, 1.1px, 0) rotate(-0.48deg) scale(1.014); }
-  60% { transform: translate3d(3.8px, -1px, 0) rotate(0.42deg) scale(1.014); }
-  70% { transform: translate3d(-2.9px, 0.9px, 0) rotate(-0.34deg) scale(1.011); }
-  80% { transform: translate3d(2.7px, -0.7px, 0) rotate(0.3deg) scale(1.01); }
-  90% { transform: translate3d(-2.1px, 0.5px, 0) rotate(-0.24deg) scale(1.008); }
-  100% { transform: translate3d(0.9px, -0.3px, 0) rotate(0.12deg) scale(1.004); }
+  10% { transform: translate3d(-1px, -0.35px, 0) rotate(-0.14deg) scale(1.003); }
+  20% { transform: translate3d(1.25px, 0.45px, 0) rotate(0.16deg) scale(1.005); }
+  30% { transform: translate3d(-1.6px, 0.55px, 0) rotate(-0.2deg) scale(1.006); }
+  40% { transform: translate3d(1.5px, -0.5px, 0) rotate(0.18deg) scale(1.005); }
+  50% { transform: translate3d(-1.35px, 0.4px, 0) rotate(-0.15deg) scale(1.004); }
+  60% { transform: translate3d(1.4px, -0.38px, 0) rotate(0.14deg) scale(1.004); }
+  70% { transform: translate3d(-1.1px, 0.32px, 0) rotate(-0.12deg) scale(1.003); }
+  80% { transform: translate3d(1px, -0.26px, 0) rotate(0.1deg) scale(1.003); }
+  90% { transform: translate3d(-0.75px, 0.18px, 0) rotate(-0.08deg) scale(1.002); }
+  100% { transform: translate3d(0.35px, -0.1px, 0) rotate(0.04deg) scale(1.001); }
 }
 
 @keyframes dashboard-heading-jitter {
