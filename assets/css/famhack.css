@@ -1088,6 +1088,16 @@ button.role-card {
   opacity: 1;
 }
 
+.dashboard-danger.is-expanded .danger-shell-bracket:not([data-wf--bracket--variant="bottom-right"]) {
+  top: 10px;
+  left: 10px;
+}
+
+.dashboard-danger.is-expanded .danger-shell-bracket[data-wf--bracket--variant="bottom-right"] {
+  right: 10px;
+  bottom: 10px;
+}
+
 .dashboard-danger.is-expanded .danger-shell-bracket .bracket-svg {
   transform: translate(0, 0) scale(1);
 }
