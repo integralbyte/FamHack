@@ -415,6 +415,16 @@ body.menu-open {
   gap: 20px;
 }
 
+.role-signin-btn {
+  width: 100%;
+  display: block;
+}
+
+.role-signin-btn .button {
+  width: 100%;
+  justify-content: center;
+}
+
 .role-card {
   width: 100%;
   min-height: 100%;

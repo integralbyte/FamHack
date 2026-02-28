@@ -11,6 +11,7 @@ const FamHack = {
     page: null,
     session: null,
     pendingEmail: '',
+    registerIntent: 'role',
     teamPreview: null,
     resendTimer: null,
     joinLookupTimer: null,
@@ -49,6 +50,9 @@ const FamHack = {
         this.state.session = session;
         this.state.participateDestination = null;
         this.state.participateLabel = null;
+        if (!session) {
+          this.resetAuthFlowState();
+        }
       });
 
       await this.hydrateSession();
@@ -146,6 +150,38 @@ const FamHack = {
 
     this.setText('register-heading', heading);
     this.setText('register-subheading', subheading);
+  },
+
+  setRegisterEmailMode(mode = 'parent') {
+    if (this.state.page !== 'register') {
+      return;
+    }
+
+    const emailLabel = document.getElementById('email-label');
+    const emailInput = document.getElementById('email-input');
+
+    if (!emailLabel || !emailInput) {
+      return;
+    }
+
+    if (mode === 'signin') {
+      emailLabel.textContent = 'Email Address';
+      emailInput.placeholder = 's1234567@ed.ac.uk';
+      return;
+    }
+
+    emailLabel.textContent = 'Parent Email Address';
+    emailInput.placeholder = 's1234567@ed.ac.uk';
+  },
+
+  resetAuthFlowState() {
+    clearInterval(this.state.resendTimer);
+    this.state.resendTimer = null;
+    this.state.pendingEmail = '';
+    this.state.teamPreview = null;
+    this.state.dashboard = null;
+    this.state.registerIntent = 'role';
+    this.clearOTPInputs();
   },
 
   getFriendlyOtpErrorMessage(error) {
@@ -348,6 +384,7 @@ const FamHack = {
   async initRegisterPage() {
     document.getElementById('choose-parent-btn')?.addEventListener('click', () => this.handleChooseParent());
     document.getElementById('choose-student-btn')?.addEventListener('click', () => this.handleChooseStudent());
+    document.getElementById('choose-signin-btn')?.addEventListener('click', () => this.handleChooseSignIn());
     document.getElementById('continue-child-btn')?.addEventListener('click', () => this.handleChooseChild());
     document.getElementById('back-to-role-btn')?.addEventListener('click', () => this.handleBackToRole());
     document.getElementById('back-from-parent-btn')?.addEventListener('click', () => this.handleBackToRole());
@@ -378,6 +415,8 @@ const FamHack = {
     });
 
     this.setRegisterIntro('What are you?', 'Choose how you want to enter FamHack.');
+    this.setRegisterEmailMode('parent');
+    this.state.registerIntent = 'role';
 
     if (this.state.session) {
       const dashboard = await this.fetchDashboard({ suppressMissing: true });
@@ -474,7 +513,9 @@ const FamHack = {
   },
 
   handleChooseParent() {
+    this.state.registerIntent = 'parent';
     this.showFieldError('role-error', '');
+    this.setRegisterEmailMode('parent');
     this.setRegisterIntro(
       'Create your academic family',
       'Academic parents verify their email first, then create the family dashboard.'
@@ -491,7 +532,27 @@ const FamHack = {
     document.getElementById('email-input')?.focus();
   },
 
+  handleChooseSignIn() {
+    this.state.registerIntent = 'signin';
+    this.showFieldError('role-error', '');
+    this.setRegisterEmailMode('signin');
+    this.setRegisterIntro(
+      'Sign in to FamHack',
+      'Use your email to get back into your account. If you already have a family, you will land on your dashboard.'
+    );
+
+    if (this.state.session) {
+      this.showPageMessage('register-page-message', 'You are already signed in.');
+      return;
+    }
+
+    this.showStep('email');
+    this.showPageMessage('register-page-message', '');
+    document.getElementById('email-input')?.focus();
+  },
+
   handleChooseStudent() {
+    this.state.registerIntent = 'student';
     this.showFieldError('role-error', '');
     this.setRegisterIntro(
       'Join an existing family',
@@ -516,7 +577,9 @@ const FamHack = {
   },
 
   handleBackToRole() {
+    this.state.registerIntent = 'role';
     this.showFieldError('role-error', '');
+    this.setRegisterEmailMode('parent');
     this.setRegisterIntro('What are you?', 'Choose how you want to enter FamHack.');
     this.showStep('role');
   },
@@ -630,8 +693,16 @@ const FamHack = {
       }
 
       if (this.state.page === 'register') {
-        this.showStep('create-team');
-        this.showPageMessage('register-page-message', 'Verified. Finish creating your family.');
+        if (this.state.registerIntent === 'signin') {
+          this.handleBackToRole();
+          this.showPageMessage(
+            'register-page-message',
+            'Signed in. Choose whether you are creating a family or joining one.'
+          );
+        } else {
+          this.showStep('create-team');
+          this.showPageMessage('register-page-message', 'Verified. Finish creating your family.');
+        }
       } else if (this.state.page === 'join') {
         const joinCode = this.normalizeJoinCode(document.getElementById('join-code-input')?.value);
         const team = this.state.teamPreview || await this.lookupTeam(joinCode, { showErrors: true });
@@ -1211,6 +1282,7 @@ const FamHack = {
 
   async handleSignOut() {
     await this.supabase.auth.signOut();
+    this.resetAuthFlowState();
     this.redirect('/register');
   },
 
