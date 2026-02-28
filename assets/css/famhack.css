@@ -86,7 +86,7 @@ body.menu-open {
   width: 100%;
   height: auto;
   transform-origin: 50% 52%;
-  animation: famhack-logo-rattle 1.1s linear infinite;
+  animation: famhack-logo-rattle 3.6s ease-in-out infinite;
 }
 
 .famhack-hero-title {
@@ -143,59 +143,6 @@ body.menu-open {
 .famhack-hero-cta {
   display: flex;
   justify-content: center;
-}
-
-.famhack-hero-cta .button-link {
-  display: inline-flex;
-  width: min(100%, 340px);
-}
-
-.famhack-hero-cta .button {
-  width: 100%;
-  min-width: clamp(260px, 32vw, 340px);
-  padding: 21px 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  transition: transform 0.28s ease, filter 0.28s ease;
-}
-
-.famhack-hero-cta .button-label {
-  font-size: 0.9rem;
-  letter-spacing: 0.11em;
-  transition: transform 0.24s ease, letter-spacing 0.24s ease;
-}
-
-.famhack-hero-cta .button-icon {
-  flex: 0 0 auto;
-  transition: transform 0.24s ease;
-}
-
-.famhack-hero-cta .button-icon-svg {
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.famhack-hero-cta .button-link:hover .button,
-.famhack-hero-cta .button-link:focus-visible .button {
-  animation: hero-cta-thrust 0.56s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.18));
-}
-
-.famhack-hero-cta .button-link:hover .button-label,
-.famhack-hero-cta .button-link:focus-visible .button-label {
-  transform: translateX(4px);
-  letter-spacing: 0.14em;
-}
-
-.famhack-hero-cta .button-link:hover .button-icon,
-.famhack-hero-cta .button-link:focus-visible .button-icon {
-  transform: translateX(10px) translateY(-1px);
-}
-
-.famhack-hero-cta .button-link:hover .button-icon-svg,
-.famhack-hero-cta .button-link:focus-visible .button-icon-svg {
-  transform: rotate(-10deg) scale(1.16);
 }
 
 /* About Preview Section */
@@ -261,12 +208,12 @@ body.menu-open {
 }
 
 .dashboard-header {
-  padding: 60px 0 0 60px;
-  --famhack-bracket-offset: 14px;
+  padding: 24px 0 0 24px;
+  --famhack-bracket-offset: 0px;
 }
 
 .members-section {
-  --famhack-bracket-offset: 16px;
+  --famhack-bracket-offset: 24px;
 }
 
 .famhack-section-heading {
@@ -788,7 +735,7 @@ button.role-card {
 /* Team Members Section */
 .members-section {
   position: relative;
-  padding: 62px 40px 40px 62px;
+  padding: 40px;
 }
 
 .members-heading {
@@ -800,18 +747,17 @@ button.role-card {
 }
 
 .members-section-primary {
-  padding: 68px 40px 40px 62px;
+  padding: 58px 40px 40px 52px;
   --famhack-bracket-offset: 18px;
 }
 
 .members-section-primary > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
-  top: 18px;
+  top: 24px;
   left: 18px;
 }
 
 #pending-section > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
   top: 16px;
-  left: 16px;
 }
 
 .members-heading-primary {
@@ -1095,7 +1041,7 @@ button.role-card {
   background: transparent;
   box-shadow: none;
   --famhack-bracket-offset: 0px;
-  --danger-shell-bracket-inset: 16px;
+  --danger-shell-bracket-inset: 26px;
   transition:
     padding 0.7s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.45s ease,
@@ -1104,7 +1050,7 @@ button.role-card {
 }
 
 .dashboard-danger.is-expanded .danger-shell {
-  padding: 68px 40px 40px 62px;
+  padding: 36px 40px 40px;
   border-color: rgba(252, 47, 32, 0.28);
   background:
     linear-gradient(180deg, rgba(252, 47, 32, 0.08), rgba(252, 47, 32, 0.03)),
@@ -1163,7 +1109,7 @@ button.role-card {
   align-items: center;
   justify-content: center;
   padding: 18px 22px;
-  --famhack-bracket-offset: 12px;
+  --famhack-bracket-offset: 0px;
 }
 
 .danger-toggle-bracket {
@@ -1247,24 +1193,15 @@ button.role-card {
 }
 
 @keyframes famhack-logo-rattle {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-  10% { transform: translate3d(-3px, -1px, 0) rotate(-0.42deg) scale(1.008); }
-  20% { transform: translate3d(3px, 1px, 0) rotate(0.46deg) scale(1.012); }
-  30% { transform: translate3d(-4px, 1.2px, 0) rotate(-0.58deg) scale(1.014); }
-  40% { transform: translate3d(4px, -1.1px, 0) rotate(0.54deg) scale(1.014); }
-  50% { transform: translate3d(-3px, 0.9px, 0) rotate(-0.38deg) scale(1.01); }
-  60% { transform: translate3d(3px, -0.8px, 0) rotate(0.34deg) scale(1.01); }
-  70% { transform: translate3d(-2px, 0.5px, 0) rotate(-0.22deg) scale(1.006); }
-  80% { transform: translate3d(2px, -0.4px, 0) rotate(0.2deg) scale(1.006); }
-  90% { transform: translate3d(-1px, 0.2px, 0) rotate(-0.1deg) scale(1.003); }
-  100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-}
-
-@keyframes hero-cta-thrust {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  24% { transform: translate3d(7px, -1px, 0) rotate(-0.45deg); }
-  58% { transform: translate3d(2px, -4px, 0) rotate(0.15deg); }
-  100% { transform: translate3d(0, -3px, 0) rotate(0deg); }
+  0%, 18%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  21% { transform: translate3d(-1.5px, -0.5px, 0) rotate(-0.35deg) scale(1.005); }
+  24% { transform: translate3d(2px, 0.75px, 0) rotate(0.4deg) scale(1.008); }
+  27% { transform: translate3d(-2px, 1px, 0) rotate(-0.45deg) scale(1.01); }
+  30% { transform: translate3d(1.5px, -0.75px, 0) rotate(0.3deg) scale(1.006); }
+  33% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  58% { transform: translate3d(0.5px, 0, 0) rotate(0.12deg) scale(1.003); }
+  62% { transform: translate3d(-0.75px, 0.25px, 0) rotate(-0.16deg) scale(1.004); }
+  66% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
 }
 
 @keyframes dashboard-heading-jitter {
