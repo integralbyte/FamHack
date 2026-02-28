@@ -86,7 +86,7 @@ body.menu-open {
   width: 100%;
   height: auto;
   transform-origin: 50% 52%;
-  animation: famhack-logo-rattle 3.6s ease-in-out infinite;
+  animation: famhack-logo-rattle 2.35s cubic-bezier(0.42, 0, 0.22, 1) infinite;
 }
 
 .famhack-hero-title {
@@ -752,7 +752,7 @@ button.role-card {
 }
 
 .members-section-primary > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
-  top: 24px;
+  top: 34px;
   left: 18px;
 }
 
@@ -1041,7 +1041,7 @@ button.role-card {
   background: transparent;
   box-shadow: none;
   --famhack-bracket-offset: 0px;
-  --danger-shell-bracket-inset: 26px;
+  --danger-shell-bracket-inset: 38px;
   transition:
     padding 0.7s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.45s ease,
@@ -1193,15 +1193,17 @@ button.role-card {
 }
 
 @keyframes famhack-logo-rattle {
-  0%, 18%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-  21% { transform: translate3d(-1.5px, -0.5px, 0) rotate(-0.35deg) scale(1.005); }
-  24% { transform: translate3d(2px, 0.75px, 0) rotate(0.4deg) scale(1.008); }
-  27% { transform: translate3d(-2px, 1px, 0) rotate(-0.45deg) scale(1.01); }
-  30% { transform: translate3d(1.5px, -0.75px, 0) rotate(0.3deg) scale(1.006); }
-  33% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-  58% { transform: translate3d(0.5px, 0, 0) rotate(0.12deg) scale(1.003); }
-  62% { transform: translate3d(-0.75px, 0.25px, 0) rotate(-0.16deg) scale(1.004); }
-  66% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  8% { transform: translate3d(-2px, -0.5px, 0) rotate(-0.35deg) scale(1.006); }
+  16% { transform: translate3d(2.5px, 0.75px, 0) rotate(0.45deg) scale(1.01); }
+  24% { transform: translate3d(-3px, 1px, 0) rotate(-0.52deg) scale(1.012); }
+  32% { transform: translate3d(3px, -1px, 0) rotate(0.5deg) scale(1.012); }
+  40% { transform: translate3d(-2px, 0.6px, 0) rotate(-0.3deg) scale(1.008); }
+  48% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  68% { transform: translate3d(-1px, 0.25px, 0) rotate(-0.18deg) scale(1.004); }
+  76% { transform: translate3d(1.2px, -0.35px, 0) rotate(0.22deg) scale(1.005); }
+  84% { transform: translate3d(-0.8px, 0.15px, 0) rotate(-0.14deg) scale(1.003); }
+  92% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
 }
 
 @keyframes dashboard-heading-jitter {
