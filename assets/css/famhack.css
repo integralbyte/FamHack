@@ -86,7 +86,7 @@ body.menu-open {
   width: 100%;
   height: auto;
   transform-origin: 50% 52%;
-  animation: famhack-logo-rattle 3.6s ease-in-out infinite;
+  animation: famhack-logo-rattle 0.72s linear infinite;
 }
 
 .famhack-hero-title {
@@ -655,19 +655,19 @@ button.role-card {
   text-shadow:
     0 0 14px rgba(252, 47, 32, 0.18),
     0 0 24px rgba(252, 47, 32, 0.1);
-  animation: dashboard-heading-jitter 0.88s ease-in-out infinite;
+  animation: dashboard-heading-jitter 0.54s linear infinite;
 }
 
 .dashboard-heading-signal:hover::before,
 .dashboard-heading-signal:focus-visible::before {
   opacity: 0.5;
-  animation: dashboard-heading-echo-left 0.88s ease-in-out infinite;
+  animation: dashboard-heading-echo-left 0.54s linear infinite;
 }
 
 .dashboard-heading-signal:hover::after,
 .dashboard-heading-signal:focus-visible::after {
   opacity: 0.34;
-  animation: dashboard-heading-echo-right 0.88s ease-in-out infinite;
+  animation: dashboard-heading-echo-right 0.54s linear infinite;
 }
 
 .dashboard-subheading {
@@ -762,7 +762,7 @@ button.role-card {
 }
 
 .members-section-primary > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
-  top: 24px;
+  top: 43px;
   left: 24px;
 }
 
@@ -1213,36 +1213,46 @@ button.role-card {
 }
 
 @keyframes famhack-logo-rattle {
-  0%, 18%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-  21% { transform: translate3d(-1.5px, -0.5px, 0) rotate(-0.35deg) scale(1.005); }
-  24% { transform: translate3d(2px, 0.75px, 0) rotate(0.4deg) scale(1.008); }
-  27% { transform: translate3d(-2px, 1px, 0) rotate(-0.45deg) scale(1.01); }
-  30% { transform: translate3d(1.5px, -0.75px, 0) rotate(0.3deg) scale(1.006); }
-  33% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-  58% { transform: translate3d(0.5px, 0, 0) rotate(0.12deg) scale(1.003); }
-  62% { transform: translate3d(-0.75px, 0.25px, 0) rotate(-0.16deg) scale(1.004); }
-  66% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  10% { transform: translate3d(-3px, -1.2px, 0) rotate(-0.52deg) scale(1.012); }
+  20% { transform: translate3d(3.5px, 1.3px, 0) rotate(0.58deg) scale(1.016); }
+  30% { transform: translate3d(-4.5px, 1.6px, 0) rotate(-0.72deg) scale(1.02); }
+  40% { transform: translate3d(4.2px, -1.4px, 0) rotate(0.66deg) scale(1.018); }
+  50% { transform: translate3d(-3.6px, 1.1px, 0) rotate(-0.48deg) scale(1.014); }
+  60% { transform: translate3d(3.8px, -1px, 0) rotate(0.42deg) scale(1.014); }
+  70% { transform: translate3d(-2.9px, 0.9px, 0) rotate(-0.34deg) scale(1.011); }
+  80% { transform: translate3d(2.7px, -0.7px, 0) rotate(0.3deg) scale(1.01); }
+  90% { transform: translate3d(-2.1px, 0.5px, 0) rotate(-0.24deg) scale(1.008); }
+  100% { transform: translate3d(0.9px, -0.3px, 0) rotate(0.12deg) scale(1.004); }
 }
 
 @keyframes dashboard-heading-jitter {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  25% { transform: translate3d(-0.5px, -0.25px, 0); }
-  50% { transform: translate3d(1px, 0, 0); }
-  75% { transform: translate3d(-0.75px, 0.35px, 0); }
+  0% { transform: translate3d(0, 0, 0); }
+  14% { transform: translate3d(-0.9px, -0.35px, 0); }
+  28% { transform: translate3d(1.25px, 0.2px, 0); }
+  42% { transform: translate3d(-1.4px, 0.45px, 0); }
+  56% { transform: translate3d(1.1px, -0.25px, 0); }
+  70% { transform: translate3d(-0.85px, 0.3px, 0); }
+  84% { transform: translate3d(0.95px, -0.15px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
 }
 
 @keyframes dashboard-heading-echo-left {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  25% { transform: translate3d(-1.2px, -0.2px, 0); }
-  50% { transform: translate3d(-0.4px, 0, 0); }
-  75% { transform: translate3d(-1.6px, 0.3px, 0); }
+  0% { transform: translate3d(0, 0, 0); }
+  20% { transform: translate3d(-1.6px, -0.25px, 0); }
+  40% { transform: translate3d(-0.8px, 0.15px, 0); }
+  60% { transform: translate3d(-1.9px, 0.35px, 0); }
+  80% { transform: translate3d(-1.1px, -0.15px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
 }
 
 @keyframes dashboard-heading-echo-right {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  25% { transform: translate3d(0.8px, 0.15px, 0); }
-  50% { transform: translate3d(1.4px, 0, 0); }
-  75% { transform: translate3d(0.6px, -0.2px, 0); }
+  0% { transform: translate3d(0, 0, 0); }
+  20% { transform: translate3d(1.2px, 0.2px, 0); }
+  40% { transform: translate3d(1.8px, -0.1px, 0); }
+  60% { transform: translate3d(0.9px, -0.3px, 0); }
+  80% { transform: translate3d(1.5px, 0.15px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
 }
 
 @keyframes dashboard-orbit {

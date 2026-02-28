@@ -258,6 +258,15 @@ const FamHack = {
       input.addEventListener('keydown', (event) => {
         if (event.key === 'Backspace' && !event.target.value && index > 0) {
           otpInputs[index - 1].focus();
+          return;
+        }
+
+        if (event.key === 'Enter') {
+          const verifyButton = document.getElementById('verify-otp-btn');
+          if (this.getOTPValue().length === this.config.otpLength && verifyButton && !verifyButton.disabled) {
+            event.preventDefault();
+            this.handleVerifyOTP();
+          }
         }
       });
 
