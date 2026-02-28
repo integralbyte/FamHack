@@ -147,17 +147,28 @@ body.menu-open {
 
 .famhack-hero-cta .button-link {
   display: inline-flex;
+  width: min(100%, 340px);
 }
 
 .famhack-hero-cta .button {
-  transition: transform 0.24s ease, filter 0.24s ease;
+  width: 100%;
+  min-width: clamp(260px, 32vw, 340px);
+  padding: 21px 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  transition: transform 0.28s ease, filter 0.28s ease;
 }
 
 .famhack-hero-cta .button-label {
+  font-size: 0.9rem;
+  letter-spacing: 0.11em;
   transition: transform 0.24s ease, letter-spacing 0.24s ease;
 }
 
 .famhack-hero-cta .button-icon {
+  flex: 0 0 auto;
   transition: transform 0.24s ease;
 }
 
@@ -167,24 +178,24 @@ body.menu-open {
 
 .famhack-hero-cta .button-link:hover .button,
 .famhack-hero-cta .button-link:focus-visible .button {
-  animation: hero-cta-surge 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.14));
+  animation: hero-cta-thrust 0.56s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.18));
 }
 
 .famhack-hero-cta .button-link:hover .button-label,
 .famhack-hero-cta .button-link:focus-visible .button-label {
-  transform: translateX(3px);
-  letter-spacing: 0.08em;
+  transform: translateX(4px);
+  letter-spacing: 0.14em;
 }
 
 .famhack-hero-cta .button-link:hover .button-icon,
 .famhack-hero-cta .button-link:focus-visible .button-icon {
-  transform: translateX(6px);
+  transform: translateX(10px) translateY(-1px);
 }
 
 .famhack-hero-cta .button-link:hover .button-icon-svg,
 .famhack-hero-cta .button-link:focus-visible .button-icon-svg {
-  transform: translateX(1px) translateY(-1px) rotate(-6deg) scale(1.18);
+  transform: rotate(-10deg) scale(1.16);
 }
 
 /* About Preview Section */
@@ -250,12 +261,12 @@ body.menu-open {
 }
 
 .dashboard-header {
-  padding: 24px 0 0 24px;
-  --famhack-bracket-offset: 0px;
+  padding: 60px 0 0 60px;
+  --famhack-bracket-offset: 14px;
 }
 
 .members-section {
-  --famhack-bracket-offset: 24px;
+  --famhack-bracket-offset: 16px;
 }
 
 .famhack-section-heading {
@@ -777,7 +788,7 @@ button.role-card {
 /* Team Members Section */
 .members-section {
   position: relative;
-  padding: 40px;
+  padding: 62px 40px 40px 62px;
 }
 
 .members-heading {
@@ -789,18 +800,18 @@ button.role-card {
 }
 
 .members-section-primary {
-  padding: 49px 40px 40px 35px;
+  padding: 68px 40px 40px 62px;
   --famhack-bracket-offset: 18px;
 }
 
 .members-section-primary > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
-  top: 49px;
-  left: 35px;
+  top: 18px;
+  left: 18px;
 }
 
 #pending-section > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
-  top: 18px;
-  left: 24px;
+  top: 16px;
+  left: 16px;
 }
 
 .members-heading-primary {
@@ -1084,7 +1095,7 @@ button.role-card {
   background: transparent;
   box-shadow: none;
   --famhack-bracket-offset: 0px;
-  --danger-shell-bracket-inset: 54px;
+  --danger-shell-bracket-inset: 16px;
   transition:
     padding 0.7s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.45s ease,
@@ -1093,7 +1104,7 @@ button.role-card {
 }
 
 .dashboard-danger.is-expanded .danger-shell {
-  padding: 36px 40px 40px;
+  padding: 68px 40px 40px 62px;
   border-color: rgba(252, 47, 32, 0.28);
   background:
     linear-gradient(180deg, rgba(252, 47, 32, 0.08), rgba(252, 47, 32, 0.03)),
@@ -1249,10 +1260,11 @@ button.role-card {
   100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
 }
 
-@keyframes hero-cta-surge {
-  0% { transform: translate3d(0, 0, 0) skewX(0deg); }
-  38% { transform: translate3d(0, -2px, 0) skewX(-5deg); }
-  100% { transform: translate3d(0, -2px, 0) skewX(0deg); }
+@keyframes hero-cta-thrust {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  24% { transform: translate3d(7px, -1px, 0) rotate(-0.45deg); }
+  58% { transform: translate3d(2px, -4px, 0) rotate(0.15deg); }
+  100% { transform: translate3d(0, -3px, 0) rotate(0deg); }
 }
 
 @keyframes dashboard-heading-jitter {
