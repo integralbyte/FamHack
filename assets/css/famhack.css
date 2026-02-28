@@ -86,7 +86,7 @@ body.menu-open {
   width: 100%;
   height: auto;
   transform-origin: 50% 52%;
-  animation: famhack-logo-rattle 0.62s linear infinite alternate;
+  will-change: transform;
 }
 
 .famhack-hero-title {

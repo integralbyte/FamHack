@@ -15,6 +15,8 @@ const FamHack = {
     teamPreview: null,
     resendTimer: null,
     joinLookupTimer: null,
+    logoJitterFrame: null,
+    logoJitterElement: null,
     participateDestination: null,
     participateLabel: null,
     participateCheckPromise: null,
@@ -301,6 +303,8 @@ const FamHack = {
   },
 
   async initHomePage() {
+    this.initHomeLogoMotion();
+
     const participateLink = document.getElementById('participate-link');
     if (!participateLink) {
       return;
@@ -339,6 +343,44 @@ const FamHack = {
     if (labelNode) {
       labelNode.textContent = label;
     }
+  },
+
+  initHomeLogoMotion() {
+    const logo = document.querySelector('.famhack-hero-logo');
+    if (!logo) {
+      return;
+    }
+
+    if (this.state.logoJitterFrame) {
+      window.cancelAnimationFrame(this.state.logoJitterFrame);
+    }
+
+    this.state.logoJitterElement = logo;
+
+    const startTime = performance.now();
+    const tick = (now) => {
+      const t = (now - startTime) / 1000;
+      const x = (Math.sin(t * 24.7) * 0.95) + (Math.sin(t * 41.9 + 0.8) * 0.42) + (Math.sin(t * 68.3 + 1.7) * 0.16);
+      const y = (Math.sin(t * 27.5 + 1.3) * 0.34) + (Math.sin(t * 53.6 + 0.4) * 0.15);
+      const rotate = (Math.sin(t * 21.8 + 0.5) * 0.12) + (Math.sin(t * 44.1 + 1.2) * 0.045);
+      const scale = 1 + (Math.sin(t * 16.2 + 1.1) * 0.0022) + (Math.sin(t * 31.4 + 0.2) * 0.0012);
+
+      logo.style.transform = `translate3d(${x.toFixed(3)}px, ${y.toFixed(3)}px, 0) rotate(${rotate.toFixed(3)}deg) scale(${scale.toFixed(4)})`;
+      this.state.logoJitterFrame = window.requestAnimationFrame(tick);
+    };
+
+    this.state.logoJitterFrame = window.requestAnimationFrame(tick);
+
+    window.addEventListener('pagehide', () => {
+      if (this.state.logoJitterFrame) {
+        window.cancelAnimationFrame(this.state.logoJitterFrame);
+        this.state.logoJitterFrame = null;
+      }
+
+      if (this.state.logoJitterElement) {
+        this.state.logoJitterElement.style.transform = '';
+      }
+    }, { once: true });
   },
 
   async resolveParticipateDestination() {
