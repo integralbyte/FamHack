@@ -150,55 +150,10 @@ body.menu-open {
 }
 
 .famhack-hero-cta .button {
-  position: relative;
-  min-width: 232px;
-  padding: 20px 28px;
-  gap: 18px;
-  border: 1px solid rgba(252, 47, 32, 0.44);
-  background:
-    linear-gradient(135deg, rgba(252, 47, 32, 0.16), rgba(255, 233, 206, 0.03) 58%),
-    rgba(255, 233, 206, 0.03);
-  overflow: hidden;
-  transition:
-    transform 0.24s ease,
-    border-color 0.24s ease,
-    box-shadow 0.24s ease,
-    background 0.24s ease;
-}
-
-.famhack-hero-cta .button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(118deg, transparent 18%, rgba(255, 233, 206, 0.2) 38%, transparent 56%),
-    linear-gradient(90deg, rgba(252, 47, 32, 0.18), transparent 38%);
-  transform: translateX(-118%);
-  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-}
-
-.famhack-hero-cta .button::after {
-  content: '';
-  position: absolute;
-  inset: auto 16px 10px 16px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(252, 47, 32, 0), rgba(252, 47, 32, 0.7), rgba(252, 47, 32, 0));
-  transform: scaleX(0.42);
-  transform-origin: center;
-  transition: transform 0.28s ease;
-  pointer-events: none;
-}
-
-.famhack-hero-cta .button-label,
-.famhack-hero-cta .button-icon {
-  position: relative;
-  z-index: 1;
+  transition: transform 0.24s ease, filter 0.24s ease;
 }
 
 .famhack-hero-cta .button-label {
-  font-size: 0.86rem;
-  letter-spacing: 0.12em;
   transition: transform 0.24s ease, letter-spacing 0.24s ease;
 }
 
@@ -212,38 +167,24 @@ body.menu-open {
 
 .famhack-hero-cta .button-link:hover .button,
 .famhack-hero-cta .button-link:focus-visible .button {
-  transform: translateY(-2px) scale(1.01);
-  border-color: rgba(252, 47, 32, 0.78);
-  background:
-    linear-gradient(135deg, rgba(252, 47, 32, 0.24), rgba(255, 233, 206, 0.06) 58%),
-    rgba(255, 233, 206, 0.04);
-  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.18);
-}
-
-.famhack-hero-cta .button-link:hover .button::before,
-.famhack-hero-cta .button-link:focus-visible .button::before {
-  transform: translateX(0);
-}
-
-.famhack-hero-cta .button-link:hover .button::after,
-.famhack-hero-cta .button-link:focus-visible .button::after {
-  transform: scaleX(1);
+  animation: hero-cta-surge 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.14));
 }
 
 .famhack-hero-cta .button-link:hover .button-label,
 .famhack-hero-cta .button-link:focus-visible .button-label {
-  transform: translateX(2px);
-  letter-spacing: 0.16em;
+  transform: translateX(3px);
+  letter-spacing: 0.08em;
 }
 
 .famhack-hero-cta .button-link:hover .button-icon,
 .famhack-hero-cta .button-link:focus-visible .button-icon {
-  transform: translateX(4px);
+  transform: translateX(6px);
 }
 
 .famhack-hero-cta .button-link:hover .button-icon-svg,
 .famhack-hero-cta .button-link:focus-visible .button-icon-svg {
-  transform: rotate(0deg) scale(1.14);
+  transform: translateX(1px) translateY(-1px) rotate(-6deg) scale(1.18);
 }
 
 /* About Preview Section */
@@ -853,12 +794,13 @@ button.role-card {
 }
 
 .members-section-primary > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
-  top: 34px;
-  left: 18px;
+  top: 49px;
+  left: 35px;
 }
 
 #pending-section > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
   top: 18px;
+  left: 24px;
 }
 
 .members-heading-primary {
@@ -1142,7 +1084,7 @@ button.role-card {
   background: transparent;
   box-shadow: none;
   --famhack-bracket-offset: 0px;
-  --danger-shell-bracket-inset: 38px;
+  --danger-shell-bracket-inset: 54px;
   transition:
     padding 0.7s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.45s ease,
@@ -1210,7 +1152,7 @@ button.role-card {
   align-items: center;
   justify-content: center;
   padding: 18px 22px;
-  --famhack-bracket-offset: 0px;
+  --famhack-bracket-offset: 12px;
 }
 
 .danger-toggle-bracket {
@@ -1305,6 +1247,12 @@ button.role-card {
   80% { transform: translate3d(2px, -0.4px, 0) rotate(0.2deg) scale(1.006); }
   90% { transform: translate3d(-1px, 0.2px, 0) rotate(-0.1deg) scale(1.003); }
   100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+}
+
+@keyframes hero-cta-surge {
+  0% { transform: translate3d(0, 0, 0) skewX(0deg); }
+  38% { transform: translate3d(0, -2px, 0) skewX(-5deg); }
+  100% { transform: translate3d(0, -2px, 0) skewX(0deg); }
 }
 
 @keyframes dashboard-heading-jitter {
