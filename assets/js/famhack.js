@@ -497,10 +497,12 @@ const FamHack = {
       }
 
       this.setButtonLabel(document.getElementById('send-otp-btn'), 'Continue');
-      this.showPageMessage('join-page-message', 'You are already signed in. Enter a family code to continue.');
 
       if (this.state.teamPreview) {
+        this.showPageMessage('join-page-message', 'You are already signed in. Review the family below and submit your request.');
         this.showStep('join-team');
+      } else {
+        this.showPageMessage('join-page-message', 'You are already signed in. Enter a family code to continue.');
       }
     }
   },
