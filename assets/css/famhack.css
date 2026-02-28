@@ -747,13 +747,13 @@ button.role-card {
 }
 
 .members-section-primary {
-  padding: 58px 40px 40px 52px;
-  --famhack-bracket-offset: 18px;
+  padding: 58px 40px 40px;
+  --famhack-bracket-offset: 24px;
 }
 
 .members-section-primary > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
   top: 24px;
-  left: 18px;
+  left: 24px;
 }
 
 #pending-section > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
