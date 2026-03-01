@@ -3,7 +3,8 @@ import { getServiceClient } from './supabase.js';
 
 export const CTF_CHALLENGE_COUNT = 5;
 export const CTF_HOME_SECRET = 'family-orbit';
-export const CTF_PDF_FILENAME = 'pale-echo.pdf';
+export const CTF_PDF_FILENAME = 'CTF.pdf';
+export const CTF_PDF_TITLE = 'pale-echo.pdf';
 const CTF_IMAGE_WIDTH = 96;
 const CTF_IMAGE_HEIGHT = 64;
 const CTF_IMAGE_ANSWER = Buffer.from(String(CTF_IMAGE_WIDTH * CTF_IMAGE_HEIGHT), 'utf8').toString('base64');
@@ -44,7 +45,7 @@ const CTF_PUBLIC_CHALLENGES = [
     mode: 'text',
     prompt: '',
     assetLabel: 'Download file',
-    assetUrl: '/assets/ctf/washed-signal.pdf',
+    assetUrl: '/assets/ctf/CTF.pdf',
     inputLabel: 'Answer',
     placeholder: 'Enter answer',
     actionLabel: 'Submit',
@@ -99,7 +100,8 @@ function verifyChallengeAnswer(challengeNumber, answer) {
     case 3:
       return base64Answer === normalizeBase64Answer(CTF_IMAGE_ANSWER);
     case 4:
-      return looseAnswer === 'pale-echo' || looseAnswer === 'pale-echo.pdf';
+      return looseAnswer === normalizeLooseAnswer(CTF_PDF_TITLE)
+        || looseAnswer === normalizeLooseAnswer(CTF_PDF_TITLE.replace(/\.pdf$/i, ''));
     case 5:
       return base64Answer === normalizeBase64Answer(encodeBase64Times(CTF_HOME_SECRET, 10));
     default:

@@ -6,7 +6,7 @@ import { allowMethods, sendError } from '../_lib/http.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PDF_PATH = path.resolve(__dirname, '../../assets/ctf/washed-signal.pdf');
+const PDF_PATH = path.resolve(__dirname, '../../assets/ctf/ctf-handoff.pdf');
 
 export default async function handler(req, res) {
   if (!allowMethods(req, res, ['GET'])) {
