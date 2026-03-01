@@ -4,6 +4,9 @@ import { getServiceClient } from './supabase.js';
 export const CTF_CHALLENGE_COUNT = 5;
 export const CTF_HOME_SECRET = 'family-orbit';
 export const CTF_PDF_FILENAME = 'pale-echo.pdf';
+const CTF_IMAGE_WIDTH = 96;
+const CTF_IMAGE_HEIGHT = 64;
+const CTF_IMAGE_ANSWER = Buffer.from(String(CTF_IMAGE_WIDTH * CTF_IMAGE_HEIGHT), 'utf8').toString('base64');
 
 const CTF_PUBLIC_CHALLENGES = [
   {
@@ -71,6 +74,10 @@ function normalizeExactAnswer(answer) {
   return String(answer || '').trim().replace(/\s+/g, '');
 }
 
+function normalizeBase64Answer(answer) {
+  return normalizeExactAnswer(answer).replace(/=+$/g, '');
+}
+
 function encodeBase64Times(value, times) {
   let output = String(value);
   for (let index = 0; index < times; index += 1) {
@@ -82,6 +89,7 @@ function encodeBase64Times(value, times) {
 function verifyChallengeAnswer(challengeNumber, answer) {
   const looseAnswer = normalizeLooseAnswer(answer);
   const exactAnswer = normalizeExactAnswer(answer);
+  const base64Answer = normalizeBase64Answer(answer);
 
   switch (challengeNumber) {
     case 1:
@@ -89,11 +97,11 @@ function verifyChallengeAnswer(challengeNumber, answer) {
     case 2:
       return looseAnswer === 'upupdowndownleftrightleftrightba';
     case 3:
-      return exactAnswer === 'NjQw';
+      return base64Answer === normalizeBase64Answer(CTF_IMAGE_ANSWER);
     case 4:
       return looseAnswer === 'pale-echo' || looseAnswer === 'pale-echo.pdf';
     case 5:
-      return exactAnswer === encodeBase64Times(CTF_HOME_SECRET, 10);
+      return base64Answer === normalizeBase64Answer(encodeBase64Times(CTF_HOME_SECRET, 10));
     default:
       return false;
   }
