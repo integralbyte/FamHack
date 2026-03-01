@@ -1298,6 +1298,9 @@ const FamHack = {
         </a>
       `
       : '';
+    const promptMarkup = challenge.prompt
+      ? `<p class="ctf-challenge-copy">${this.escapeHtml(challenge.prompt)}</p>`
+      : '';
 
     if (challenge.mode === 'konami') {
       const konamiClass = this.state.ctfKonamiSolved ? ' is-solved' : '';
@@ -1320,7 +1323,7 @@ const FamHack = {
       <form class="ctf-challenge-card" autocomplete="off">
         <p class="ctf-step-kicker">Challenge ${challenge.number} / ${ctf.challenges.length}</p>
         <h2 class="ctf-challenge-title">${this.escapeHtml(challenge.title)}</h2>
-        <p class="ctf-challenge-copy">${this.escapeHtml(challenge.prompt)}</p>
+        ${promptMarkup}
         ${challenge.body ? `<p class="ctf-challenge-clue">${this.escapeHtml(challenge.body)}</p>` : ''}
         ${assetMarkup}
         <div class="form-group">
