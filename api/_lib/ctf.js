@@ -30,7 +30,7 @@ const CTF_PUBLIC_CHALLENGES = [
     mode: 'text',
     prompt: '',
     assetLabel: 'Download file',
-    assetUrl: '/assets/ctf/metadata-signal.png',
+    assetUrl: '/assets/ctf/CTF.jpg',
     inputLabel: 'Answer',
     placeholder: 'Enter answer',
     actionLabel: 'Submit',
