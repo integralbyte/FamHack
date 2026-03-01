@@ -15,8 +15,10 @@ const FamHack = {
     teamPreview: null,
     resendTimer: null,
     joinLookupTimer: null,
-    logoJitterFrame: null,
     logoJitterElement: null,
+    logoResetTimer: null,
+    logoLastPointerX: null,
+    logoLastPointerY: null,
     participateDestination: null,
     participateLabel: null,
     participateCheckPromise: null,
@@ -351,35 +353,48 @@ const FamHack = {
       return;
     }
 
-    if (this.state.logoJitterFrame) {
-      window.cancelAnimationFrame(this.state.logoJitterFrame);
-    }
-
     this.state.logoJitterElement = logo;
-
-    const startTime = performance.now();
-    const tick = (now) => {
-      const t = (now - startTime) / 1000;
-      const x = (Math.sin(t * 24.7) * 0.95) + (Math.sin(t * 41.9 + 0.8) * 0.42) + (Math.sin(t * 68.3 + 1.7) * 0.16);
-      const y = (Math.sin(t * 27.5 + 1.3) * 0.34) + (Math.sin(t * 53.6 + 0.4) * 0.15);
-      const rotate = (Math.sin(t * 21.8 + 0.5) * 0.12) + (Math.sin(t * 44.1 + 1.2) * 0.045);
-      const scale = 1 + (Math.sin(t * 16.2 + 1.1) * 0.0022) + (Math.sin(t * 31.4 + 0.2) * 0.0012);
-
-      logo.style.transform = `translate3d(${x.toFixed(3)}px, ${y.toFixed(3)}px, 0) rotate(${rotate.toFixed(3)}deg) scale(${scale.toFixed(4)})`;
-      this.state.logoJitterFrame = window.requestAnimationFrame(tick);
+    const resetLogo = () => {
+      clearTimeout(this.state.logoResetTimer);
+      this.state.logoResetTimer = null;
+      this.state.logoLastPointerX = null;
+      this.state.logoLastPointerY = null;
+      logo.style.transform = '';
     };
 
-    this.state.logoJitterFrame = window.requestAnimationFrame(tick);
+    logo.addEventListener('pointerenter', (event) => {
+      this.state.logoLastPointerX = event.clientX;
+      this.state.logoLastPointerY = event.clientY;
+    });
+
+    logo.addEventListener('pointermove', (event) => {
+      const rect = logo.getBoundingClientRect();
+      const offsetX = ((event.clientX - rect.left) / rect.width) - 0.5;
+      const offsetY = ((event.clientY - rect.top) / rect.height) - 0.5;
+      const deltaX = this.state.logoLastPointerX == null ? 0 : event.clientX - this.state.logoLastPointerX;
+      const deltaY = this.state.logoLastPointerY == null ? 0 : event.clientY - this.state.logoLastPointerY;
+      const velocity = Math.min(Math.hypot(deltaX, deltaY), 16);
+
+      this.state.logoLastPointerX = event.clientX;
+      this.state.logoLastPointerY = event.clientY;
+
+      const translateX = (offsetX * 2.2) + (deltaX * 0.24);
+      const translateY = (offsetY * 0.9) + (deltaY * 0.08);
+      const rotate = (offsetX * 0.38) + (deltaX * 0.03);
+      const scale = 1 + (velocity * 0.00045);
+
+      logo.style.transform = `translate3d(${translateX.toFixed(3)}px, ${translateY.toFixed(3)}px, 0) rotate(${rotate.toFixed(3)}deg) scale(${scale.toFixed(4)})`;
+
+      clearTimeout(this.state.logoResetTimer);
+      this.state.logoResetTimer = window.setTimeout(() => {
+        logo.style.transform = '';
+      }, 90);
+    });
+
+    logo.addEventListener('pointerleave', resetLogo);
 
     window.addEventListener('pagehide', () => {
-      if (this.state.logoJitterFrame) {
-        window.cancelAnimationFrame(this.state.logoJitterFrame);
-        this.state.logoJitterFrame = null;
-      }
-
-      if (this.state.logoJitterElement) {
-        this.state.logoJitterElement.style.transform = '';
-      }
+      resetLogo();
     }, { once: true });
   },
 
