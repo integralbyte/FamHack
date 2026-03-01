@@ -23,6 +23,11 @@ const FamHack = {
     participateLabel: null,
     participateCheckPromise: null,
     dashboard: null,
+    ctf: null,
+    ctfPendingAdvanceState: null,
+    ctfKonamiIndex: 0,
+    ctfKonamiSolved: false,
+    ctfAdvanceTimer: null,
   },
 
   async init() {
@@ -67,6 +72,8 @@ const FamHack = {
         await this.initRegisterPage();
       } else if (this.state.page === 'join') {
         await this.initJoinPage();
+      } else if (this.state.page === 'ctf') {
+        await this.initCtfPage();
       } else if (this.state.page === 'dashboard') {
         await this.initDashboardPage();
       }
@@ -81,6 +88,7 @@ const FamHack = {
     if (path === '/' || path.endsWith('/index.html')) return 'home';
     if (path === '/register' || path.endsWith('/register.html')) return 'register';
     if (path === '/join' || path.endsWith('/join.html')) return 'join';
+    if (path === '/ctf' || path.endsWith('/ctf.html')) return 'ctf';
     if (path === '/dashboard' || path.endsWith('/dashboard.html')) return 'dashboard';
     return null;
   },
@@ -181,9 +189,15 @@ const FamHack = {
   resetAuthFlowState() {
     clearInterval(this.state.resendTimer);
     this.state.resendTimer = null;
+    clearTimeout(this.state.ctfAdvanceTimer);
+    this.state.ctfAdvanceTimer = null;
     this.state.pendingEmail = '';
     this.state.teamPreview = null;
     this.state.dashboard = null;
+    this.state.ctf = null;
+    this.state.ctfPendingAdvanceState = null;
+    this.state.ctfKonamiIndex = 0;
+    this.state.ctfKonamiSolved = false;
     this.state.registerIntent = 'role';
     this.clearOTPInputs();
   },
@@ -578,6 +592,27 @@ const FamHack = {
 
     this.setDashboardLoading(true);
     await this.loadDashboard();
+  },
+
+  async initCtfPage() {
+    document.getElementById('ctf-sign-out-btn')?.addEventListener('click', () => this.handleSignOut());
+    document.getElementById('ctf-challenge-shell')?.addEventListener('submit', (event) => this.handleCtfSubmit(event));
+    document.getElementById('ctf-challenge-shell')?.addEventListener('click', (event) => {
+      const nextButton = event.target.closest('[data-ctf-next]');
+      if (nextButton) {
+        this.advanceSolvedCtfChallenge();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => this.handleKonamiKeydown(event));
+
+    if (!this.state.session) {
+      this.redirect('/register');
+      return;
+    }
+
+    this.setCtfLoading(true);
+    await this.loadCtfState();
   },
 
   handleChooseParent() {
@@ -1051,6 +1086,410 @@ const FamHack = {
     return payload;
   },
 
+  async fetchCtfState() {
+    return this.apiRequest('/api/ctf/state');
+  },
+
+  setCtfLoading(isLoading) {
+    const loader = document.getElementById('ctf-loading');
+    const body = document.getElementById('ctf-body');
+
+    if (loader) {
+      loader.hidden = !isLoading;
+    }
+
+    if (body) {
+      body.hidden = isLoading;
+    }
+
+    if (!isLoading && body && typeof window.gsap !== 'undefined') {
+      window.gsap.fromTo(body, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
+    }
+  },
+
+  async loadCtfState() {
+    try {
+      this.setCtfLoading(true);
+      const ctf = await this.fetchCtfState();
+      this.state.ctf = ctf;
+      this.state.ctfPendingAdvanceState = null;
+      this.state.ctfKonamiIndex = 0;
+      this.state.ctfKonamiSolved = false;
+      this.renderCtf(ctf);
+      this.setCtfLoading(false);
+    } catch (error) {
+      console.error(error);
+      if (error.status === 401) {
+        this.redirect('/register');
+        return;
+      }
+      this.setCtfLoading(false);
+      this.showFatalError(error.message || 'Unable to load the CTF right now.');
+    }
+  },
+
+  renderCtf(ctf) {
+    this.state.ctf = ctf;
+
+    const teamName = document.getElementById('ctf-team-name');
+    const teamLevel = document.getElementById('ctf-team-level-copy');
+    const memberProgress = document.getElementById('ctf-member-progress-copy');
+    const teamRank = document.getElementById('ctf-team-rank');
+    const statusBanner = document.getElementById('ctf-status-banner');
+
+    if (teamName) {
+      teamName.textContent = ctf.viewer.teamName;
+    }
+
+    if (teamLevel) {
+      teamLevel.textContent = `Family level ${ctf.team.level} / ${this.config.ctfChallengeCount || ctf.challenges.length}`;
+    }
+
+    if (memberProgress) {
+      if (ctf.member.completed) {
+        memberProgress.textContent = `Your run is complete: ${ctf.member.solvedChallenges.length}/${ctf.challenges.length} challenges cleared.`;
+      } else {
+        memberProgress.textContent = `Your run is on challenge ${ctf.member.currentChallengeNumber}/${ctf.challenges.length}.`;
+      }
+    }
+
+    if (teamRank) {
+      const ownRow = ctf.leaderboard.find((row) => row.teamId === ctf.team.id);
+      teamRank.textContent = ownRow ? `Leaderboard rank #${ownRow.rank}` : 'Leaderboard rank pending';
+    }
+
+    if (statusBanner) {
+      statusBanner.hidden = false;
+      if (ctf.member.completed) {
+        statusBanner.textContent = 'You cleared every challenge. Your family keeps its place on the leaderboard even if your teammates start from challenge one.';
+      } else if (ctf.team.level > ctf.member.highestSolvedChallenge) {
+        statusBanner.textContent = `Your family has already reached level ${ctf.team.level}. Your own run still advances one challenge at a time from where you left it.`;
+      } else {
+        statusBanner.textContent = 'The first clear from any approved family member advances the family on the leaderboard. Your own run remains personal.';
+      }
+    }
+
+    this.renderCtfCompletedList(document.getElementById('ctf-completed-list'), ctf);
+    this.renderCtfLeaderboard(document.getElementById('ctf-leaderboard-list'), ctf);
+    this.renderCtfChallenge();
+  },
+
+  renderCtfCompletedList(container, ctf) {
+    if (!container) {
+      return;
+    }
+
+    const solved = ctf.challenges.filter((challenge) => ctf.member.solvedChallenges.includes(challenge.number));
+    if (!solved.length) {
+      container.innerHTML = '<p class="empty-state">No personal clears yet. Your first solve starts the run.</p>';
+      return;
+    }
+
+    container.innerHTML = solved.map((challenge) => `
+      <div class="ctf-completed-chip">
+        <span class="ctf-completed-number">0${challenge.number}</span>
+        <span class="ctf-completed-title">${this.escapeHtml(challenge.title)}</span>
+      </div>
+    `).join('');
+  },
+
+  renderCtfLeaderboard(container, ctf) {
+    if (!container) {
+      return;
+    }
+
+    if (!ctf.leaderboard.length) {
+      container.innerHTML = '<p class="empty-state">No families on the board yet.</p>';
+      return;
+    }
+
+    container.innerHTML = ctf.leaderboard.map((row) => {
+      const isCurrentTeam = row.teamId === ctf.team.id;
+      const stamp = row.reachedAt ? this.formatDateTime(row.reachedAt) : 'Waiting for first clear';
+
+      return `
+        <div class="ctf-leaderboard-row${isCurrentTeam ? ' is-current-team' : ''}">
+          <div class="ctf-leaderboard-rank">#${row.rank}</div>
+          <div class="ctf-leaderboard-team">
+            <p class="ctf-leaderboard-name">${this.escapeHtml(row.teamName)}</p>
+            <p class="ctf-leaderboard-meta">${stamp}</p>
+          </div>
+          <div class="ctf-leaderboard-level">L${row.level}</div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  renderCtfChallenge() {
+    const shell = document.getElementById('ctf-challenge-shell');
+    if (!shell) {
+      return;
+    }
+
+    const ctf = this.state.ctf;
+    if (!ctf) {
+      shell.innerHTML = '';
+      return;
+    }
+
+    if (ctf.member.completed) {
+      shell.innerHTML = `
+        <section class="ctf-challenge-card ctf-challenge-card-success">
+          <p class="ctf-step-kicker">Run Complete</p>
+          <h2 class="ctf-challenge-title">Every signal is clear.</h2>
+          <p class="ctf-challenge-copy">You finished the full FamHack CTF. Your family stays on the board, and your teammates can still play through from challenge one on their own runs.</p>
+        </section>
+      `;
+      return;
+    }
+
+    const gate = this.state.ctfPendingAdvanceState;
+    if (gate) {
+      if (gate.mode === 'konami') {
+        shell.innerHTML = `
+          <section class="ctf-challenge-card ctf-challenge-card-konami">
+            <div class="ctf-konami-stage" tabindex="0" aria-label="Konami unlocked">
+              <p class="ctf-konami-text is-solved">${this.escapeHtml(gate.successTitle)}</p>
+            </div>
+            <div class="ctf-gate-actions">
+              ${gate.ready
+                ? '<button type="button" class="copy-btn ctf-next-btn" data-ctf-next>Next Challenge</button>'
+                : '<p class="ctf-gate-pulse">Opening the next signal...</p>'}
+            </div>
+          </section>
+        `;
+        return;
+      }
+
+      shell.innerHTML = `
+        <section class="ctf-challenge-card ctf-challenge-card-success">
+          <p class="ctf-step-kicker">Challenge ${gate.solvedChallengeNumber} cleared</p>
+          <h2 class="ctf-challenge-title">${this.escapeHtml(gate.successTitle)}</h2>
+          <p class="ctf-challenge-copy">${this.escapeHtml(gate.successCopy)}</p>
+          <div class="ctf-gate-actions">
+            ${gate.ready
+              ? '<button type="button" class="copy-btn ctf-next-btn" data-ctf-next>Next Challenge</button>'
+              : '<p class="ctf-gate-pulse">Opening the next signal...</p>'}
+          </div>
+        </section>
+      `;
+      return;
+    }
+
+    const challenge = ctf.challenges.find((item) => item.active) || ctf.challenges.find((item) => !item.solved);
+    if (!challenge) {
+      shell.innerHTML = '';
+      return;
+    }
+
+    const assetMarkup = challenge.assetUrl
+      ? `
+        <a class="button-link w-inline-block ctf-download-link" href="${this.escapeHtml(challenge.assetUrl)}" download>
+          <div class="button">
+            <p class="button-label">${this.escapeHtml(challenge.assetLabel || 'Download clue')}</p>
+            <div class="button-icon">
+              <div class="button-icon-svg w-embed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z" fill="currentColor" stroke-width="0.155153"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </a>
+      `
+      : '';
+
+    if (challenge.mode === 'konami') {
+      const konamiClass = this.state.ctfKonamiSolved ? ' is-solved' : '';
+      const konamiText = this.state.ctfKonamiSolved ? challenge.successText : challenge.prompt;
+
+      shell.innerHTML = `
+        <section class="ctf-challenge-card ctf-challenge-card-konami">
+          <div class="ctf-konami-stage" tabindex="0" aria-label="Konami challenge">
+            <p id="ctf-konami-text" class="ctf-konami-text${konamiClass}">${this.escapeHtml(konamiText)}</p>
+          </div>
+          <p id="ctf-answer-error" class="error-message ctf-inline-error"></p>
+        </section>
+      `;
+
+      document.querySelector('.ctf-konami-stage')?.focus();
+      return;
+    }
+
+    shell.innerHTML = `
+      <form class="ctf-challenge-card" autocomplete="off">
+        <p class="ctf-step-kicker">Challenge ${challenge.number} / ${ctf.challenges.length}</p>
+        <h2 class="ctf-challenge-title">${this.escapeHtml(challenge.title)}</h2>
+        <p class="ctf-challenge-copy">${this.escapeHtml(challenge.prompt)}</p>
+        ${challenge.body ? `<p class="ctf-challenge-clue">${this.escapeHtml(challenge.body)}</p>` : ''}
+        ${assetMarkup}
+        <div class="form-group">
+          <label class="form-label" for="ctf-answer-input">${this.escapeHtml(challenge.inputLabel || 'Answer')}</label>
+          <input id="ctf-answer-input" name="ctf-answer" class="form-input" type="${challenge.mode === 'password' ? 'password' : 'text'}" placeholder="${this.escapeHtml(challenge.placeholder || 'Enter your answer')}" />
+          <p id="ctf-answer-error" class="error-message ctf-inline-error"></p>
+        </div>
+        <button type="submit" id="ctf-submit-btn" class="button-link ctf-submit-link w-inline-block">
+          <div class="button">
+            <p class="button-label">${this.escapeHtml(challenge.actionLabel || 'Submit Answer')}</p>
+            <div class="button-icon">
+              <div class="button-icon-svg w-embed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z" fill="currentColor" stroke-width="0.155153"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </button>
+      </form>
+    `;
+  },
+
+  setCtfAdvanceGate(challenge, { successTitle, successCopy, delayMs = 0 } = {}) {
+    clearTimeout(this.state.ctfAdvanceTimer);
+
+    this.state.ctfPendingAdvanceState = {
+      mode: challenge.mode,
+      solvedChallengeNumber: challenge.number,
+      successTitle: successTitle || `${challenge.title} cleared.`,
+      successCopy: successCopy || 'Move to the next challenge when you are ready.',
+      ready: delayMs === 0,
+    };
+
+    if (delayMs > 0) {
+      this.state.ctfAdvanceTimer = window.setTimeout(() => {
+        if (!this.state.ctfPendingAdvanceState) {
+          return;
+        }
+
+        this.state.ctfPendingAdvanceState.ready = true;
+        this.renderCtfChallenge();
+      }, delayMs);
+    }
+  },
+
+  async submitCtfChallenge(challenge, answer, { successTitle, successCopy, delayMs = 0 } = {}) {
+    const nextState = await this.apiRequest('/api/ctf/submit', {
+      method: 'POST',
+      body: {
+        challengeNumber: challenge.number,
+        answer,
+      },
+    });
+
+    this.state.ctf = nextState;
+    this.state.ctfKonamiIndex = 0;
+
+    if (nextState.member.completed) {
+      this.state.ctfPendingAdvanceState = null;
+      this.state.ctfKonamiSolved = false;
+      this.renderCtf(nextState);
+      return;
+    }
+
+    this.setCtfAdvanceGate(challenge, { successTitle, successCopy, delayMs });
+    this.renderCtf(nextState);
+  },
+
+  async handleCtfSubmit(event) {
+    const form = event.target.closest('form');
+    if (!form) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const ctf = this.state.ctf;
+    const challenge = ctf?.challenges?.find((item) => item.active);
+    if (!challenge || challenge.mode === 'konami') {
+      return;
+    }
+
+    const input = form.querySelector('#ctf-answer-input');
+    const submitButton = form.querySelector('#ctf-submit-btn');
+    const answer = String(input?.value || '').trim();
+
+    this.showFieldError('ctf-answer-error', '');
+
+    if (!answer) {
+      this.showFieldError('ctf-answer-error', 'Enter an answer before submitting.');
+      input?.focus();
+      return;
+    }
+
+    this.setButtonState(submitButton, {
+      busy: true,
+      label: 'Checking...',
+      idleLabel: challenge.actionLabel || 'Submit Answer',
+    });
+
+    try {
+      await this.submitCtfChallenge(challenge, answer, {
+        successTitle: `${challenge.title} cleared.`,
+        successCopy: 'Nice. Your personal run advances here, and your family board updates if this was the first team clear for the level.',
+      });
+    } catch (error) {
+      console.error(error);
+      this.showFieldError('ctf-answer-error', error.message || 'That answer is not correct yet.');
+    } finally {
+      this.setButtonState(submitButton, {
+        busy: false,
+        label: 'Checking...',
+        idleLabel: challenge.actionLabel || 'Submit Answer',
+      });
+    }
+  },
+
+  async handleKonamiKeydown(event) {
+    if (this.state.page !== 'ctf' || !this.state.ctf || this.state.ctfPendingAdvanceState) {
+      return;
+    }
+
+    const challenge = this.state.ctf.challenges.find((item) => item.active);
+    if (!challenge || challenge.number !== 2 || challenge.mode !== 'konami' || this.state.ctfKonamiSolved) {
+      return;
+    }
+
+    const sequence = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
+    const key = String(event.key || '').toLowerCase();
+    const expectedKey = sequence[this.state.ctfKonamiIndex];
+
+    if (key !== expectedKey) {
+      this.state.ctfKonamiIndex = key === sequence[0] ? 1 : 0;
+      return;
+    }
+
+    this.state.ctfKonamiIndex += 1;
+
+    if (this.state.ctfKonamiIndex < sequence.length) {
+      return;
+    }
+
+    this.state.ctfKonamiSolved = true;
+    this.state.ctfKonamiIndex = 0;
+    this.renderCtfChallenge();
+
+    try {
+      await this.submitCtfChallenge(challenge, 'upupdowndownleftrightleftrightba', {
+        successTitle: challenge.successText || 'You found Konami.',
+        successCopy: 'The sequence is locked in. The next challenge will open in a moment.',
+        delayMs: 2200,
+      });
+    } catch (error) {
+      console.error(error);
+      this.state.ctfKonamiSolved = false;
+      this.renderCtfChallenge();
+      this.showFieldError('ctf-answer-error', error.message || 'That sequence did not unlock the next signal.');
+    }
+  },
+
+  advanceSolvedCtfChallenge() {
+    clearTimeout(this.state.ctfAdvanceTimer);
+    this.state.ctfAdvanceTimer = null;
+    this.state.ctfPendingAdvanceState = null;
+    this.state.ctfKonamiSolved = false;
+    this.renderCtf(this.state.ctf);
+  },
+
   async fetchDashboard({ suppressMissing } = {}) {
     try {
       return await this.apiRequest('/api/team/dashboard');
@@ -1099,6 +1538,9 @@ const FamHack = {
     const deleteTeamConfirmInput = document.getElementById('delete-team-confirm-input');
     const deleteTeamConfirmHint = document.getElementById('delete-team-confirm-hint');
     const leaveTeamButton = document.getElementById('leave-team-btn');
+    const ctfLaunchTitle = document.getElementById('ctf-launch-title');
+    const ctfLaunchCopy = document.getElementById('ctf-launch-copy');
+    const ctfLaunchLink = document.getElementById('ctf-launch-link');
     const statusBanner = document.getElementById('dashboard-status-banner');
     const pendingSection = document.getElementById('pending-section');
     const pendingList = document.getElementById('pending-list');
@@ -1163,6 +1605,24 @@ const FamHack = {
 
     if (inviteGrid) {
       inviteGrid.hidden = dashboard.viewer.role !== 'parent';
+    }
+
+    if (ctfLaunchTitle && ctfLaunchCopy && ctfLaunchLink) {
+      if (dashboard.viewer.status !== 'approved') {
+        ctfLaunchTitle.textContent = 'CTF unlocks after approval';
+        ctfLaunchCopy.textContent = 'Once your academic parent approves the request, this button will open the five-step family CTF.';
+        ctfLaunchLink.href = '/dashboard';
+        ctfLaunchLink.setAttribute('aria-disabled', 'true');
+        ctfLaunchLink.classList.add('is-disabled');
+        this.setButtonLabel(ctfLaunchLink, 'Locked');
+      } else {
+        ctfLaunchTitle.textContent = 'Family CTF';
+        ctfLaunchCopy.textContent = 'Solve the separate five-step CTF here. The first teammate to clear a level moves the whole family up the leaderboard.';
+        ctfLaunchLink.href = '/ctf';
+        ctfLaunchLink.removeAttribute('aria-disabled');
+        ctfLaunchLink.classList.remove('is-disabled');
+        this.setButtonLabel(ctfLaunchLink, dashboard.viewer.role === 'parent' ? 'Open CTF' : 'Continue CTF');
+      }
     }
 
     if (statusBanner) {
@@ -1521,6 +1981,23 @@ const FamHack = {
       this.showPageMessage('register-page-message', message);
     } else if (this.state.page === 'join') {
       this.showPageMessage('join-page-message', message);
+    } else if (this.state.page === 'ctf') {
+      this.setCtfLoading(false);
+      const banner = document.getElementById('ctf-status-banner');
+      const shell = document.getElementById('ctf-challenge-shell');
+      if (banner) {
+        banner.hidden = false;
+        banner.textContent = message;
+      }
+      if (shell) {
+        shell.innerHTML = `
+          <section class="ctf-challenge-card">
+            <p class="ctf-step-kicker">CTF unavailable</p>
+            <h2 class="ctf-challenge-title">This page cannot open yet.</h2>
+            <p class="ctf-challenge-copy">${this.escapeHtml(message)}</p>
+          </section>
+        `;
+      }
     } else {
       this.setDashboardLoading(false);
       const banner = document.getElementById('dashboard-status-banner');
@@ -1538,6 +2015,19 @@ const FamHack = {
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#39;');
+  },
+
+  formatDateTime(value) {
+    if (!value) {
+      return '';
+    }
+
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(value));
   },
 
   initNavigation() {

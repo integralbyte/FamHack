@@ -3,19 +3,11 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>FamHack | Academic Family Hackathon</title>
-  <meta
-    content="FamHack is an 8-hour hackathon for first-year Informatics students and their academic families at the University of Edinburgh."
-    name="description" />
-  <meta content="FamHack | Academic Family Hackathon" property="og:title" />
-  <meta
-    content="An 8-hour family-themed hackathon for first-year Informatics students and their academic parents."
-    property="og:description" />
+  <title>CTF | FamHack</title>
+  <meta content="Solve the FamHack family CTF and track your team on the leaderboard." name="description" />
+  <meta content="CTF | FamHack" property="og:title" />
+  <meta content="Solve the FamHack family CTF and track your team on the leaderboard." property="og:description" />
   <meta content="assets/images/famhack-logo.png" property="og:image" />
-  <meta content="FamHack | Academic Family Hackathon" property="twitter:title" />
-  <meta
-    content="An 8-hour family-themed hackathon for first-year Informatics students and their academic parents."
-    property="twitter:description" />
   <meta property="og:type" content="website" />
   <meta content="summary_large_image" name="twitter:card" />
   <meta content="width=device-width, initial-scale=1" name="viewport" />
@@ -49,14 +41,6 @@
     body .page-transition-wrapper {
       display: flex;
     }
-
-    .w-editor .page-transition-wrapper {
-      display: none;
-    }
-
-    .w-design-mode .page-transition-wrapper {
-      display: none;
-    }
   </style>
 </head>
 
@@ -74,9 +58,8 @@
     data-easing="ease" data-collapse="all" role="banner" data-duration="400" data-doc-height="1">
     <div data-w-id="e903e6ca-9cbf-65a6-cd1d-c65d08b38e2b" class="flyout-menu">
       <div class="flyout-menu-backdrop-blur"></div>
-      <div id="w-node-aa64fe34-539e-74b2-cead-d54968040dce-93a441be" data-w-id="aa64fe34-539e-74b2-cead-d54968040dce"
-        class="nav-blur"></div>
-      <div id="w-node-_2307badf-cfbb-5634-caef-7bce66751576-93a441be" class="flyout-menu-wrapper">
+      <div class="nav-blur"></div>
+      <div class="flyout-menu-wrapper">
         <div class="flyout-menu-tab">
           <div class="flyout-tab-wrapper">
             <div class="flyout-menu-tab-inner">
@@ -105,7 +88,7 @@
               </div>
             </div>
           </div>
-          <div data-w-id="facc4c8e-1389-3b24-b4a7-7c9622bdba70" class="nav-close-click-area">
+          <div class="nav-close-click-area">
             <div class="nav-close-curve-wrapper">
               <div data-wf--nav-curve--variant="left" class="nav-curve">
                 <div class="curve w-embed">
@@ -147,33 +130,33 @@
                     }
                   </style>
                 </div>
-                <a data-w-id="f8656e6c-bbde-a6dd-5289-c6e3110106ba" href="/"
-                  class="menu-item-layout w-inline-block">
+                <a href="/" class="menu-item-layout w-inline-block">
                   <h4>Home</h4>
                 </a>
               </div>
               <div class="menu-item">
-                <a data-w-id="f8656e6c-bbde-a6dd-5289-c6e3110106ba" href="/about"
-                  class="menu-item-layout w-inline-block">
+                <a href="/about" class="menu-item-layout w-inline-block">
                   <h4>About</h4>
                 </a>
               </div>
               <div class="menu-item">
-                <a data-w-id="f8656e6c-bbde-a6dd-5289-c6e3110106ba" href="/tracks"
-                  class="menu-item-layout w-inline-block">
+                <a href="/tracks" class="menu-item-layout w-inline-block">
                   <h4>Tracks</h4>
                 </a>
               </div>
               <div class="menu-item">
-                <a data-w-id="f8656e6c-bbde-a6dd-5289-c6e3110106ba" href="/register"
-                  class="menu-item-layout w-inline-block">
+                <a href="/register" class="menu-item-layout w-inline-block">
                   <h4>Register</h4>
                 </a>
               </div>
               <div class="menu-item">
-                <a data-w-id="f8656e6c-bbde-a6dd-5289-c6e3110106ba" href="/dashboard"
-                  class="menu-item-layout w-inline-block">
+                <a href="/dashboard" class="menu-item-layout w-inline-block">
                   <h4>Dashboard</h4>
+                </a>
+              </div>
+              <div class="menu-item">
+                <a href="/ctf" class="menu-item-layout w-inline-block w--current">
+                  <h4>CTF</h4>
                 </a>
               </div>
             </div>
@@ -257,10 +240,9 @@
   <div class="smooth-wrapper">
     <div class="smooth-content">
       <div>
-        <!-- Hero Section -->
-        <section class="famhack-hero">
-          <div class="famhack-hero-inner">
-            <div class="famhack-hero-content">
+        <section class="dashboard-section ctf-section">
+          <div class="dashboard-inner ctf-inner">
+            <div class="dashboard-header ctf-header">
               <div data-wf--bracket--variant="top-left" class="bracket">
                 <div class="bracket-svg w-embed">
                   <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
@@ -269,109 +251,117 @@
                   </svg>
                 </div>
               </div>
-              <div class="famhack-hero-logo-wrapper">
-                <span class="famhack-hero-secret" aria-hidden="true">family-orbit</span>
-                <img src="assets/images/famhack-logo.png" alt="FamHack" class="famhack-hero-logo" />
-              </div>
-              <p class="famhack-hero-tagline">Connecting first years with their academic families</p>
-              <div class="famhack-hero-details">
-                <div class="famhack-detail-item">
-                  <span class="famhack-detail-label">Date</span>
-                  <span class="famhack-detail-value">Saturday, 28 March 2026 (TBC)</span>
+              <div class="dashboard-header-top">
+                <div>
+                  <p class="ctf-page-kicker">Family CTF</p>
+                  <h1 id="ctf-team-name" class="dashboard-heading">Loading family...</h1>
+                  <p id="ctf-team-level-copy" class="dashboard-subheading">Loading family level...</p>
                 </div>
-                <div class="famhack-detail-item">
-                  <span class="famhack-detail-label">Venue</span>
-                  <span class="famhack-detail-value">Informatics Forum / The Nucleus (TBC)</span>
-                </div>
-                <div class="famhack-detail-item">
-                  <span class="famhack-detail-label">Theme</span>
-                  <span class="famhack-detail-value">Family and staying connected as life moves forward</span>
-                </div>
-                <div class="famhack-detail-item">
-                  <span class="famhack-detail-label">Format</span>
-                  <span class="famhack-detail-value">8 hours, in person</span>
+                <div class="dashboard-header-actions">
+                  <a href="/dashboard" class="copy-btn copy-btn-secondary ctf-return-link">Back to Dashboard</a>
+                  <button id="ctf-sign-out-btn" class="copy-btn copy-btn-secondary">Sign out</button>
                 </div>
               </div>
-              <div class="famhack-hero-cta">
-                <a id="participate-link" data-wf--button--variant="colour" href="/register" class="button-link w-inline-block">
-                  <div class="button">
-                    <p class="button-label">Participate</p>
-                    <div class="button-icon">
-                      <div class="button-icon-svg w-embed">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                          <path
-                            d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                            fill="currentColor" stroke-width="0.155153" />
+            </div>
+
+            <div id="ctf-loading" class="dashboard-loading ctf-loading" aria-live="polite">
+              <div class="dashboard-loading-stage">
+                <div class="dashboard-loading-orbit">
+                  <span class="dashboard-loading-core">CTF</span>
+                  <span class="dashboard-loading-node dashboard-loading-node-a"></span>
+                  <span class="dashboard-loading-node dashboard-loading-node-b"></span>
+                  <span class="dashboard-loading-node dashboard-loading-node-c"></span>
+                  <span class="dashboard-loading-node dashboard-loading-node-d"></span>
+                </div>
+              </div>
+              <div class="dashboard-loading-copy">
+                <p class="dashboard-loading-kicker">Signal Sweep</p>
+                <h2 class="dashboard-loading-heading">Opening the challenge board</h2>
+                <p class="dashboard-loading-text">Loading your personal run, your family level, and the live leaderboard.</p>
+              </div>
+            </div>
+
+            <div id="ctf-body" hidden>
+              <div id="ctf-status-banner" class="status-banner" hidden></div>
+
+              <div class="ctf-summary-grid">
+                <div class="invite-section ctf-summary-card">
+                  <p class="invite-label">Your Run</p>
+                  <p id="ctf-member-progress-copy" class="ctf-summary-copy">Loading progress...</p>
+                </div>
+                <div class="invite-section ctf-summary-card">
+                  <p class="invite-label">Leaderboard</p>
+                  <p id="ctf-team-rank" class="ctf-summary-copy">Loading rank...</p>
+                </div>
+              </div>
+
+              <div class="ctf-layout">
+                <div class="ctf-main-column">
+                  <div class="members-section ctf-panel">
+                    <div data-wf--bracket--variant="top-left" class="bracket">
+                      <div class="bracket-svg w-embed">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                          <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                            stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div id="ctf-challenge-shell"></div>
+                    <div data-wf--bracket--variant="bottom-right"
+                      class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                      <div class="bracket-svg w-embed">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                          <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                            stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
                         </svg>
                       </div>
                     </div>
                   </div>
-                </a>
-              </div>
-              <div data-wf--bracket--variant="bottom-right"
-                class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
-                <div class="bracket-svg w-embed">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
-                    <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
-                      stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        <!-- About Preview Section -->
-        <section class="famhack-about-preview">
-          <div class="famhack-about-preview-inner">
-            <div data-wf--bracket--variant="top-left" class="bracket">
-              <div class="bracket-svg w-embed">
-                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
-                  <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
-                    stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
-                </svg>
-              </div>
-            </div>
-            <h2 class="famhack-section-heading">What is FamHack?</h2>
-            <p class="famhack-section-text">FamHack is a one-day academic-family hackathon for first-year Informatics students and their academic parents. It turns the academic family network into a real team experience: build together, compete together, and meet the people you will keep around long after first year.</p>
-            <p class="famhack-section-text">The public programme centres on three challenge paths: a flagship main track, a CompSoc collaboration, and a scavenger hunt designed for mixed-skill teams.</p>
-            <div class="famhack-button-row">
-              <a data-wf--button--variant="dark" href="/about" class="button-link w-inline-block">
-                <div class="button w-variant-5452c88f-b993-2cc4-82dd-46f3e520c036">
-                  <p class="button-label w-variant-5452c88f-b993-2cc4-82dd-46f3e520c036">About FamHack</p>
-                  <div class="button-icon w-variant-5452c88f-b993-2cc4-82dd-46f3e520c036">
-                    <div class="button-icon-svg w-embed">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                        <path
-                          d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                          fill="currentColor" stroke-width="0.155153" />
+                  <div class="members-section ctf-panel ctf-completed-panel">
+                    <div data-wf--bracket--variant="top-left" class="bracket">
+                      <div class="bracket-svg w-embed">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                          <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                            stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                        </svg>
+                      </div>
+                    </div>
+                    <h2 class="members-heading">Your Clears</h2>
+                    <div id="ctf-completed-list" class="ctf-completed-list"></div>
+                    <div data-wf--bracket--variant="bottom-right"
+                      class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                      <div class="bracket-svg w-embed">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                          <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                            stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="members-section ctf-panel ctf-leaderboard-panel">
+                  <div data-wf--bracket--variant="top-left" class="bracket">
+                    <div class="bracket-svg w-embed">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                        <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                          stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                      </svg>
+                    </div>
+                  </div>
+                  <h2 class="members-heading">Leaderboard</h2>
+                  <div id="ctf-leaderboard-list" class="ctf-leaderboard-list"></div>
+                  <div data-wf--bracket--variant="bottom-right"
+                    class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                    <div class="bracket-svg w-embed">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                        <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                          stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
                       </svg>
                     </div>
                   </div>
                 </div>
-              </a>
-              <a data-wf--button--variant="colour" href="/tracks" class="button-link w-inline-block">
-                <div class="button">
-                  <p class="button-label">Explore Tracks</p>
-                  <div class="button-icon w-variant-5452c88f-b993-2cc4-82dd-46f3e520c036">
-                    <div class="button-icon-svg w-embed">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                        <path
-                          d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                          fill="currentColor" stroke-width="0.155153" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </a>
-            </div>
-            <div data-wf--bracket--variant="bottom-right"
-              class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
-              <div class="bracket-svg w-embed">
-                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
-                  <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
-                    stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
-                </svg>
               </div>
             </div>
           </div>
@@ -391,6 +381,7 @@
                 <a href="/tracks">Tracks</a>
                 <a href="/register">Register</a>
                 <a href="/dashboard">Dashboard</a>
+                <a href="/ctf">CTF</a>
               </div>
               <div class="footer-col">
                 <h6>Community</h6>
@@ -431,58 +422,31 @@
     type="text/javascript"></script>
   <script src="https://cdn.prod.website-files.com/gsap/3.14.2/gsap.min.js" type="text/javascript"></script>
   <script src="https://cdn.prod.website-files.com/gsap/3.14.2/ScrollTrigger.min.js" type="text/javascript"></script>
-  <script src="https://cdn.prod.website-files.com/gsap/3.14.2/Draggable.min.js" type="text/javascript"></script>
   <script src="https://cdn.prod.website-files.com/gsap/3.14.2/ScrollSmoother.min.js" type="text/javascript"></script>
-  <script src="https://cdn.prod.website-files.com/gsap/3.14.2/InertiaPlugin.min.js" type="text/javascript"></script>
-  <script src="https://cdn.prod.website-files.com/gsap/3.14.2/SplitText.min.js" type="text/javascript"></script>
-  <script
-    type="text/javascript">gsap.registerPlugin(ScrollTrigger, Draggable, ScrollSmoother, InertiaPlugin, SplitText);</script>
+  <script type="text/javascript">gsap.registerPlugin(ScrollTrigger, ScrollSmoother);</script>
 
-  <!-- Disable body scroll when flyout menu is open -->
   <script>
-    const toggleScroll = (isOpen) => {
-      gsap.set(document.body, { overflow: isOpen ? "hidden" : "" });
-    };
-    window.addEventListener("load", () => {
-      const flyoutMenu = document.querySelector(".flyout-menu");
-      if (flyoutMenu) {
-        const isOpen = getComputedStyle(flyoutMenu).display === "grid";
-        toggleScroll(isOpen);
-      }
-    });
+    const toggleScroll = (isOpen) => { gsap.set(document.body, { overflow: isOpen ? "hidden" : "" }); };
     const flyoutMenu = document.querySelector(".flyout-menu");
     if (flyoutMenu) {
       new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           if (mutation.type === "attributes") {
-            const isOpen = getComputedStyle(flyoutMenu).display === "grid";
-            toggleScroll(isOpen);
+            toggleScroll(getComputedStyle(flyoutMenu).display === "grid");
           }
         });
       }).observe(flyoutMenu, { attributes: true, attributeFilter: ["style", "class"] });
     }
   </script>
 
-  <!-- Page Transitions -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const transitionEl = document.querySelector(".page-transition-wrapper");
       let transitionTimeline;
-      const isInIframe = window.self !== window.top;
-      if (isInIframe && transitionEl) {
-        gsap.set(transitionEl, { display: "none" });
-        return;
-      }
+      if (window.self !== window.top && transitionEl) { gsap.set(transitionEl, { display: "none" }); return; }
       function createTransitionTimeline() {
         if (!transitionEl) return;
-        transitionTimeline = gsap.timeline({
-          paused: true,
-          onComplete: () => {
-            if (transitionTimeline.reversed()) {
-              gsap.set(transitionEl, { display: "none" });
-            }
-          },
-        });
+        transitionTimeline = gsap.timeline({ paused: true, onComplete: () => { if (transitionTimeline.reversed()) gsap.set(transitionEl, { display: "none" }); } });
         transitionTimeline.to(transitionEl, { rowGap: "400vh", duration: 0.6, ease: "power2.inOut" });
       }
       function animateIn() {
@@ -493,15 +457,8 @@
           setTimeout(() => gsap.set(transitionEl, { display: "none" }), 1000);
         }
       }
-      window.addEventListener("pageshow", function (event) {
-        if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
-          animateIn();
-        } else {
-          animateIn();
-        }
-      });
-      const links = document.querySelectorAll("a[href]:not([target='_blank']):not([href^='#'])");
-      links.forEach((link) => {
+      window.addEventListener("pageshow", () => animateIn());
+      document.querySelectorAll("a[href]:not([target='_blank']):not([href^='#'])").forEach((link) => {
         link.addEventListener("click", function (e) {
           e.preventDefault();
           const url = this.href;
@@ -510,28 +467,19 @@
             if (!transitionTimeline) createTransitionTimeline();
             transitionTimeline.reverse();
             transitionTimeline.eventCallback("onReverseComplete", () => { window.location.href = url; });
-          } else {
-            window.location.href = url;
-          }
+          } else { window.location.href = url; }
         });
       });
     });
   </script>
 
-  <!-- GSAP Smooth Scroll -->
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      gsap.registerPlugin(ScrollTrigger, Draggable, ScrollSmoother);
+      gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
       const smoothWrapper = document.querySelector(".smooth-wrapper");
       const smoothContent = document.querySelector(".smooth-content");
       if (smoothWrapper && smoothContent) {
-        ScrollSmoother.create({
-          wrapper: ".smooth-wrapper",
-          content: ".smooth-content",
-          smooth: 1.2,
-          smoothTouch: true,
-          effects: true,
-        });
+        ScrollSmoother.create({ wrapper: ".smooth-wrapper", content: ".smooth-content", smooth: 1.2, smoothTouch: true, effects: true });
       }
     });
   </script>

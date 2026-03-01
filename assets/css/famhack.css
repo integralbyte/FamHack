@@ -78,10 +78,33 @@ body.menu-open {
 }
 
 .famhack-hero-logo-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 400px);
   margin-bottom: 12px;
 }
 
+.famhack-hero-secret {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.88rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(255, 233, 206, 0.18);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
 .famhack-hero-logo {
+  position: relative;
+  z-index: 1;
   max-width: 400px;
   width: 100%;
   height: auto;
@@ -910,6 +933,59 @@ button.role-card {
   margin-bottom: 12px;
 }
 
+.ctf-launch-card {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 26px;
+  margin-bottom: 28px;
+  padding: 34px 40px 36px;
+  background:
+    radial-gradient(circle at top right, rgba(252, 47, 32, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(255, 233, 206, 0.04), rgba(255, 233, 206, 0.02)),
+    #101010;
+  border: 1px solid rgba(255, 233, 206, 0.08);
+}
+
+.ctf-launch-copy-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 560px;
+}
+
+.ctf-launch-kicker,
+.ctf-page-kicker,
+.ctf-step-kicker {
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: rgba(252, 47, 32, 0.88);
+}
+
+.ctf-launch-title {
+  margin-bottom: 0;
+}
+
+.ctf-launch-copy,
+.ctf-summary-copy,
+.ctf-challenge-copy,
+.ctf-gate-pulse,
+.ctf-leaderboard-meta {
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: rgba(255, 233, 206, 0.72);
+}
+
+#ctf-launch-link.is-disabled {
+  pointer-events: none;
+  opacity: 0.56;
+}
+
 .dashboard-loading {
   margin-bottom: 40px;
   padding: 34px;
@@ -1041,6 +1117,223 @@ button.role-card {
   padding: 0;
   border: none;
   background: transparent;
+}
+
+.ctf-inner {
+  max-width: 1140px;
+}
+
+.ctf-header {
+  margin-bottom: 28px;
+}
+
+.ctf-loading {
+  margin-bottom: 28px;
+}
+
+.ctf-return-link {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ctf-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.ctf-summary-card {
+  margin-bottom: 0;
+}
+
+.ctf-summary-copy {
+  font-size: 1rem;
+  color: #ffe9ce;
+}
+
+.ctf-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.85fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.ctf-main-column {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.ctf-panel {
+  background:
+    radial-gradient(circle at top left, rgba(252, 47, 32, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 233, 206, 0.04), rgba(255, 233, 206, 0.015)),
+    #101010;
+  border: 1px solid rgba(255, 233, 206, 0.08);
+}
+
+.ctf-challenge-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ctf-challenge-title {
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: clamp(1.55rem, 2.8vw, 2.4rem);
+  font-weight: 600;
+  color: #ffe9ce;
+  line-height: 1.08;
+}
+
+.ctf-challenge-clue {
+  margin: 0;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 233, 206, 0.12);
+  background: rgba(255, 233, 206, 0.04);
+  font-family: 'Azeret Mono', monospace;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: #ffe9ce;
+}
+
+.ctf-download-link,
+.ctf-submit-link {
+  align-self: flex-start;
+}
+
+.ctf-submit-link {
+  margin-top: 4px;
+}
+
+.ctf-inline-error {
+  min-height: 1.5em;
+}
+
+.ctf-konami-stage {
+  min-height: 250px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  border: 1px solid rgba(255, 233, 206, 0.1);
+  background:
+    radial-gradient(circle at center, rgba(252, 47, 32, 0.05), transparent 55%),
+    rgba(255, 233, 206, 0.015);
+}
+
+.ctf-konami-text {
+  margin: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: clamp(1.8rem, 5vw, 3.8rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fc2f20;
+  text-align: center;
+}
+
+.ctf-konami-text.is-solved {
+  color: #65d38b;
+}
+
+.ctf-challenge-card-success {
+  min-height: 280px;
+  justify-content: center;
+}
+
+.ctf-gate-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 54px;
+}
+
+.ctf-next-btn {
+  min-width: 180px;
+}
+
+.ctf-gate-pulse {
+  color: rgba(252, 47, 32, 0.88);
+  animation: ctf-gate-pulse 1.1s ease-in-out infinite alternate;
+}
+
+.ctf-completed-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ctf-completed-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 233, 206, 0.12);
+  background: rgba(255, 233, 206, 0.03);
+}
+
+.ctf-completed-number {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  color: rgba(252, 47, 32, 0.9);
+}
+
+.ctf-completed-title {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 0.82rem;
+  color: #ffe9ce;
+}
+
+.ctf-leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ctf-leaderboard-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 233, 206, 0.1);
+  background: rgba(255, 233, 206, 0.03);
+}
+
+.ctf-leaderboard-row.is-current-team {
+  border-color: rgba(252, 47, 32, 0.42);
+  background:
+    linear-gradient(90deg, rgba(252, 47, 32, 0.12), rgba(252, 47, 32, 0.03)),
+    rgba(255, 233, 206, 0.04);
+}
+
+.ctf-leaderboard-rank,
+.ctf-leaderboard-level,
+.ctf-leaderboard-name {
+  font-family: 'Azeret Mono', monospace;
+}
+
+.ctf-leaderboard-rank {
+  font-size: 1rem;
+  color: rgba(252, 47, 32, 0.92);
+}
+
+.ctf-leaderboard-name {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  color: #ffe9ce;
+}
+
+.ctf-leaderboard-level {
+  font-size: 0.88rem;
+  color: #ffe9ce;
+  letter-spacing: 0.12em;
 }
 
 .danger-shell {
@@ -1274,6 +1567,18 @@ button.role-card {
   50% {
     opacity: 1;
     box-shadow: 0 0 0 10px rgba(252, 47, 32, 0.16);
+  }
+}
+
+@keyframes ctf-gate-pulse {
+  from {
+    opacity: 0.58;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(-2px);
   }
 }
 
@@ -1897,6 +2202,16 @@ button.button-link:disabled {
     grid-template-columns: 1fr;
   }
 
+  .ctf-layout,
+  .ctf-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ctf-launch-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .organizer-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1973,6 +2288,15 @@ button.button-link:disabled {
     height: 150px;
   }
 
+  .ctf-launch-card,
+  .ctf-panel {
+    padding: 28px 20px;
+  }
+
+  .ctf-konami-stage {
+    min-height: 210px;
+  }
+
   .track-card,
   .about-panel,
   .organizer-card,
@@ -2024,6 +2348,14 @@ button.button-link:disabled {
   .member-card {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .ctf-leaderboard-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .ctf-leaderboard-level {
+    grid-column: 2;
   }
 
   .member-card-actions {

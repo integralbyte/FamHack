@@ -176,3 +176,32 @@ alter table public.team_memberships enable row level security;
 revoke all on public.profiles from anon, authenticated;
 revoke all on public.teams from anon, authenticated;
 revoke all on public.team_memberships from anon, authenticated;
+
+create table if not exists public.ctf_member_solves (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references public.teams (id) on delete cascade,
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  challenge_number smallint not null check (challenge_number between 1 and 5),
+  solved_at timestamptz not null default timezone('utc', now()),
+  unique (team_id, user_id, challenge_number)
+);
+
+create table if not exists public.ctf_team_checkpoints (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references public.teams (id) on delete cascade,
+  challenge_number smallint not null check (challenge_number between 1 and 5),
+  reached_by uuid references public.profiles (id) on delete set null,
+  reached_at timestamptz not null default timezone('utc', now()),
+  unique (team_id, challenge_number)
+);
+
+create index if not exists ctf_member_solves_team_user_idx
+  on public.ctf_member_solves (team_id, user_id, challenge_number);
+create index if not exists ctf_team_checkpoints_rank_idx
+  on public.ctf_team_checkpoints (challenge_number desc, reached_at asc);
+
+alter table public.ctf_member_solves enable row level security;
+alter table public.ctf_team_checkpoints enable row level security;
+
+revoke all on public.ctf_member_solves from anon, authenticated;
+revoke all on public.ctf_team_checkpoints from anon, authenticated;
