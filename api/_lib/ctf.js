@@ -2,7 +2,7 @@ import { assertAllowedEmail, getMembershipByUserId, getTeamById } from './teams.
 import { getServiceClient } from './supabase.js';
 
 export const CTF_CHALLENGE_COUNT = 5;
-export const CTF_HOME_SECRET = 'family-orbit';
+export const CTF_HOME_SECRET = 'FAMILY-ORBIT';
 export const CTF_PDF_FILENAME = 'CTF.pdf';
 export const CTF_PDF_TITLE = 'pale-echo.pdf';
 const CTF_IMAGE_WIDTH = 96;
