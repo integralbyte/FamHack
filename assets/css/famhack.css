@@ -1205,6 +1205,10 @@ button.role-card {
   gap: 18px;
 }
 
+.ctf-challenge-card-konami {
+  gap: 0;
+}
+
 .ctf-challenge-title {
   margin: 0;
   font-family: 'Azeret Mono', monospace;
@@ -1239,6 +1243,8 @@ button.role-card {
 }
 
 .ctf-konami-stage {
+  width: 100%;
+  box-sizing: border-box;
   min-height: 250px;
   display: grid;
   place-items: center;
@@ -1263,6 +1269,15 @@ button.role-card {
 
 .ctf-konami-text.is-solved {
   color: #65d38b;
+}
+
+.ctf-challenge-card-konami .ctf-inline-error:empty {
+  display: none;
+  min-height: 0;
+}
+
+.ctf-challenge-card-konami .ctf-inline-error:not(:empty) {
+  margin-top: 18px;
 }
 
 .ctf-challenge-card-success {
