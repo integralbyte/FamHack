@@ -15,7 +15,7 @@ const CTF_PUBLIC_CHALLENGES = [
     title: 'Signal One',
     mode: 'text',
     prompt: '',
-    body: 'liFe drAws huMans tHrough Attics. Ciphered brooKs wait.',
+    body: 'Faintly Ancient Maps Hold A Coded Key.',
     inputLabel: 'Answer',
     placeholder: 'Enter answer',
     actionLabel: 'Submit',
