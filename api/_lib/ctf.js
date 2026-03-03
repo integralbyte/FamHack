@@ -43,7 +43,7 @@ const CTF_PUBLIC_CHALLENGES = [
     number: 4,
     title: 'Signal Four',
     mode: 'password',
-    prompt: 'go home, look for me and then 640 me please',
+    prompt: 'Go home, look for me, and then 640 me please.',
     inputLabel: 'Password',
     placeholder: 'Enter password',
     actionLabel: 'Submit',
