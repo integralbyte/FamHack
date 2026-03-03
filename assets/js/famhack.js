@@ -1160,7 +1160,7 @@ const FamHack = {
 
     if (statusBanner) {
       statusBanner.hidden = false;
-      statusBanner.classList.toggle('is-success', ctf.member.completed);
+      statusBanner.classList.toggle('is-success', ctf.member.completed || ctf.team.level > ctf.member.highestSolvedChallenge);
       if (ctf.member.completed) {
         statusBanner.textContent = 'Congrats, you cleared every challenge.';
       } else if (ctf.team.level > ctf.member.highestSolvedChallenge) {
