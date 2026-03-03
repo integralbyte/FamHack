@@ -1160,8 +1160,9 @@ const FamHack = {
 
     if (statusBanner) {
       statusBanner.hidden = false;
+      statusBanner.classList.toggle('is-success', ctf.member.completed);
       if (ctf.member.completed) {
-        statusBanner.textContent = 'You cleared every challenge. Your family keeps its place on the leaderboard even if your teammates start from challenge one.';
+        statusBanner.textContent = 'Congrats, you cleared every challenge.';
       } else if (ctf.team.level > ctf.member.highestSolvedChallenge) {
         statusBanner.textContent = `Your family has already reached level ${ctf.team.level}. Your own run still advances one challenge at a time from where you left it.`;
       } else {
@@ -1990,6 +1991,7 @@ const FamHack = {
       const shell = document.getElementById('ctf-challenge-shell');
       if (banner) {
         banner.hidden = false;
+        banner.classList.remove('is-success');
         banner.textContent = message;
       }
       if (shell) {

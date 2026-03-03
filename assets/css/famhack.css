@@ -1116,6 +1116,12 @@ button.role-card {
   line-height: 1.7;
 }
 
+.status-banner.is-success {
+  background-color: rgba(101, 211, 139, 0.09);
+  border-color: rgba(101, 211, 139, 0.34);
+  color: #bdf5d0;
+}
+
 .dashboard-danger {
   margin-top: 40px;
   padding: 0;
