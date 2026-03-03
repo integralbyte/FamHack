@@ -1,10 +1,10 @@
 import { getServiceClient } from './supabase.js';
 
-export async function requireUser(req) {
+export async function getOptionalUser(req) {
   const authorization = req.headers.authorization || '';
 
   if (!authorization.startsWith('Bearer ')) {
-    throw new Error('Missing bearer token');
+    return null;
   }
 
   const token = authorization.slice('Bearer '.length);
@@ -12,8 +12,21 @@ export async function requireUser(req) {
   const { data, error } = await supabase.auth.getUser(token);
 
   if (error || !data.user) {
-    throw new Error('Invalid or expired session');
+    return null;
   }
 
   return data.user;
+}
+
+export async function requireUser(req) {
+  const authorization = req.headers.authorization || '';
+  if (!authorization.startsWith('Bearer ')) {
+    throw new Error('Missing bearer token');
+  }
+
+  const user = await getOptionalUser(req);
+  if (!user) {
+    throw new Error('Invalid or expired session');
+  }
+  return user;
 }

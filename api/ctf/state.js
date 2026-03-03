@@ -1,5 +1,5 @@
-import { requireUser } from '../_lib/auth.js';
-import { getCtfStateForUser } from '../_lib/ctf.js';
+import { getOptionalUser } from '../_lib/auth.js';
+import { getCtfStateForUser, getGuestCtfState } from '../_lib/ctf.js';
 import { allowMethods, sendError } from '../_lib/http.js';
 
 export default async function handler(req, res) {
@@ -8,8 +8,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const user = await requireUser(req);
-    const state = await getCtfStateForUser(user);
+    const user = await getOptionalUser(req);
+    const state = user ? await getCtfStateForUser(user) : await getGuestCtfState();
     res.status(200).json(state);
   } catch (error) {
     sendError(res, error.status || 500, error.message);

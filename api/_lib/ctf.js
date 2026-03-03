@@ -87,6 +87,27 @@ function encodeBase64Times(value, times) {
   return output;
 }
 
+function sanitizeSolvedChallengeNumbers(solvedChallenges) {
+  const numbers = Array.isArray(solvedChallenges)
+    ? solvedChallenges
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value >= 1 && value <= CTF_CHALLENGE_COUNT)
+    : [];
+
+  const uniqueSorted = Array.from(new Set(numbers)).sort((left, right) => left - right);
+  const contiguous = [];
+
+  for (let expected = 1; expected <= CTF_CHALLENGE_COUNT; expected += 1) {
+    if (uniqueSorted.includes(expected)) {
+      contiguous.push(expected);
+    } else {
+      break;
+    }
+  }
+
+  return contiguous;
+}
+
 function verifyChallengeAnswer(challengeNumber, answer) {
   const looseAnswer = normalizeLooseAnswer(answer);
   const exactAnswer = normalizeExactAnswer(answer);
@@ -115,6 +136,26 @@ function serializeChallenge(challenge, solvedChallengeNumbers, currentChallengeN
     solved: solvedChallengeNumbers.includes(challenge.number),
     active: challenge.number === currentChallengeNumber,
     locked: currentChallengeNumber == null ? false : challenge.number > currentChallengeNumber,
+  };
+}
+
+function buildCtfState({ viewer, solvedChallengeNumbers, team, leaderboard }) {
+  const highestSolvedChallenge = solvedChallengeNumbers.at(-1) || 0;
+  const currentChallengeNumber = highestSolvedChallenge >= CTF_CHALLENGE_COUNT
+    ? null
+    : Math.min(highestSolvedChallenge + 1, CTF_CHALLENGE_COUNT);
+
+  return {
+    viewer,
+    member: {
+      solvedChallenges: solvedChallengeNumbers,
+      highestSolvedChallenge,
+      currentChallengeNumber: highestSolvedChallenge >= CTF_CHALLENGE_COUNT ? CTF_CHALLENGE_COUNT : currentChallengeNumber,
+      completed: highestSolvedChallenge >= CTF_CHALLENGE_COUNT,
+    },
+    team,
+    challenges: CTF_PUBLIC_CHALLENGES.map((challenge) => serializeChallenge(challenge, solvedChallengeNumbers, currentChallengeNumber)),
+    leaderboard,
   };
 }
 
@@ -253,25 +294,17 @@ export async function getCtfStateForUser(user) {
 
   const solvedChallengeNumbers = memberSolves.map((row) => row.challenge_number).sort((a, b) => a - b);
   const highestSolvedChallenge = solvedChallengeNumbers.at(-1) || 0;
-  const currentChallengeNumber = highestSolvedChallenge >= CTF_CHALLENGE_COUNT
-    ? null
-    : Math.min(highestSolvedChallenge + 1, CTF_CHALLENGE_COUNT);
   const teamLevel = teamCheckpoints.at(-1)?.challenge_number || 0;
   const teamReachedAt = teamCheckpoints.at(-1)?.reached_at || null;
 
-  return {
+  return buildCtfState({
     viewer: {
       id: user.id,
       email: user.email,
       role: membership.role,
       teamId: team.id,
       teamName: team.name,
-    },
-    member: {
-      solvedChallenges: solvedChallengeNumbers,
-      highestSolvedChallenge,
-      currentChallengeNumber: highestSolvedChallenge >= CTF_CHALLENGE_COUNT ? CTF_CHALLENGE_COUNT : currentChallengeNumber,
-      completed: highestSolvedChallenge >= CTF_CHALLENGE_COUNT,
+      guest: false,
     },
     team: {
       id: team.id,
@@ -279,9 +312,33 @@ export async function getCtfStateForUser(user) {
       level: teamLevel,
       reachedAt: teamReachedAt,
     },
-    challenges: CTF_PUBLIC_CHALLENGES.map((challenge) => serializeChallenge(challenge, solvedChallengeNumbers, currentChallengeNumber)),
+    solvedChallengeNumbers,
     leaderboard,
-  };
+  });
+}
+
+export async function getGuestCtfState(solvedChallenges = []) {
+  const leaderboard = await getCtfLeaderboard();
+  const solvedChallengeNumbers = sanitizeSolvedChallengeNumbers(solvedChallenges);
+
+  return buildCtfState({
+    viewer: {
+      id: null,
+      email: null,
+      role: 'guest',
+      teamId: null,
+      teamName: 'Guest Run',
+      guest: true,
+    },
+    solvedChallengeNumbers,
+    team: {
+      id: null,
+      name: 'Guest Run',
+      level: 0,
+      reachedAt: null,
+    },
+    leaderboard,
+  });
 }
 
 export async function submitCtfAnswerForUser(user, challengeNumber, answer) {
@@ -337,4 +394,30 @@ export async function submitCtfAnswerForUser(user, challengeNumber, answer) {
   }
 
   return getCtfStateForUser(user);
+}
+
+export async function submitGuestCtfAnswer(challengeNumber, answer, solvedChallenges = []) {
+  const parsedChallengeNumber = Number(challengeNumber);
+
+  if (!Number.isInteger(parsedChallengeNumber) || parsedChallengeNumber < 1 || parsedChallengeNumber > CTF_CHALLENGE_COUNT) {
+    throw createStatusError(400, 'Unknown CTF challenge');
+  }
+
+  const solvedChallengeNumbers = sanitizeSolvedChallengeNumbers(solvedChallenges);
+  const highestSolvedChallenge = solvedChallengeNumbers.at(-1) || 0;
+  const expectedChallengeNumber = highestSolvedChallenge + 1;
+
+  if (parsedChallengeNumber <= highestSolvedChallenge) {
+    return getGuestCtfState(solvedChallengeNumbers);
+  }
+
+  if (parsedChallengeNumber !== expectedChallengeNumber) {
+    throw createStatusError(409, 'Solve your current challenge before moving on.');
+  }
+
+  if (!verifyChallengeAnswer(parsedChallengeNumber, answer)) {
+    throw createStatusError(400, 'That answer is not correct yet.');
+  }
+
+  return getGuestCtfState([...solvedChallengeNumbers, parsedChallengeNumber]);
 }

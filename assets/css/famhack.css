@@ -1280,6 +1280,10 @@ button.role-card {
   margin-top: 18px;
 }
 
+.ctf-challenge-card-konami .ctf-gate-actions {
+  margin-top: 18px;
+}
+
 .ctf-challenge-card-success {
   min-height: 280px;
   justify-content: center;
@@ -1294,6 +1298,11 @@ button.role-card {
 
 .ctf-next-btn {
   min-width: 180px;
+  background-color: #f12c1e;
+}
+
+.ctf-next-btn:hover {
+  background-color: #da291c;
 }
 
 .ctf-gate-pulse {

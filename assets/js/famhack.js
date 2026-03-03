@@ -595,7 +595,11 @@ const FamHack = {
   },
 
   async initCtfPage() {
-    document.getElementById('ctf-sign-out-btn')?.addEventListener('click', () => this.handleSignOut());
+    const signOutButton = document.getElementById('ctf-sign-out-btn');
+    signOutButton?.addEventListener('click', () => this.handleSignOut());
+    if (signOutButton) {
+      signOutButton.hidden = !this.state.session;
+    }
     document.getElementById('ctf-challenge-shell')?.addEventListener('submit', (event) => this.handleCtfSubmit(event));
     document.getElementById('ctf-challenge-shell')?.addEventListener('click', (event) => {
       const nextButton = event.target.closest('[data-ctf-next]');
@@ -605,11 +609,6 @@ const FamHack = {
     });
 
     document.addEventListener('keydown', (event) => this.handleKonamiKeydown(event));
-
-    if (!this.state.session) {
-      this.redirect('/register');
-      return;
-    }
 
     this.setCtfLoading(true);
     await this.loadCtfState();
@@ -1136,36 +1135,63 @@ const FamHack = {
     const memberProgress = document.getElementById('ctf-member-progress-copy');
     const teamRank = document.getElementById('ctf-team-rank');
     const statusBanner = document.getElementById('ctf-status-banner');
+    const returnLink = document.querySelector('.ctf-return-link');
+    const signOutButton = document.getElementById('ctf-sign-out-btn');
+    const isGuest = Boolean(ctf.viewer?.guest);
 
     if (teamName) {
-      teamName.textContent = ctf.viewer.teamName;
+      teamName.textContent = isGuest ? 'Guest Run' : ctf.viewer.teamName;
     }
 
     if (teamLevel) {
-      teamLevel.textContent = `Family level ${ctf.team.level} / ${this.config.ctfChallengeCount || ctf.challenges.length}`;
+      teamLevel.textContent = isGuest
+        ? `Open practice run · ${ctf.challenges.length} challenges`
+        : `Family level ${ctf.team.level} / ${this.config.ctfChallengeCount || ctf.challenges.length}`;
     }
 
     if (memberProgress) {
       if (ctf.member.completed) {
-        memberProgress.textContent = `Your run is complete: ${ctf.member.solvedChallenges.length}/${ctf.challenges.length} challenges cleared.`;
+        memberProgress.textContent = isGuest
+          ? `Guest run complete: ${ctf.member.solvedChallenges.length}/${ctf.challenges.length} challenges cleared.`
+          : `Your run is complete: ${ctf.member.solvedChallenges.length}/${ctf.challenges.length} challenges cleared.`;
       } else {
-        memberProgress.textContent = `Your run is on challenge ${ctf.member.currentChallengeNumber}/${ctf.challenges.length}.`;
+        memberProgress.textContent = isGuest
+          ? `Guest run is on challenge ${ctf.member.currentChallengeNumber}/${ctf.challenges.length}.`
+          : `Your run is on challenge ${ctf.member.currentChallengeNumber}/${ctf.challenges.length}.`;
       }
     }
 
     if (teamRank) {
-      const ownRow = ctf.leaderboard.find((row) => row.teamId === ctf.team.id);
-      teamRank.textContent = ownRow ? `Leaderboard rank #${ownRow.rank}` : 'Leaderboard rank pending';
+      if (isGuest) {
+        teamRank.textContent = 'Sign in with a family to appear';
+      } else {
+        const ownRow = ctf.leaderboard.find((row) => row.teamId === ctf.team.id);
+        teamRank.textContent = ownRow ? `Leaderboard rank #${ownRow.rank}` : 'Leaderboard rank pending';
+      }
+    }
+
+    if (returnLink) {
+      returnLink.href = this.state.session ? '/dashboard' : '/register';
+      returnLink.textContent = this.state.session ? 'Back to Dashboard' : 'Back to Register';
+    }
+
+    if (signOutButton) {
+      signOutButton.hidden = !this.state.session;
     }
 
     if (statusBanner) {
       statusBanner.hidden = false;
-      statusBanner.classList.toggle('is-success', ctf.member.completed || ctf.team.level > ctf.member.highestSolvedChallenge);
-      if (ctf.member.completed) {
+      if (isGuest) {
+        statusBanner.classList.remove('is-success');
+        statusBanner.textContent = 'Guest mode only. Your progress will not be saved.';
+      } else if (ctf.member.completed) {
+        statusBanner.classList.add('is-success');
         statusBanner.textContent = 'Congrats, you cleared every challenge.';
       } else if (ctf.team.level > ctf.member.highestSolvedChallenge) {
+        statusBanner.classList.add('is-success');
         statusBanner.textContent = `Your family has already reached level ${ctf.team.level}. Your own run still advances one challenge at a time from where you left it.`;
       } else {
+        statusBanner.classList.remove('is-success');
         statusBanner.textContent = 'The first clear from any approved family member advances the family on the leaderboard. Your own run remains personal.';
       }
     }
@@ -1182,7 +1208,9 @@ const FamHack = {
 
     const solved = ctf.challenges.filter((challenge) => ctf.member.solvedChallenges.includes(challenge.number));
     if (!solved.length) {
-      container.innerHTML = '<p class="empty-state">No personal clears yet. Your first solve starts the run.</p>';
+      container.innerHTML = ctf.viewer?.guest
+        ? '<p class="empty-state">No clears yet. This guest run starts from challenge one.</p>'
+        : '<p class="empty-state">No personal clears yet. Your first solve starts the run.</p>';
       return;
     }
 
@@ -1205,7 +1233,7 @@ const FamHack = {
     }
 
     container.innerHTML = ctf.leaderboard.map((row) => {
-      const isCurrentTeam = row.teamId === ctf.team.id;
+      const isCurrentTeam = !ctf.viewer?.guest && row.teamId === ctf.team.id;
       const stamp = row.reachedAt ? this.formatDateTime(row.reachedAt) : 'Waiting for first clear';
 
       return `
@@ -1238,7 +1266,9 @@ const FamHack = {
         <section class="ctf-challenge-card ctf-challenge-card-success">
           <p class="ctf-step-kicker">Run Complete</p>
           <h2 class="ctf-challenge-title">Every signal is clear.</h2>
-          <p class="ctf-challenge-copy">You finished the full FamHack CTF. Your family stays on the board, and your teammates can still play through from challenge one on their own runs.</p>
+          <p class="ctf-challenge-copy">${ctf.viewer?.guest
+            ? 'You finished the full FamHack CTF. Sign in with a family if you want your clears to count on the board.'
+            : 'You finished the full FamHack CTF. Your family stays on the board, and your teammates can still play through from challenge one on their own runs.'}</p>
         </section>
       `;
       return;
@@ -1255,7 +1285,7 @@ const FamHack = {
             <div class="ctf-gate-actions">
               ${gate.ready
                 ? '<button type="button" class="copy-btn ctf-next-btn" data-ctf-next>Next Challenge</button>'
-                : '<p class="ctf-gate-pulse">Opening the next signal...</p>'}
+                : '<p class="ctf-gate-pulse">Unlocking the next signal...</p>'}
             </div>
           </section>
         `;
@@ -1270,7 +1300,7 @@ const FamHack = {
           <div class="ctf-gate-actions">
             ${gate.ready
               ? '<button type="button" class="copy-btn ctf-next-btn" data-ctf-next>Next Challenge</button>'
-              : '<p class="ctf-gate-pulse">Opening the next signal...</p>'}
+              : '<p class="ctf-gate-pulse">Unlocking the next signal...</p>'}
           </div>
         </section>
       `;
@@ -1377,6 +1407,7 @@ const FamHack = {
       body: {
         challengeNumber: challenge.number,
         answer,
+        solvedChallenges: this.state.ctf?.viewer?.guest ? this.state.ctf?.member?.solvedChallenges || [] : undefined,
       },
     });
 
