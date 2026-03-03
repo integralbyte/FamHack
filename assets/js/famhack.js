@@ -1620,7 +1620,7 @@ const FamHack = {
         ctfLaunchLink.classList.add('is-disabled');
         this.setButtonLabel(ctfLaunchLink, 'Locked');
       } else {
-        ctfLaunchTitle.textContent = 'Family CTF';
+        ctfLaunchTitle.textContent = 'Open the challenge board';
         ctfLaunchCopy.textContent = 'Solve the separate five-step CTF here. The first teammate to clear a level moves the whole family up the leaderboard.';
         ctfLaunchLink.href = '/ctf';
         ctfLaunchLink.removeAttribute('aria-disabled');
