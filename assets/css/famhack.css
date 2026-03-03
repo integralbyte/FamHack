@@ -965,6 +965,10 @@ button.role-card {
   color: rgba(252, 47, 32, 0.88);
 }
 
+.ctf-page-kicker {
+  margin-bottom: 14px;
+}
+
 .ctf-launch-title {
   margin-bottom: 0;
 }
@@ -1157,14 +1161,11 @@ button.role-card {
 .ctf-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.85fr);
+  grid-template-areas:
+    "solve leaderboard"
+    "clears clears";
   gap: 22px;
-  align-items: start;
-}
-
-.ctf-main-column {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
+  align-items: stretch;
 }
 
 .ctf-panel {
@@ -1173,6 +1174,23 @@ button.role-card {
     linear-gradient(180deg, rgba(255, 233, 206, 0.04), rgba(255, 233, 206, 0.015)),
     #101010;
   border: 1px solid rgba(255, 233, 206, 0.08);
+}
+
+.ctf-solve-panel {
+  grid-area: solve;
+}
+
+.ctf-leaderboard-panel {
+  grid-area: leaderboard;
+}
+
+.ctf-completed-panel {
+  grid-area: clears;
+}
+
+.ctf-solve-panel,
+.ctf-leaderboard-panel {
+  height: 100%;
 }
 
 .ctf-challenge-card {
@@ -2205,6 +2223,13 @@ button.button-link:disabled {
   .ctf-layout,
   .ctf-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ctf-layout {
+    grid-template-areas:
+      "solve"
+      "leaderboard"
+      "clears";
   }
 
   .ctf-launch-card {
