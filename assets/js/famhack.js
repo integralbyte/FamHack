@@ -1641,7 +1641,7 @@ const FamHack = {
 
     if (ctfLaunchTitle && ctfLaunchCopy && ctfLaunchLink) {
       ctfLaunchTitle.textContent = 'Open the challenge board';
-      ctfLaunchCopy.textContent = 'Solve the five-step CTF on your own run. The leaderboard tracks individual clears, not families.';
+      ctfLaunchCopy.textContent = 'Solve the six-step CTF on your own run. The leaderboard tracks individual clears, not families.';
       ctfLaunchLink.href = '/ctf';
       ctfLaunchLink.removeAttribute('aria-disabled');
       ctfLaunchLink.classList.remove('is-disabled');

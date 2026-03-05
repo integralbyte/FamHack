@@ -181,7 +181,7 @@ create table if not exists public.ctf_member_solves (
   id uuid primary key default gen_random_uuid(),
   team_id uuid not null references public.teams (id) on delete cascade,
   user_id uuid not null references public.profiles (id) on delete cascade,
-  challenge_number smallint not null check (challenge_number between 1 and 5),
+  challenge_number smallint not null check (challenge_number between 1 and 6),
   solved_at timestamptz not null default timezone('utc', now()),
   unique (team_id, user_id, challenge_number)
 );
@@ -189,7 +189,7 @@ create table if not exists public.ctf_member_solves (
 create table if not exists public.ctf_team_checkpoints (
   id uuid primary key default gen_random_uuid(),
   team_id uuid not null references public.teams (id) on delete cascade,
-  challenge_number smallint not null check (challenge_number between 1 and 5),
+  challenge_number smallint not null check (challenge_number between 1 and 6),
   reached_by uuid references public.profiles (id) on delete set null,
   reached_at timestamptz not null default timezone('utc', now()),
   unique (team_id, challenge_number)
@@ -198,10 +198,28 @@ create table if not exists public.ctf_team_checkpoints (
 create table if not exists public.ctf_user_solves (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles (id) on delete cascade,
-  challenge_number smallint not null check (challenge_number between 1 and 5),
+  challenge_number smallint not null check (challenge_number between 1 and 6),
   solved_at timestamptz not null default timezone('utc', now()),
   unique (user_id, challenge_number)
 );
+
+alter table public.ctf_member_solves
+  drop constraint if exists ctf_member_solves_challenge_number_check;
+alter table public.ctf_member_solves
+  add constraint ctf_member_solves_challenge_number_check
+  check (challenge_number between 1 and 6);
+
+alter table public.ctf_team_checkpoints
+  drop constraint if exists ctf_team_checkpoints_challenge_number_check;
+alter table public.ctf_team_checkpoints
+  add constraint ctf_team_checkpoints_challenge_number_check
+  check (challenge_number between 1 and 6);
+
+alter table public.ctf_user_solves
+  drop constraint if exists ctf_user_solves_challenge_number_check;
+alter table public.ctf_user_solves
+  add constraint ctf_user_solves_challenge_number_check
+  check (challenge_number between 1 and 6);
 
 create index if not exists ctf_member_solves_team_user_idx
   on public.ctf_member_solves (team_id, user_id, challenge_number);

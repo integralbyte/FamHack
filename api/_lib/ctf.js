@@ -1,7 +1,7 @@
 import { assertAllowedEmail } from './teams.js';
 import { getServiceClient } from './supabase.js';
 
-export const CTF_CHALLENGE_COUNT = 5;
+export const CTF_CHALLENGE_COUNT = 6;
 export const CTF_HOME_SECRET = 'FAMILY-ORBIT';
 export const CTF_PDF_FILENAME = 'CTF.pdf';
 export const CTF_PDF_TITLE = 'pale-echo.pdf';
@@ -32,6 +32,15 @@ const CTF_PUBLIC_CHALLENGES = [
     number: 3,
     title: 'Signal Three',
     mode: 'text',
+    prompt: "I'm someone who holds places. I'm a...",
+    inputLabel: 'Answer',
+    placeholder: 'Enter answer',
+    actionLabel: 'Submit',
+  },
+  {
+    number: 4,
+    title: 'Signal Four',
+    mode: 'text',
     prompt: '',
     assetLabel: 'Download file',
     assetUrl: '/assets/ctf/CTF.jpg',
@@ -40,8 +49,8 @@ const CTF_PUBLIC_CHALLENGES = [
     actionLabel: 'Submit',
   },
   {
-    number: 4,
-    title: 'Signal Four',
+    number: 5,
+    title: 'Signal Five',
     mode: 'password',
     prompt: 'Go home, look for me, and then 640 me please.',
     inputLabel: 'Password',
@@ -49,8 +58,8 @@ const CTF_PUBLIC_CHALLENGES = [
     actionLabel: 'Submit',
   },
   {
-    number: 5,
-    title: 'Signal Five',
+    number: 6,
+    title: 'Signal Six',
     mode: 'text',
     prompt: '',
     assetLabel: 'Download file',
@@ -119,10 +128,12 @@ function verifyChallengeAnswer(challengeNumber, answer) {
     case 2:
       return looseAnswer === 'upupdowndownleftrightleftrightba';
     case 3:
-      return base64Answer === normalizeBase64Answer(CTF_IMAGE_ANSWER);
+      return looseAnswer === normalizeLooseAnswer('Enter answer');
     case 4:
-      return base64Answer === normalizeBase64Answer(encodeBase64Times(CTF_HOME_SECRET, 10));
+      return base64Answer === normalizeBase64Answer(CTF_IMAGE_ANSWER);
     case 5:
+      return base64Answer === normalizeBase64Answer(encodeBase64Times(CTF_HOME_SECRET, 10));
+    case 6:
       return looseAnswer === normalizeLooseAnswer(CTF_PDF_TITLE)
         || looseAnswer === normalizeLooseAnswer(CTF_PDF_TITLE.replace(/\.pdf$/i, ''));
     default:
