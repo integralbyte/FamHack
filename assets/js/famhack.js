@@ -1130,23 +1130,23 @@ const FamHack = {
   renderCtf(ctf) {
     this.state.ctf = ctf;
 
-    const teamName = document.getElementById('ctf-team-name');
-    const teamLevel = document.getElementById('ctf-team-level-copy');
+    const playerName = document.getElementById('ctf-team-name');
+    const playerLevel = document.getElementById('ctf-team-level-copy');
     const memberProgress = document.getElementById('ctf-member-progress-copy');
-    const teamRank = document.getElementById('ctf-team-rank');
+    const playerRank = document.getElementById('ctf-team-rank');
     const statusBanner = document.getElementById('ctf-status-banner');
     const returnLink = document.querySelector('.ctf-return-link');
     const signOutButton = document.getElementById('ctf-sign-out-btn');
     const isGuest = Boolean(ctf.viewer?.guest);
 
-    if (teamName) {
-      teamName.textContent = isGuest ? 'Guest Run' : ctf.viewer.teamName;
+    if (playerName) {
+      playerName.textContent = isGuest ? 'Guest Run' : ctf.viewer.name;
     }
 
-    if (teamLevel) {
-      teamLevel.textContent = isGuest
+    if (playerLevel) {
+      playerLevel.textContent = isGuest
         ? `Open practice run · ${ctf.challenges.length} challenges`
-        : `Family level ${ctf.team.level} / ${this.config.ctfChallengeCount || ctf.challenges.length}`;
+        : `Personal level ${ctf.member.highestSolvedChallenge} / ${this.config.ctfChallengeCount || ctf.challenges.length}`;
     }
 
     if (memberProgress) {
@@ -1161,12 +1161,12 @@ const FamHack = {
       }
     }
 
-    if (teamRank) {
+    if (playerRank) {
       if (isGuest) {
-        teamRank.textContent = 'Sign in with a family to appear';
+        playerRank.textContent = 'Sign in to appear';
       } else {
-        const ownRow = ctf.leaderboard.find((row) => row.teamId === ctf.team.id);
-        teamRank.textContent = ownRow ? `Leaderboard rank #${ownRow.rank}` : 'Leaderboard rank pending';
+        const ownRow = ctf.leaderboard.find((row) => row.userId === ctf.viewer.id);
+        playerRank.textContent = ownRow ? `Rank #${ownRow.rank}` : 'Solve one challenge to rank';
       }
     }
 
@@ -1187,12 +1187,9 @@ const FamHack = {
       } else if (ctf.member.completed) {
         statusBanner.classList.add('is-success');
         statusBanner.textContent = 'Congrats, you cleared every challenge.';
-      } else if (ctf.team.level > ctf.member.highestSolvedChallenge) {
-        statusBanner.classList.add('is-success');
-        statusBanner.textContent = `Your family has already reached level ${ctf.team.level}. Your own run still advances one challenge at a time from where you left it.`;
       } else {
         statusBanner.classList.remove('is-success');
-        statusBanner.textContent = 'The first clear from any approved family member advances the family on the leaderboard. Your own run remains personal.';
+        statusBanner.textContent = 'Every clear moves your personal run forward and updates the individual leaderboard.';
       }
     }
 
@@ -1228,19 +1225,19 @@ const FamHack = {
     }
 
     if (!ctf.leaderboard.length) {
-      container.innerHTML = '<p class="empty-state">No families on the board yet.</p>';
+      container.innerHTML = '<p class="empty-state">No individual clears on the board yet.</p>';
       return;
     }
 
     container.innerHTML = ctf.leaderboard.map((row) => {
-      const isCurrentTeam = !ctf.viewer?.guest && row.teamId === ctf.team.id;
+      const isCurrentPlayer = !ctf.viewer?.guest && row.userId === ctf.viewer.id;
       const stamp = row.reachedAt ? this.formatDateTime(row.reachedAt) : 'Waiting for first clear';
 
       return `
-        <div class="ctf-leaderboard-row${isCurrentTeam ? ' is-current-team' : ''}">
+        <div class="ctf-leaderboard-row${isCurrentPlayer ? ' is-current-team' : ''}">
           <div class="ctf-leaderboard-rank">#${row.rank}</div>
           <div class="ctf-leaderboard-team">
-            <p class="ctf-leaderboard-name">${this.escapeHtml(row.teamName)}</p>
+            <p class="ctf-leaderboard-name">${this.escapeHtml(row.name)}</p>
             <p class="ctf-leaderboard-meta">${stamp}</p>
           </div>
           <div class="ctf-leaderboard-level">L${row.level}</div>
@@ -1267,8 +1264,8 @@ const FamHack = {
           <p class="ctf-step-kicker">Run Complete</p>
           <h2 class="ctf-challenge-title">Every signal is clear.</h2>
           <p class="ctf-challenge-copy">${ctf.viewer?.guest
-            ? 'You finished the full FamHack CTF. Sign in with a family if you want your clears to count on the board.'
-            : 'You finished the full FamHack CTF. Your family stays on the board, and your teammates can still play through from challenge one on their own runs.'}</p>
+            ? 'You finished the full FamHack CTF. Sign in if you want your clears to count on the leaderboard.'
+            : 'You finished the full FamHack CTF. Your individual run is locked in on the leaderboard.'}</p>
         </section>
       `;
       return;
@@ -1460,7 +1457,7 @@ const FamHack = {
     try {
       await this.submitCtfChallenge(challenge, answer, {
         successTitle: `${challenge.title} cleared.`,
-        successCopy: 'Nice. Your personal run advances here, and your family board updates if this was the first team clear for the level.',
+        successCopy: 'Nice. Your personal run advances immediately, and your leaderboard position updates with each new level.',
       });
     } catch (error) {
       console.error(error);
@@ -1506,7 +1503,7 @@ const FamHack = {
     try {
       await this.submitCtfChallenge(challenge, 'upupdowndownleftrightleftrightba', {
         successTitle: challenge.successText || 'You found Konami.',
-        successCopy: 'The sequence is locked in. The next challenge will open in a moment.',
+        successCopy: 'The sequence is locked in. Your personal run is unlocking the next challenge.',
         delayMs: 2200,
       });
     } catch (error) {
@@ -1643,21 +1640,12 @@ const FamHack = {
     }
 
     if (ctfLaunchTitle && ctfLaunchCopy && ctfLaunchLink) {
-      if (dashboard.viewer.status !== 'approved') {
-        ctfLaunchTitle.textContent = 'CTF unlocks after approval';
-        ctfLaunchCopy.textContent = 'Once your academic parent approves the request, this button will open the five-step family CTF.';
-        ctfLaunchLink.href = '/dashboard';
-        ctfLaunchLink.setAttribute('aria-disabled', 'true');
-        ctfLaunchLink.classList.add('is-disabled');
-        this.setButtonLabel(ctfLaunchLink, 'Locked');
-      } else {
-        ctfLaunchTitle.textContent = 'Open the challenge board';
-        ctfLaunchCopy.textContent = 'Solve the separate five-step CTF here. The first teammate to clear a level moves the whole family up the leaderboard.';
-        ctfLaunchLink.href = '/ctf';
-        ctfLaunchLink.removeAttribute('aria-disabled');
-        ctfLaunchLink.classList.remove('is-disabled');
-        this.setButtonLabel(ctfLaunchLink, dashboard.viewer.role === 'parent' ? 'Open CTF' : 'Continue CTF');
-      }
+      ctfLaunchTitle.textContent = 'Open the challenge board';
+      ctfLaunchCopy.textContent = 'Solve the five-step CTF on your own run. The leaderboard tracks individual clears, not families.';
+      ctfLaunchLink.href = '/ctf';
+      ctfLaunchLink.removeAttribute('aria-disabled');
+      ctfLaunchLink.classList.remove('is-disabled');
+      this.setButtonLabel(ctfLaunchLink, 'Open CTF');
     }
 
     if (statusBanner) {

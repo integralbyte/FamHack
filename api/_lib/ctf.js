@@ -1,4 +1,4 @@
-import { assertAllowedEmail, getMembershipByUserId, getTeamById } from './teams.js';
+import { assertAllowedEmail } from './teams.js';
 import { getServiceClient } from './supabase.js';
 
 export const CTF_CHALLENGE_COUNT = 5;
@@ -130,6 +130,25 @@ function verifyChallengeAnswer(challengeNumber, answer) {
   }
 }
 
+function getDisplayName(profile, fallbackEmail = '') {
+  const fullName = String(profile?.full_name || '').trim();
+  if (fullName) {
+    return fullName;
+  }
+
+  const normalizedEmail = String(profile?.email || fallbackEmail || '').trim().toLowerCase();
+  const localPart = normalizedEmail.split('@')[0] || 'FamHack Player';
+
+  return localPart
+    .replace(/[._-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ') || 'FamHack Player';
+}
+
 function serializeChallenge(challenge, solvedChallengeNumbers, currentChallengeNumber) {
   return {
     ...challenge,
@@ -139,7 +158,7 @@ function serializeChallenge(challenge, solvedChallengeNumbers, currentChallengeN
   };
 }
 
-function buildCtfState({ viewer, solvedChallengeNumbers, team, leaderboard }) {
+function buildCtfState({ viewer, solvedChallengeNumbers, leaderboard }) {
   const highestSolvedChallenge = solvedChallengeNumbers.at(-1) || 0;
   const currentChallengeNumber = highestSolvedChallenge >= CTF_CHALLENGE_COUNT
     ? null
@@ -153,54 +172,58 @@ function buildCtfState({ viewer, solvedChallengeNumbers, team, leaderboard }) {
       currentChallengeNumber: highestSolvedChallenge >= CTF_CHALLENGE_COUNT ? CTF_CHALLENGE_COUNT : currentChallengeNumber,
       completed: highestSolvedChallenge >= CTF_CHALLENGE_COUNT,
     },
-    team,
     challenges: CTF_PUBLIC_CHALLENGES.map((challenge) => serializeChallenge(challenge, solvedChallengeNumbers, currentChallengeNumber)),
     leaderboard,
   };
 }
 
-export async function requireCtfParticipant(user) {
-  assertAllowedEmail(user.email);
+async function ensureCtfProfile(user) {
+  const supabase = getServiceClient();
+  const payload = {
+    id: user.id,
+    email: String(user.email || '').trim().toLowerCase(),
+  };
 
-  const membership = await getMembershipByUserId(user.id);
-  if (!membership) {
-    throw createStatusError(404, 'Join or create a family before opening the CTF.');
+  const { error } = await supabase.from('profiles').upsert(payload, {
+    onConflict: 'id',
+  });
+
+  if (error) {
+    throw new Error(error.message);
   }
-
-  if (membership.status !== 'approved') {
-    throw createStatusError(403, 'The CTF unlocks after your family membership is approved.');
-  }
-
-  const team = await getTeamById(membership.team_id);
-  if (!team) {
-    throw createStatusError(404, 'Family not found');
-  }
-
-  return { membership, team };
 }
 
-export async function getMemberCtfSolves(teamId, userId) {
+async function getProfileByUserId(userId) {
   const supabase = getServiceClient();
   const { data, error } = await supabase
-    .from('ctf_member_solves')
-    .select('challenge_number, solved_at')
-    .eq('team_id', teamId)
-    .eq('user_id', userId)
-    .order('challenge_number', { ascending: true });
+    .from('profiles')
+    .select('id, email, full_name')
+    .eq('id', userId)
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data || [];
+  return data;
 }
 
-export async function getTeamCheckpointRows(teamId) {
+export async function requireCtfParticipant(user) {
+  assertAllowedEmail(user.email);
+  await ensureCtfProfile(user);
+  const profile = await getProfileByUserId(user.id);
+  return {
+    profile,
+    displayName: getDisplayName(profile, user.email),
+  };
+}
+
+export async function getMemberCtfSolves(userId) {
   const supabase = getServiceClient();
   const { data, error } = await supabase
-    .from('ctf_team_checkpoints')
-    .select('challenge_number, reached_at, reached_by')
-    .eq('team_id', teamId)
+    .from('ctf_user_solves')
+    .select('challenge_number, solved_at')
+    .eq('user_id', userId)
     .order('challenge_number', { ascending: true });
 
   if (error) {
@@ -212,46 +235,47 @@ export async function getTeamCheckpointRows(teamId) {
 
 export async function getCtfLeaderboard() {
   const supabase = getServiceClient();
-  const [{ data: checkpoints, error: checkpointsError }, { data: teams, error: teamsError }] = await Promise.all([
-    supabase
-      .from('ctf_team_checkpoints')
-      .select('team_id, challenge_number, reached_at')
-      .order('challenge_number', { ascending: false })
-      .order('reached_at', { ascending: true }),
-    supabase
-      .from('teams')
-      .select('id, name, created_at')
-      .order('created_at', { ascending: true }),
-  ]);
+  const { data: solves, error: solvesError } = await supabase
+    .from('ctf_user_solves')
+    .select('user_id, challenge_number, solved_at')
+    .order('challenge_number', { ascending: false })
+    .order('solved_at', { ascending: true });
 
-  if (checkpointsError) {
-    throw new Error(checkpointsError.message);
+  if (solvesError) {
+    throw new Error(solvesError.message);
   }
 
-  if (teamsError) {
-    throw new Error(teamsError.message);
-  }
-
-  if (!teams?.length) {
+  if (!solves?.length) {
     return [];
   }
 
-  const highestCheckpointByTeam = new Map();
-  (checkpoints || []).forEach((checkpoint) => {
-    if (!highestCheckpointByTeam.has(checkpoint.team_id)) {
-      highestCheckpointByTeam.set(checkpoint.team_id, checkpoint);
+  const profileIds = Array.from(new Set(solves.map((row) => row.user_id)));
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id, email, full_name')
+    .in('id', profileIds);
+
+  if (profilesError) {
+    throw new Error(profilesError.message);
+  }
+
+  const profileMap = new Map((profiles || []).map((profile) => [profile.id, profile]));
+  const highestSolveByUser = new Map();
+
+  (solves || []).forEach((solve) => {
+    if (!highestSolveByUser.has(solve.user_id)) {
+      highestSolveByUser.set(solve.user_id, solve);
     }
   });
 
-  const rows = (teams || [])
-    .map((team) => {
-      const checkpoint = highestCheckpointByTeam.get(team.id);
+  const rows = Array.from(highestSolveByUser.entries())
+    .map(([userId, solve]) => {
+      const profile = profileMap.get(userId) || null;
       return {
-        teamId: team.id,
-        teamName: team.name,
-        level: checkpoint?.challenge_number || 0,
-        reachedAt: checkpoint?.reached_at || null,
-        createdAt: team.created_at,
+        userId,
+        name: getDisplayName(profile),
+        level: solve.challenge_number || 0,
+        reachedAt: solve.solved_at || null,
       };
     })
     .sort((left, right) => {
@@ -271,12 +295,12 @@ export async function getCtfLeaderboard() {
         return 1;
       }
 
-      return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+      return left.name.localeCompare(right.name);
     })
     .map((row, index) => ({
       rank: index + 1,
-      teamId: row.teamId,
-      teamName: row.teamName,
+      userId: row.userId,
+      name: row.name,
       level: row.level,
       reachedAt: row.reachedAt,
     }));
@@ -285,32 +309,20 @@ export async function getCtfLeaderboard() {
 }
 
 export async function getCtfStateForUser(user) {
-  const { membership, team } = await requireCtfParticipant(user);
-  const [memberSolves, teamCheckpoints, leaderboard] = await Promise.all([
-    getMemberCtfSolves(team.id, user.id),
-    getTeamCheckpointRows(team.id),
+  const participant = await requireCtfParticipant(user);
+  const [memberSolves, leaderboard] = await Promise.all([
+    getMemberCtfSolves(user.id),
     getCtfLeaderboard(),
   ]);
 
   const solvedChallengeNumbers = memberSolves.map((row) => row.challenge_number).sort((a, b) => a - b);
-  const highestSolvedChallenge = solvedChallengeNumbers.at(-1) || 0;
-  const teamLevel = teamCheckpoints.at(-1)?.challenge_number || 0;
-  const teamReachedAt = teamCheckpoints.at(-1)?.reached_at || null;
 
   return buildCtfState({
     viewer: {
       id: user.id,
       email: user.email,
-      role: membership.role,
-      teamId: team.id,
-      teamName: team.name,
+      name: participant.displayName,
       guest: false,
-    },
-    team: {
-      id: team.id,
-      name: team.name,
-      level: teamLevel,
-      reachedAt: teamReachedAt,
     },
     solvedChallengeNumbers,
     leaderboard,
@@ -325,18 +337,10 @@ export async function getGuestCtfState(solvedChallenges = []) {
     viewer: {
       id: null,
       email: null,
-      role: 'guest',
-      teamId: null,
-      teamName: 'Guest Run',
+      name: 'Guest Run',
       guest: true,
     },
     solvedChallengeNumbers,
-    team: {
-      id: null,
-      name: 'Guest Run',
-      level: 0,
-      reachedAt: null,
-    },
     leaderboard,
   });
 }
@@ -348,8 +352,8 @@ export async function submitCtfAnswerForUser(user, challengeNumber, answer) {
     throw createStatusError(400, 'Unknown CTF challenge');
   }
 
-  const { membership, team } = await requireCtfParticipant(user);
-  const memberSolves = await getMemberCtfSolves(team.id, user.id);
+  await requireCtfParticipant(user);
+  const memberSolves = await getMemberCtfSolves(user.id);
   const highestSolvedChallenge = memberSolves.at(-1)?.challenge_number || 0;
   const expectedChallengeNumber = highestSolvedChallenge + 1;
 
@@ -368,9 +372,8 @@ export async function submitCtfAnswerForUser(user, challengeNumber, answer) {
   const supabase = getServiceClient();
   const solvedAt = new Date().toISOString();
   const { error: solveError } = await supabase
-    .from('ctf_member_solves')
+    .from('ctf_user_solves')
     .insert({
-      team_id: team.id,
       user_id: user.id,
       challenge_number: parsedChallengeNumber,
       solved_at: solvedAt,
@@ -378,19 +381,6 @@ export async function submitCtfAnswerForUser(user, challengeNumber, answer) {
 
   if (solveError && solveError.code !== '23505') {
     throw new Error(solveError.message);
-  }
-
-  const { error: checkpointError } = await supabase
-    .from('ctf_team_checkpoints')
-    .insert({
-      team_id: team.id,
-      challenge_number: parsedChallengeNumber,
-      reached_by: user.id,
-      reached_at: solvedAt,
-    });
-
-  if (checkpointError && checkpointError.code !== '23505') {
-    throw new Error(checkpointError.message);
   }
 
   return getCtfStateForUser(user);

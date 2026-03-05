@@ -12,7 +12,7 @@ export async function getOptionalUser(req) {
   const { data, error } = await supabase.auth.getUser(token);
 
   if (error || !data.user) {
-    return null;
+    throw new Error('Invalid or expired session');
   }
 
   return data.user;

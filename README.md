@@ -9,12 +9,13 @@ This version keeps the static site theme and adds a real registration backend:
 - Teams are capped at 15 approved members.
 - Children can cancel pending requests or leave an approved family from the dashboard.
 - Parents can transfer ownership to an approved child before leaving.
+- The CTF now saves progress per individual user and uses an individual leaderboard.
 
 ## Required setup
 
 1. Create a Supabase project.
 2. In Supabase SQL Editor, run `supabase/schema.sql`.
-   - If you already set this project up earlier, re-run the file so the team-size trigger and parent-transfer function are installed.
+   - If you already set this project up earlier, re-run the file so the team-size trigger, parent-transfer function, and individual CTF tables are installed.
 3. Create a Resend account, add your domain, and verify the DNS records Resend gives you.
 4. In Supabase Auth:
    - enable Email auth
@@ -35,4 +36,5 @@ This version keeps the static site theme and adds a real registration backend:
 - `register.html`: parent logs in with email OTP, creates a family/team, receives a join code.
 - `join.html`: child logs in, enters the join code, and submits a join request.
 - `dashboard.html`: parent approves or declines requests; children can see pending status.
+- `ctf.html`: each signed-in user has their own saved CTF run and appears on the individual leaderboard.
 - Team limits and parent transfers are enforced on the server. The frontend cannot bypass the 15-person cap.
