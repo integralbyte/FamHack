@@ -70,8 +70,8 @@ const CTF_CHALLENGES = [
     inputLabel: 'Answer',
     placeholder: 'Enter answer',
     actionLabel: 'Submit',
-    successTitle: 'Blackout cracked.',
-    successCopy: 'Good eyes. That clue gave you nothing for free.',
+    successTitle: 'Metadata mapped.',
+    successCopy: 'You read the clue, checked the dimensions, and landed the number.',
   },
   {
     number: 5,

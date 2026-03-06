@@ -1235,7 +1235,7 @@ const FamHack = {
     }
 
     if (!ctf.leaderboard.length) {
-      container.innerHTML = '<p class="empty-state">No individual clears on the board yet.</p>';
+      container.innerHTML = '<p class="empty-state">No clears yet.</p>';
       return;
     }
 
