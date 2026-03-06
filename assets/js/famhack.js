@@ -1412,7 +1412,7 @@ const FamHack = {
 
         this.state.ctfPendingAdvanceState.ready = true;
         this.renderCtfChallenge();
-      }, delayMs);
+      }, gate.delayMs);
     }
   },
 
@@ -1454,7 +1454,7 @@ const FamHack = {
     event.preventDefault();
 
     const ctf = this.state.ctf;
-    const challenge = ctf?.challenges?.find((item) => item.active);
+    const challenge = ctf?.currentChallenge;
     if (!challenge || challenge.mode === 'konami') {
       return;
     }
