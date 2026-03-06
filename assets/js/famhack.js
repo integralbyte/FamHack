@@ -1193,7 +1193,7 @@ const FamHack = {
         statusBanner.textContent = ctf.completionMessage.copy;
       } else {
         statusBanner.classList.remove('is-success');
-        statusBanner.textContent = 'First full clear takes the prize.';
+        statusBanner.textContent = 'The first person to clear all six challenges wins the prize.';
       }
     }
 
