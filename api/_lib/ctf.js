@@ -43,7 +43,7 @@ const CTF_CHALLENGES = [
     inputLabel: 'Sequence',
     placeholder: '',
     actionLabel: 'Continue',
-    successTitle: 'Konami noticed.',
+    successTitle: 'You found Konami.',
     successCopy: 'Cheeky, but fair. Keep going.',
   },
   {
@@ -664,6 +664,32 @@ async function validateUserToken(user, accessToken, challengeNumber) {
   };
 }
 
+async function validateUserTokenById(userId, accessToken, challengeNumber) {
+  const payload = verifySignedToken(accessToken);
+
+  if (payload?.v !== CTF_TOKEN_PREFIX || payload.guest || payload.userId !== userId) {
+    throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+  }
+
+  const memberSolves = await getMemberCtfSolves(userId);
+  const solvedChallengeNumbers = memberSolves.map((row) => row.challenge_number).sort((left, right) => left - right);
+  const highestSolvedChallenge = solvedChallengeNumbers.at(-1) || 0;
+  const expectedChallengeNumber = highestSolvedChallenge + 1;
+
+  if (payload.challengeNumber !== expectedChallengeNumber || Number(challengeNumber) !== expectedChallengeNumber) {
+    throw createStatusError(409, 'Solve your current challenge before moving on.');
+  }
+
+  if (payload.proof !== buildSolveProof(solvedChallengeNumbers)) {
+    throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+  }
+
+  return {
+    solvedChallengeNumbers,
+    expectedChallengeNumber,
+  };
+}
+
 function buildSolveResponse(state, solvedChallengeNumber) {
   if (state.member.completed) {
     return state;
@@ -757,10 +783,19 @@ export async function getCtfAssetForRequest({ user, challengeNumber, accessToken
     throw createStatusError(400, 'Unknown CTF challenge');
   }
 
-  if (user) {
-    await validateUserToken(user, accessToken, parsedChallengeNumber);
-  } else {
+  const payload = verifySignedToken(accessToken);
+  if (payload?.v !== CTF_TOKEN_PREFIX) {
+    throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+  }
+
+  if (payload.guest) {
     validateGuestToken(accessToken, parsedChallengeNumber);
+  } else {
+    if (user && payload.userId !== user.id) {
+      throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+    }
+
+    await validateUserTokenById(payload.userId, accessToken, parsedChallengeNumber);
   }
 
   const challenge = getChallengeDefinition(parsedChallengeNumber);
