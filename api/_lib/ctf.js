@@ -51,21 +51,21 @@ const CTF_PUBLIC_CHALLENGES = [
   {
     number: 5,
     title: 'Signal Five',
-    mode: 'password',
-    prompt: 'Go home, look for me, and then 640 me please.',
-    inputLabel: 'Password',
-    placeholder: 'Enter password',
-    actionLabel: 'Submit',
-  },
-  {
-    number: 6,
-    title: 'Signal Six',
     mode: 'text',
     prompt: '',
     assetLabel: 'Download file',
     assetUrl: '/assets/ctf/CTF.pdf',
     inputLabel: 'Answer',
     placeholder: 'Enter answer',
+    actionLabel: 'Submit',
+  },
+  {
+    number: 6,
+    title: 'Signal Six',
+    mode: 'password',
+    prompt: 'Go home, look for me, and then 640 me please.',
+    inputLabel: 'Password',
+    placeholder: 'Enter password',
     actionLabel: 'Submit',
   },
 ];
@@ -132,10 +132,10 @@ function verifyChallengeAnswer(challengeNumber, answer) {
     case 4:
       return base64Answer === normalizeBase64Answer(CTF_IMAGE_ANSWER);
     case 5:
-      return base64Answer === normalizeBase64Answer(encodeBase64Times(CTF_HOME_SECRET, 10));
-    case 6:
       return looseAnswer === normalizeLooseAnswer(CTF_PDF_TITLE)
         || looseAnswer === normalizeLooseAnswer(CTF_PDF_TITLE.replace(/\.pdf$/i, ''));
+    case 6:
+      return base64Answer === normalizeBase64Answer(encodeBase64Times(CTF_HOME_SECRET, 10));
     default:
       return false;
   }
