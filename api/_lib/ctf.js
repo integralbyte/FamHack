@@ -1,4 +1,4 @@
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createHash, createHmac, pbkdf2Sync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +14,8 @@ const CTF_IMAGE_FILENAME = 'CTF.jpg';
 const CTF_TOKEN_PREFIX = 'famhack-ctf-v1';
 const CTF_PROOF_SEED = 'famhack-ctf-seed';
 const CTF_DEFAULT_ACCESS_SECRET = 'famhack-ctf-local-dev-secret';
+const CTF_KONAMI_ITERATIONS = 6000;
+const CTF_KONAMI_CODEPOINTS = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const CTF_PRIVATE_ASSET_DIR = path.resolve(__dirname, '../../private/ctf');
@@ -128,6 +130,55 @@ function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
 }
 
+function getKonamiPassword() {
+  return CTF_KONAMI_CODEPOINTS.map((codepoint) => {
+    switch (codepoint) {
+      case 37:
+        return 'arrowleft';
+      case 38:
+        return 'arrowup';
+      case 39:
+        return 'arrowright';
+      case 40:
+        return 'arrowdown';
+      default:
+        return String.fromCharCode(codepoint).toLowerCase();
+    }
+  }).join('');
+}
+
+function createKonamiProof(accessToken, challengeNumber) {
+  return createHmac('sha256', getAccessSecret())
+    .update(`konami:${challengeNumber}:${accessToken}`)
+    .digest('hex');
+}
+
+function createKonamiBundle(accessToken, challengeNumber) {
+  const payload = JSON.stringify({
+    challenge: challengeNumber,
+    proof: createKonamiProof(accessToken, challengeNumber),
+  });
+  const salt = randomBytes(16);
+  const iv = randomBytes(12);
+  const key = pbkdf2Sync(getKonamiPassword(), salt, CTF_KONAMI_ITERATIONS, 32, 'sha256');
+  const cipher = createCipheriv('aes-256-gcm', key, iv);
+  const ciphertext = Buffer.concat([cipher.update(payload, 'utf8'), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+
+  return {
+    encrypted: Buffer.concat([iv, ciphertext, authTag]).toString('base64'),
+    salt: salt.toString('base64'),
+    iterations: CTF_KONAMI_ITERATIONS,
+    hash: 'SHA-256',
+  };
+}
+
+function safeEqualText(left, right) {
+  const leftBuffer = Buffer.from(String(left || ''), 'utf8');
+  const rightBuffer = Buffer.from(String(right || ''), 'utf8');
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
+
 export function getPrivateCtfAssetPath(filename) {
   return path.resolve(CTF_PRIVATE_ASSET_DIR, filename);
 }
@@ -195,7 +246,7 @@ function getChallengeProofMaterial(challengeNumber) {
     case 1:
       return normalizeLooseAnswer('famhack');
     case 2:
-      return normalizeLooseAnswer('upupdowndownleftrightleftrightba');
+      return sha256('signal-two-konami');
     case 3:
       return normalizeLooseAnswer('Enter answer');
     case 4:
@@ -218,7 +269,7 @@ function buildSolveProof(solvedChallengeNumbers) {
   );
 }
 
-function verifyChallengeAnswer(challengeNumber, answer) {
+function verifyChallengeAnswer(challengeNumber, answer, accessToken) {
   const looseAnswer = normalizeLooseAnswer(answer);
   const base64Answer = normalizeBase64Answer(answer);
 
@@ -226,7 +277,7 @@ function verifyChallengeAnswer(challengeNumber, answer) {
     case 1:
       return looseAnswer === normalizeLooseAnswer('famhack');
     case 2:
-      return looseAnswer === normalizeLooseAnswer('upupdowndownleftrightleftrightba');
+      return safeEqualText(answer, createKonamiProof(accessToken, challengeNumber));
     case 3:
       return looseAnswer === normalizeLooseAnswer('Enter answer');
     case 4:
@@ -408,6 +459,9 @@ function serializeCurrentChallenge(challenge, viewer, solvedChallengeNumbers) {
     assetLabel: challenge.assetLabel,
     assetUrl: challenge.assetFile
       ? `/api/ctf/asset?challenge=${challenge.number}&token=${encodeURIComponent(accessToken)}`
+      : null,
+    konamiBundle: challenge.mode === 'konami'
+      ? createKonamiBundle(accessToken, challenge.number)
       : null,
     accessToken,
   };
@@ -728,7 +782,7 @@ export async function submitCtfAnswerForUser(user, challengeNumber, answer, acce
     throw createStatusError(409, 'Solve your current challenge before moving on.');
   }
 
-  if (!verifyChallengeAnswer(parsedChallengeNumber, answer)) {
+  if (!verifyChallengeAnswer(parsedChallengeNumber, answer, accessToken)) {
     throw createStatusError(400, 'That answer is not correct yet.');
   }
 
@@ -768,7 +822,7 @@ export async function submitGuestCtfAnswer(challengeNumber, answer, accessToken)
     throw createStatusError(409, 'Solve your current challenge before moving on.');
   }
 
-  if (!verifyChallengeAnswer(parsedChallengeNumber, answer)) {
+  if (!verifyChallengeAnswer(parsedChallengeNumber, answer, accessToken)) {
     throw createStatusError(400, 'That answer is not correct yet.');
   }
 

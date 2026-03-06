@@ -25,7 +25,9 @@ const FamHack = {
     dashboard: null,
     ctf: null,
     ctfPendingAdvanceState: null,
-    ctfKonamiIndex: 0,
+    ctfRecentKeys: [],
+    ctfKonamiBusy: false,
+    ctfKonamiRetry: false,
     ctfKonamiSolved: false,
     ctfAdvanceTimer: null,
   },
@@ -196,7 +198,9 @@ const FamHack = {
     this.state.dashboard = null;
     this.state.ctf = null;
     this.state.ctfPendingAdvanceState = null;
-    this.state.ctfKonamiIndex = 0;
+    this.state.ctfRecentKeys = [];
+    this.state.ctfKonamiBusy = false;
+    this.state.ctfKonamiRetry = false;
     this.state.ctfKonamiSolved = false;
     this.state.registerIntent = 'role';
     this.clearOTPInputs();
@@ -1112,7 +1116,9 @@ const FamHack = {
       const ctf = await this.fetchCtfState();
       this.state.ctf = ctf;
       this.state.ctfPendingAdvanceState = null;
-      this.state.ctfKonamiIndex = 0;
+      this.state.ctfRecentKeys = [];
+      this.state.ctfKonamiBusy = false;
+      this.state.ctfKonamiRetry = false;
       this.state.ctfKonamiSolved = false;
       this.renderCtf(ctf);
       this.setCtfLoading(false);
@@ -1427,7 +1433,9 @@ const FamHack = {
     });
 
     this.state.ctf = nextState;
-    this.state.ctfKonamiIndex = 0;
+    this.state.ctfRecentKeys = [];
+    this.state.ctfKonamiBusy = false;
+    this.state.ctfKonamiRetry = false;
 
     if (nextState.member.completed) {
       this.state.ctfPendingAdvanceState = null;
@@ -1501,44 +1509,142 @@ const FamHack = {
       return;
     }
 
-    const sequence = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
-    const key = String(event.key || '').toLowerCase();
-    const expectedKey = sequence[this.state.ctfKonamiIndex];
-
-    if (key !== expectedKey) {
-      this.state.ctfKonamiIndex = key === sequence[0] ? 1 : 0;
+    const key = this.normalizeKonamiKey(event.key);
+    if (!key) {
       return;
     }
 
-    this.state.ctfKonamiIndex += 1;
-
-    if (this.state.ctfKonamiIndex < sequence.length) {
-      return;
+    this.state.ctfRecentKeys.push(key);
+    if (this.state.ctfRecentKeys.length > 20) {
+      this.state.ctfRecentKeys = this.state.ctfRecentKeys.slice(-20);
     }
 
-    this.state.ctfKonamiSolved = true;
-    this.state.ctfKonamiIndex = 0;
-    this.renderCtfChallenge();
-
-    try {
-      await this.submitCtfChallenge(challenge, 'upupdowndownleftrightleftrightba');
-    } catch (error) {
-      console.error(error);
-      this.state.ctfKonamiSolved = false;
-      this.renderCtfChallenge();
-      this.showFieldError('ctf-answer-error', error.message || 'That sequence did not unlock the next signal.');
-    }
+    await this.processKonamiKeyBuffer(challenge);
   },
 
   advanceSolvedCtfChallenge() {
     clearTimeout(this.state.ctfAdvanceTimer);
     this.state.ctfAdvanceTimer = null;
     this.state.ctfPendingAdvanceState = null;
+    this.state.ctfRecentKeys = [];
+    this.state.ctfKonamiBusy = false;
+    this.state.ctfKonamiRetry = false;
     this.state.ctfKonamiSolved = false;
     if (this.state.ctf?.clearGate) {
       delete this.state.ctf.clearGate;
     }
     this.renderCtf(this.state.ctf);
+  },
+
+  normalizeKonamiKey(key) {
+    const normalized = String(key || '').trim().toLowerCase();
+    if (!normalized) {
+      return null;
+    }
+
+    const ignoredKeys = new Set([
+      'shift',
+      'control',
+      'alt',
+      'meta',
+      'capslock',
+      'tab',
+      'escape',
+      'enter',
+      'backspace',
+    ]);
+
+    if (ignoredKeys.has(normalized)) {
+      return null;
+    }
+
+    return normalized;
+  },
+
+  async decryptKonamiBundle(bundle, password) {
+    if (!bundle || !password || !window.crypto?.subtle) {
+      return null;
+    }
+
+    try {
+      const encoder = new TextEncoder();
+      const keyMaterial = await window.crypto.subtle.importKey(
+        'raw',
+        encoder.encode(password),
+        'PBKDF2',
+        false,
+        ['deriveBits', 'deriveKey'],
+      );
+      const saltBytes = Uint8Array.from(atob(bundle.salt), (char) => char.charCodeAt(0));
+      const encryptedBytes = Uint8Array.from(atob(bundle.encrypted), (char) => char.charCodeAt(0));
+      const iv = encryptedBytes.slice(0, 12);
+      const ciphertext = encryptedBytes.slice(12);
+      const key = await window.crypto.subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt: saltBytes,
+          iterations: Number(bundle.iterations) || 6000,
+          hash: bundle.hash || 'SHA-256',
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt'],
+      );
+      const decryptedBuffer = await window.crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        ciphertext,
+      );
+
+      return JSON.parse(new TextDecoder().decode(decryptedBuffer));
+    } catch (error) {
+      return null;
+    }
+  },
+
+  async processKonamiKeyBuffer(challenge) {
+    if (this.state.ctfKonamiBusy) {
+      this.state.ctfKonamiRetry = true;
+      return;
+    }
+
+    this.state.ctfKonamiBusy = true;
+
+    try {
+      do {
+        this.state.ctfKonamiRetry = false;
+
+        const bundle = challenge.konamiBundle;
+        const keyBuffer = [...this.state.ctfRecentKeys];
+        const maxWindow = Math.min(20, keyBuffer.length);
+        let decrypted = null;
+
+        for (let length = 1; length <= maxWindow; length += 1) {
+          const candidate = keyBuffer.slice(-length).join('');
+          decrypted = await this.decryptKonamiBundle(bundle, candidate);
+          if (decrypted?.proof) {
+            break;
+          }
+        }
+
+        if (!decrypted?.proof || this.state.ctfKonamiSolved) {
+          continue;
+        }
+
+        this.state.ctfKonamiSolved = true;
+        this.renderCtfChallenge();
+        await this.submitCtfChallenge(challenge, decrypted.proof);
+        return;
+      } while (this.state.ctfKonamiRetry && !this.state.ctfKonamiSolved);
+    } catch (error) {
+      console.error(error);
+      this.state.ctfKonamiSolved = false;
+      this.renderCtfChallenge();
+      this.showFieldError('ctf-answer-error', error.message || 'That sequence did not unlock the next signal.');
+    } finally {
+      this.state.ctfKonamiBusy = false;
+    }
   },
 
   async fetchDashboard({ suppressMissing } = {}) {
