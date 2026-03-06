@@ -1,15 +1,28 @@
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { assertAllowedEmail } from './teams.js';
 import { getServiceClient } from './supabase.js';
 
 export const CTF_CHALLENGE_COUNT = 6;
-export const CTF_HOME_SECRET = 'FAMILY-ORBIT';
 export const CTF_PDF_FILENAME = 'CTF.pdf';
-export const CTF_PDF_TITLE = 'pale-echo.pdf';
-const CTF_IMAGE_WIDTH = 96;
-const CTF_IMAGE_HEIGHT = 64;
-const CTF_IMAGE_ANSWER = Buffer.from(String(CTF_IMAGE_WIDTH * CTF_IMAGE_HEIGHT), 'utf8').toString('base64');
 
-const CTF_PUBLIC_CHALLENGES = [
+const CTF_HANDOFF_FILENAME = 'ctf-handoff.pdf';
+const CTF_IMAGE_FILENAME = 'CTF.jpg';
+const CTF_TOKEN_PREFIX = 'famhack-ctf-v1';
+const CTF_PROOF_SEED = 'famhack-ctf-seed';
+const CTF_DEFAULT_ACCESS_SECRET = 'famhack-ctf-local-dev-secret';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+export const CTF_PRIVATE_ASSET_DIR = path.resolve(__dirname, '../../private/ctf');
+const CTF_HOMEPAGE_PATH = path.resolve(__dirname, '../../index.html');
+let ctfHandoffPdfTitle = null;
+let ctfHomeSecret = null;
+let ctfImageAnswer = null;
+
+const CTF_CHALLENGES = [
   {
     number: 1,
     title: 'Signal One',
@@ -19,14 +32,19 @@ const CTF_PUBLIC_CHALLENGES = [
     inputLabel: 'Answer',
     placeholder: 'Enter answer',
     actionLabel: 'Submit',
+    successTitle: 'Clean start.',
+    successCopy: 'Nice spot. The next signal is ready.',
   },
   {
     number: 2,
     title: 'Signal Two',
     mode: 'konami',
     prompt: 'Konami was here.',
-    successText: 'You found Konami.',
+    inputLabel: 'Sequence',
+    placeholder: '',
     actionLabel: 'Continue',
+    successTitle: 'Konami noticed.',
+    successCopy: 'Cheeky, but fair. Keep going.',
   },
   {
     number: 3,
@@ -36,6 +54,8 @@ const CTF_PUBLIC_CHALLENGES = [
     inputLabel: 'Answer',
     placeholder: 'Enter answer',
     actionLabel: 'Submit',
+    successTitle: 'That fits.',
+    successCopy: 'You clocked the little trick there.',
   },
   {
     number: 4,
@@ -43,10 +63,13 @@ const CTF_PUBLIC_CHALLENGES = [
     mode: 'text',
     prompt: '',
     assetLabel: 'Download file',
-    assetUrl: '/assets/ctf/CTF.jpg',
+    assetFile: CTF_IMAGE_FILENAME,
+    assetContentType: 'image/jpeg',
     inputLabel: 'Answer',
     placeholder: 'Enter answer',
     actionLabel: 'Submit',
+    successTitle: 'Blackout cracked.',
+    successCopy: 'Good eyes. That clue gave you nothing for free.',
   },
   {
     number: 5,
@@ -54,10 +77,13 @@ const CTF_PUBLIC_CHALLENGES = [
     mode: 'text',
     prompt: '',
     assetLabel: 'Download file',
-    assetUrl: '/assets/ctf/CTF.pdf',
+    assetFile: 'CTF.pdf',
+    assetContentType: 'application/pdf',
     inputLabel: 'Answer',
     placeholder: 'Enter answer',
     actionLabel: 'Submit',
+    successTitle: 'Paper trail found.',
+    successCopy: 'That one was properly sneaky. One left.',
   },
   {
     number: 6,
@@ -67,6 +93,8 @@ const CTF_PUBLIC_CHALLENGES = [
     inputLabel: 'Password',
     placeholder: 'Enter password',
     actionLabel: 'Submit',
+    successTitle: 'Board cleared.',
+    successCopy: 'Every signal is done.',
   },
 ];
 
@@ -96,6 +124,47 @@ function encodeBase64Times(value, times) {
   return output;
 }
 
+function sha256(value) {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+export function getPrivateCtfAssetPath(filename) {
+  return path.resolve(CTF_PRIVATE_ASSET_DIR, filename);
+}
+
+function getAccessSecret() {
+  return process.env.CTF_ACCESS_SECRET
+    || process.env.SUPABASE_SERVICE_ROLE_KEY
+    || CTF_DEFAULT_ACCESS_SECRET;
+}
+
+function signTokenPayload(payload) {
+  const encodedPayload = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+  const signature = createHmac('sha256', getAccessSecret()).update(encodedPayload).digest('base64url');
+  return `${encodedPayload}.${signature}`;
+}
+
+function verifySignedToken(token) {
+  const [encodedPayload, signature] = String(token || '').split('.');
+  if (!encodedPayload || !signature) {
+    throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+  }
+
+  const expectedSignature = createHmac('sha256', getAccessSecret()).update(encodedPayload).digest('base64url');
+  const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+  const receivedBuffer = Buffer.from(signature, 'utf8');
+
+  if (expectedBuffer.length !== receivedBuffer.length || !timingSafeEqual(expectedBuffer, receivedBuffer)) {
+    throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+  }
+
+  try {
+    return JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'));
+  } catch (error) {
+    throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+  }
+}
+
 function sanitizeSolvedChallengeNumbers(solvedChallenges) {
   const numbers = Array.isArray(solvedChallenges)
     ? solvedChallenges
@@ -117,28 +186,143 @@ function sanitizeSolvedChallengeNumbers(solvedChallenges) {
   return contiguous;
 }
 
+function getChallengeDefinition(challengeNumber) {
+  return CTF_CHALLENGES.find((challenge) => challenge.number === Number(challengeNumber)) || null;
+}
+
+function getChallengeProofMaterial(challengeNumber) {
+  switch (challengeNumber) {
+    case 1:
+      return normalizeLooseAnswer('famhack');
+    case 2:
+      return normalizeLooseAnswer('upupdowndownleftrightleftrightba');
+    case 3:
+      return normalizeLooseAnswer('Enter answer');
+    case 4:
+      return normalizeBase64Answer(getImageChallengeAnswer());
+    case 5:
+      return normalizeLooseAnswer(getHandoffPdfTitle());
+    case 6:
+      return normalizeBase64Answer(encodeBase64Times(getHomeSecret(), 10));
+    default:
+      throw createStatusError(400, 'Unknown CTF challenge');
+  }
+}
+
+function buildSolveProof(solvedChallengeNumbers) {
+  const contiguousSolved = sanitizeSolvedChallengeNumbers(solvedChallengeNumbers);
+
+  return contiguousSolved.reduce(
+    (proof, challengeNumber) => sha256(`${proof}:${challengeNumber}:${getChallengeProofMaterial(challengeNumber)}`),
+    CTF_PROOF_SEED,
+  );
+}
+
 function verifyChallengeAnswer(challengeNumber, answer) {
   const looseAnswer = normalizeLooseAnswer(answer);
-  const exactAnswer = normalizeExactAnswer(answer);
   const base64Answer = normalizeBase64Answer(answer);
 
   switch (challengeNumber) {
     case 1:
-      return looseAnswer === 'famhack';
+      return looseAnswer === normalizeLooseAnswer('famhack');
     case 2:
-      return looseAnswer === 'upupdowndownleftrightleftrightba';
+      return looseAnswer === normalizeLooseAnswer('upupdowndownleftrightleftrightba');
     case 3:
       return looseAnswer === normalizeLooseAnswer('Enter answer');
     case 4:
-      return base64Answer === normalizeBase64Answer(CTF_IMAGE_ANSWER);
+      return base64Answer === normalizeBase64Answer(getImageChallengeAnswer());
     case 5:
-      return looseAnswer === normalizeLooseAnswer(CTF_PDF_TITLE)
-        || looseAnswer === normalizeLooseAnswer(CTF_PDF_TITLE.replace(/\.pdf$/i, ''));
+      return looseAnswer === normalizeLooseAnswer(getHandoffPdfTitle())
+        || looseAnswer === normalizeLooseAnswer(getHandoffPdfTitle().replace(/\.pdf$/i, ''));
     case 6:
-      return base64Answer === normalizeBase64Answer(encodeBase64Times(CTF_HOME_SECRET, 10));
+      return base64Answer === normalizeBase64Answer(encodeBase64Times(getHomeSecret(), 10));
     default:
       return false;
   }
+}
+
+function getHandoffPdfTitle() {
+  if (ctfHandoffPdfTitle) {
+    return ctfHandoffPdfTitle;
+  }
+
+  const pdfBuffer = readFileSync(getPrivateCtfAssetPath(CTF_HANDOFF_FILENAME));
+  const pdfSource = pdfBuffer.toString('latin1');
+  const titleMatch = pdfSource.match(/\/Title\s*\(([^)]*)\)/);
+
+  if (!titleMatch?.[1]) {
+    throw new Error('Unable to read the handoff PDF title');
+  }
+
+  ctfHandoffPdfTitle = titleMatch[1];
+  return ctfHandoffPdfTitle;
+}
+
+function getHomeSecret() {
+  if (ctfHomeSecret) {
+    return ctfHomeSecret;
+  }
+
+  const homepageSource = readFileSync(CTF_HOMEPAGE_PATH, 'utf8');
+  const secretMatch = homepageSource.match(/<span class="famhack-hero-orbit"[^>]*>([^<]+)<\/span>/i);
+
+  if (!secretMatch?.[1]) {
+    throw new Error('Unable to read the hidden homepage secret');
+  }
+
+  ctfHomeSecret = secretMatch[1].trim();
+  return ctfHomeSecret;
+}
+
+function getImageChallengeAnswer() {
+  if (ctfImageAnswer) {
+    return ctfImageAnswer;
+  }
+
+  const { width, height } = getJpegDimensions(getPrivateCtfAssetPath(CTF_IMAGE_FILENAME));
+  ctfImageAnswer = Buffer.from(String(width * height), 'utf8').toString('base64');
+  return ctfImageAnswer;
+}
+
+function getJpegDimensions(filePath) {
+  const buffer = readFileSync(filePath);
+
+  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) {
+    throw new Error('Unable to read the CTF image dimensions');
+  }
+
+  let offset = 2;
+  while (offset < buffer.length - 9) {
+    if (buffer[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+
+    const marker = buffer[offset + 1];
+    if (marker === 0xd8 || marker === 0xd9) {
+      offset += 2;
+      continue;
+    }
+
+    const segmentLength = buffer.readUInt16BE(offset + 2);
+    const isStartOfFrame = [
+      0xc0, 0xc1, 0xc2, 0xc3,
+      0xc5, 0xc6, 0xc7,
+      0xc9, 0xca, 0xcb,
+      0xcd, 0xce, 0xcf,
+    ].includes(marker);
+
+    if (isStartOfFrame) {
+      return {
+        height: buffer.readUInt16BE(offset + 5),
+        width: buffer.readUInt16BE(offset + 7),
+      };
+    }
+
+    offset += 2 + segmentLength;
+  }
+
+  throw new Error('Unable to read the CTF image dimensions');
 }
 
 function getDisplayName(profile, fallbackEmail = '') {
@@ -160,12 +344,72 @@ function getDisplayName(profile, fallbackEmail = '') {
     .join(' ') || 'FamHack Player';
 }
 
-function serializeChallenge(challenge, solvedChallengeNumbers, currentChallengeNumber) {
+function getCompletionMessage(viewer, leaderboard) {
+  if (viewer.guest) {
+    return {
+      title: 'You cleared the FamHack CTF.',
+      copy: 'Sign in if you want your finish to count on the board.',
+      winner: false,
+    };
+  }
+
+  const winningRow = leaderboard.find((row) => row.winner) || null;
+  const viewerWon = Boolean(winningRow && winningRow.userId === viewer.id);
+
+  if (viewerWon) {
+    return {
+      title: 'You won the FamHack CTF.',
+      copy: 'You were first through every signal. Prize secured.',
+      winner: true,
+    };
+  }
+
   return {
-    ...challenge,
-    solved: solvedChallengeNumbers.includes(challenge.number),
-    active: challenge.number === currentChallengeNumber,
-    locked: currentChallengeNumber == null ? false : challenge.number > currentChallengeNumber,
+    title: 'You cleared the FamHack CTF.',
+    copy: 'All six signals are done. Strong finish.',
+    winner: false,
+  };
+}
+
+function createAccessToken(viewer, solvedChallengeNumbers, currentChallengeNumber) {
+  return signTokenPayload({
+    v: CTF_TOKEN_PREFIX,
+    challengeNumber: currentChallengeNumber,
+    guest: Boolean(viewer.guest),
+    userId: viewer.guest ? null : viewer.id,
+    solvedChallengeNumbers: viewer.guest ? sanitizeSolvedChallengeNumbers(solvedChallengeNumbers) : undefined,
+    proof: buildSolveProof(solvedChallengeNumbers),
+  });
+}
+
+function serializeSolvedChallenge(challengeNumber) {
+  const challenge = getChallengeDefinition(challengeNumber);
+
+  return challenge
+    ? {
+      number: challenge.number,
+      title: challenge.title,
+    }
+    : null;
+}
+
+function serializeCurrentChallenge(challenge, viewer, solvedChallengeNumbers) {
+  const accessToken = createAccessToken(viewer, solvedChallengeNumbers, challenge.number);
+
+  return {
+    number: challenge.number,
+    title: challenge.title,
+    mode: challenge.mode,
+    prompt: challenge.prompt,
+    body: challenge.body,
+    inputLabel: challenge.inputLabel,
+    placeholder: challenge.placeholder,
+    actionLabel: challenge.actionLabel,
+    assetLabel: challenge.assetLabel,
+    assetUrl: challenge.assetFile
+      ? `/api/ctf/asset?challenge=${challenge.number}&token=${encodeURIComponent(accessToken)}`
+      : null,
+    accessToken,
   };
 }
 
@@ -174,17 +418,27 @@ function buildCtfState({ viewer, solvedChallengeNumbers, leaderboard }) {
   const currentChallengeNumber = highestSolvedChallenge >= CTF_CHALLENGE_COUNT
     ? null
     : Math.min(highestSolvedChallenge + 1, CTF_CHALLENGE_COUNT);
+  const currentChallenge = currentChallengeNumber
+    ? serializeCurrentChallenge(getChallengeDefinition(currentChallengeNumber), viewer, solvedChallengeNumbers)
+    : null;
 
   return {
     viewer,
+    challengeCount: CTF_CHALLENGE_COUNT,
     member: {
       solvedChallenges: solvedChallengeNumbers,
       highestSolvedChallenge,
       currentChallengeNumber: highestSolvedChallenge >= CTF_CHALLENGE_COUNT ? CTF_CHALLENGE_COUNT : currentChallengeNumber,
       completed: highestSolvedChallenge >= CTF_CHALLENGE_COUNT,
     },
-    challenges: CTF_PUBLIC_CHALLENGES.map((challenge) => serializeChallenge(challenge, solvedChallengeNumbers, currentChallengeNumber)),
+    solvedChallenges: solvedChallengeNumbers
+      .map((challengeNumber) => serializeSolvedChallenge(challengeNumber))
+      .filter(Boolean),
+    currentChallenge,
     leaderboard,
+    completionMessage: highestSolvedChallenge >= CTF_CHALLENGE_COUNT
+      ? getCompletionMessage(viewer, leaderboard)
+      : null,
   };
 }
 
@@ -307,16 +561,18 @@ export async function getCtfLeaderboard() {
       }
 
       return left.name.localeCompare(right.name);
-    })
-    .map((row, index) => ({
-      rank: index + 1,
-      userId: row.userId,
-      name: row.name,
-      level: row.level,
-      reachedAt: row.reachedAt,
-    }));
+    });
 
-  return rows;
+  const winningUserId = rows.find((row) => row.level === CTF_CHALLENGE_COUNT)?.userId || null;
+
+  return rows.map((row, index) => ({
+    rank: index + 1,
+    userId: row.userId,
+    name: row.name,
+    level: row.level,
+    reachedAt: row.reachedAt,
+    winner: Boolean(winningUserId && winningUserId === row.userId && row.level === CTF_CHALLENGE_COUNT),
+  }));
 }
 
 export async function getCtfStateForUser(user) {
@@ -326,7 +582,7 @@ export async function getCtfStateForUser(user) {
     getCtfLeaderboard(),
   ]);
 
-  const solvedChallengeNumbers = memberSolves.map((row) => row.challenge_number).sort((a, b) => a - b);
+  const solvedChallengeNumbers = memberSolves.map((row) => row.challenge_number).sort((left, right) => left - right);
 
   return buildCtfState({
     viewer: {
@@ -356,17 +612,87 @@ export async function getGuestCtfState(solvedChallenges = []) {
   });
 }
 
-export async function submitCtfAnswerForUser(user, challengeNumber, answer) {
+function validateGuestToken(accessToken, challengeNumber) {
+  const payload = verifySignedToken(accessToken);
+
+  if (payload?.v !== CTF_TOKEN_PREFIX || !payload.guest) {
+    throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+  }
+
+  const solvedChallengeNumbers = sanitizeSolvedChallengeNumbers(payload.solvedChallengeNumbers);
+  const highestSolvedChallenge = solvedChallengeNumbers.at(-1) || 0;
+  const expectedChallengeNumber = highestSolvedChallenge + 1;
+
+  if (payload.challengeNumber !== expectedChallengeNumber || Number(challengeNumber) !== expectedChallengeNumber) {
+    throw createStatusError(409, 'Solve your current challenge before moving on.');
+  }
+
+  if (payload.proof !== buildSolveProof(solvedChallengeNumbers)) {
+    throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+  }
+
+  return {
+    solvedChallengeNumbers,
+    expectedChallengeNumber,
+  };
+}
+
+async function validateUserToken(user, accessToken, challengeNumber) {
+  const payload = verifySignedToken(accessToken);
+
+  if (payload?.v !== CTF_TOKEN_PREFIX || payload.guest || payload.userId !== user.id) {
+    throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+  }
+
+  await requireCtfParticipant(user);
+  const memberSolves = await getMemberCtfSolves(user.id);
+  const solvedChallengeNumbers = memberSolves.map((row) => row.challenge_number).sort((left, right) => left - right);
+  const highestSolvedChallenge = solvedChallengeNumbers.at(-1) || 0;
+  const expectedChallengeNumber = highestSolvedChallenge + 1;
+
+  if (payload.challengeNumber !== expectedChallengeNumber || Number(challengeNumber) !== expectedChallengeNumber) {
+    throw createStatusError(409, 'Solve your current challenge before moving on.');
+  }
+
+  if (payload.proof !== buildSolveProof(solvedChallengeNumbers)) {
+    throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
+  }
+
+  return {
+    solvedChallengeNumbers,
+    expectedChallengeNumber,
+  };
+}
+
+function buildSolveResponse(state, solvedChallengeNumber) {
+  if (state.member.completed) {
+    return state;
+  }
+
+  const challenge = getChallengeDefinition(solvedChallengeNumber);
+
+  return {
+    ...state,
+    clearGate: {
+      mode: challenge.mode,
+      solvedChallengeNumber: challenge.number,
+      successTitle: challenge.successTitle,
+      successCopy: challenge.successCopy,
+      ready: challenge.mode !== 'konami',
+      delayMs: challenge.mode === 'konami' ? 2200 : 0,
+    },
+  };
+}
+
+export async function submitCtfAnswerForUser(user, challengeNumber, answer, accessToken) {
   const parsedChallengeNumber = Number(challengeNumber);
 
   if (!Number.isInteger(parsedChallengeNumber) || parsedChallengeNumber < 1 || parsedChallengeNumber > CTF_CHALLENGE_COUNT) {
     throw createStatusError(400, 'Unknown CTF challenge');
   }
 
-  await requireCtfParticipant(user);
-  const memberSolves = await getMemberCtfSolves(user.id);
-  const highestSolvedChallenge = memberSolves.at(-1)?.challenge_number || 0;
-  const expectedChallengeNumber = highestSolvedChallenge + 1;
+  const { solvedChallengeNumbers, expectedChallengeNumber } = await validateUserToken(user, accessToken, parsedChallengeNumber);
+  const highestSolvedChallenge = solvedChallengeNumbers.at(-1) || 0;
 
   if (parsedChallengeNumber <= highestSolvedChallenge) {
     return getCtfStateForUser(user);
@@ -394,19 +720,19 @@ export async function submitCtfAnswerForUser(user, challengeNumber, answer) {
     throw new Error(solveError.message);
   }
 
-  return getCtfStateForUser(user);
+  const nextState = await getCtfStateForUser(user);
+  return buildSolveResponse(nextState, parsedChallengeNumber);
 }
 
-export async function submitGuestCtfAnswer(challengeNumber, answer, solvedChallenges = []) {
+export async function submitGuestCtfAnswer(challengeNumber, answer, accessToken) {
   const parsedChallengeNumber = Number(challengeNumber);
 
   if (!Number.isInteger(parsedChallengeNumber) || parsedChallengeNumber < 1 || parsedChallengeNumber > CTF_CHALLENGE_COUNT) {
     throw createStatusError(400, 'Unknown CTF challenge');
   }
 
-  const solvedChallengeNumbers = sanitizeSolvedChallengeNumbers(solvedChallenges);
+  const { solvedChallengeNumbers, expectedChallengeNumber } = validateGuestToken(accessToken, parsedChallengeNumber);
   const highestSolvedChallenge = solvedChallengeNumbers.at(-1) || 0;
-  const expectedChallengeNumber = highestSolvedChallenge + 1;
 
   if (parsedChallengeNumber <= highestSolvedChallenge) {
     return getGuestCtfState(solvedChallengeNumbers);
@@ -420,5 +746,30 @@ export async function submitGuestCtfAnswer(challengeNumber, answer, solvedChalle
     throw createStatusError(400, 'That answer is not correct yet.');
   }
 
-  return getGuestCtfState([...solvedChallengeNumbers, parsedChallengeNumber]);
+  const nextState = await getGuestCtfState([...solvedChallengeNumbers, parsedChallengeNumber]);
+  return buildSolveResponse(nextState, parsedChallengeNumber);
+}
+
+export async function getCtfAssetForRequest({ user, challengeNumber, accessToken }) {
+  const parsedChallengeNumber = Number(challengeNumber);
+
+  if (!Number.isInteger(parsedChallengeNumber) || parsedChallengeNumber < 1 || parsedChallengeNumber > CTF_CHALLENGE_COUNT) {
+    throw createStatusError(400, 'Unknown CTF challenge');
+  }
+
+  if (user) {
+    await validateUserToken(user, accessToken, parsedChallengeNumber);
+  } else {
+    validateGuestToken(accessToken, parsedChallengeNumber);
+  }
+
+  const challenge = getChallengeDefinition(parsedChallengeNumber);
+  if (!challenge?.assetFile) {
+    throw createStatusError(404, 'No downloadable clue exists for this challenge.');
+  }
+
+  return {
+    filename: challenge.assetFile,
+    contentType: challenge.assetContentType,
+  };
 }

@@ -1384,6 +1384,22 @@ button.role-card {
   letter-spacing: 0.12em;
 }
 
+.ctf-leaderboard-level.is-trophy {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  letter-spacing: 0;
+  color: #f2c34c;
+}
+
+.ctf-winner-icon {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  color: #f2c34c;
+  filter: drop-shadow(0 0 8px rgba(242, 195, 76, 0.28));
+}
+
 .danger-shell {
   position: relative;
   width: 100%;
