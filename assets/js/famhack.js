@@ -1828,8 +1828,8 @@ const FamHack = {
     }
 
     if (ctfLaunchTitle && ctfLaunchCopy && ctfLaunchLink) {
-      ctfLaunchTitle.textContent = 'Open the challenge board';
-      ctfLaunchCopy.textContent = 'Solve the six-step CTF on your own run. The leaderboard tracks individual clears, not families.';
+      ctfLaunchTitle.textContent = 'Take on the CTF';
+      ctfLaunchCopy.textContent = 'First to clear all six challenges wins £20 and a certificate.';
       ctfLaunchLink.href = '/ctf';
       ctfLaunchLink.removeAttribute('aria-disabled');
       ctfLaunchLink.classList.remove('is-disabled');

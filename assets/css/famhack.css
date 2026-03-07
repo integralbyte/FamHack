@@ -267,6 +267,10 @@ body.menu-open {
   gap: 16px;
 }
 
+.about-content .famhack-button-row {
+  justify-content: center;
+}
+
 /* Revamped Footer Styles */
 .footer-new {
   background-color: #0d0d0d;
@@ -1824,7 +1828,7 @@ button.button-link:disabled {
 }
 
 .about-inner {
-  max-width: 800px;
+  max-width: 860px;
   margin: 0 auto;
 }
 
@@ -1887,6 +1891,12 @@ button.button-link:disabled {
   font-weight: 500;
   color: #ffe9ce;
   margin: 0 0 15px;
+  line-height: 1.22;
+  text-wrap: balance;
+}
+
+.about-panel:not(.about-panel-wide) .about-panel-title {
+  max-width: 14ch;
 }
 
 .about-panel-copy {
@@ -1933,6 +1943,8 @@ button.button-link:disabled {
   font-weight: 600;
   color: #ffe9ce;
   margin: 0 0 14px;
+  line-height: 1.18;
+  text-wrap: balance;
 }
 
 .organizer-grid {
@@ -2022,8 +2034,9 @@ button.button-link:disabled {
   margin: 0 0 16px;
   font-family: 'Azeret Mono', monospace;
   font-size: clamp(2.4rem, 5vw, 4.6rem);
-  line-height: 1.05;
+  line-height: 1.12;
   color: #ffe9ce;
+  text-wrap: balance;
 }
 
 .tracks-lede {
@@ -2070,6 +2083,8 @@ button.button-link:disabled {
 }
 
 .track-card-main {
+  display: flex;
+  flex-direction: column;
   min-height: 560px;
   background:
     radial-gradient(circle at 82% 16%, rgba(252, 47, 32, 0.24), transparent 34%),
@@ -2107,12 +2122,13 @@ button.button-link:disabled {
   margin: 0 0 18px;
   font-family: 'Azeret Mono', monospace;
   font-size: clamp(1.8rem, 4vw, 3rem);
-  line-height: 1.08;
+  line-height: 1.16;
   color: #ffe9ce;
+  text-wrap: balance;
 }
 
 .track-card-main .track-title {
-  max-width: 10ch;
+  max-width: 11ch;
 }
 
 .track-copy {
@@ -2130,6 +2146,22 @@ button.button-link:disabled {
   margin: 28px 0 0;
   display: grid;
   gap: 14px;
+}
+
+.track-flagship-trophy {
+  margin-top: auto;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  color: #e7b64f;
+}
+
+.track-flagship-trophy svg {
+  width: min(230px, 72%);
+  height: auto;
+  filter:
+    drop-shadow(0 0 18px rgba(231, 182, 79, 0.2))
+    drop-shadow(0 14px 32px rgba(231, 182, 79, 0.1));
 }
 
 .track-points li {
@@ -2154,7 +2186,7 @@ button.button-link:disabled {
 
 .tracks-lower {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
   gap: 24px;
 }
 
@@ -2171,6 +2203,12 @@ button.button-link:disabled {
   font-family: 'Azeret Mono', monospace;
   font-size: 1.2rem;
   color: #ffe9ce;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.track-meta-title {
+  max-width: 14ch;
 }
 
 .track-meta-copy,
@@ -2186,6 +2224,14 @@ button.button-link:disabled {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
+}
+
+.tracks-hero .button {
+  min-width: 250px;
+}
+
+.tracks-hero .button-label {
+  white-space: nowrap;
 }
 
 /* Loading States */
