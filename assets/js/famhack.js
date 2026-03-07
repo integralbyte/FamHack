@@ -1156,7 +1156,7 @@ const FamHack = {
       }
 
       if (memberProgress) {
-        memberProgress.textContent = 'Come back at launch to start the first challenge.';
+        memberProgress.textContent = 'Come back at launch to start the challenge.';
       }
 
       if (playerRank) {
