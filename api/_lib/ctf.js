@@ -256,12 +256,13 @@ function buildLockedViewer(user) {
 export function getCtfReleaseGate(req) {
   const releaseAt = getReleaseAt();
   const releaseAtIso = releaseAt.toISOString();
-  const launched = Boolean(getLaunchSecret());
+  const launchOverride = Boolean(getLaunchSecret());
+  const launched = launchOverride || Date.now() >= releaseAt.getTime();
 
   return {
     granted: launched,
-    released: launched,
-    launchConfigured: launched,
+    released: Date.now() >= releaseAt.getTime(),
+    launchConfigured: launchOverride,
     releaseAt: releaseAtIso,
   };
 }

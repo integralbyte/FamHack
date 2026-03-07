@@ -1148,19 +1148,19 @@ const FamHack = {
 
     if (ctf.locked) {
       if (playerName) {
-        playerName.textContent = 'CTF Locked';
+        playerName.textContent = 'FamHack CTF';
       }
 
       if (playerLevel) {
-        playerLevel.textContent = releaseLabel ? `Opens ${releaseLabel}` : 'Launch pending';
+        playerLevel.textContent = releaseLabel ? `Opens ${releaseLabel}` : 'Opens soon';
       }
 
       if (memberProgress) {
-        memberProgress.textContent = 'Challenge zero is holding the board shut right now.';
+        memberProgress.textContent = 'Come back at launch to start the first challenge.';
       }
 
       if (playerRank) {
-        playerRank.textContent = 'Leaderboard opens at launch';
+        playerRank.textContent = 'Leaderboard opens with the CTF';
       }
 
       if (returnLink) {
@@ -1255,7 +1255,7 @@ const FamHack = {
     }
 
     if (ctf.locked) {
-      container.innerHTML = '<p class="empty-state">No clears yet. Everything opens at launch.</p>';
+      container.innerHTML = '<p class="empty-state">No clears yet.</p>';
       return;
     }
 
@@ -1281,7 +1281,7 @@ const FamHack = {
     }
 
     if (ctf.locked) {
-      container.innerHTML = '<p class="empty-state">Board locked until launch.</p>';
+      container.innerHTML = '<p class="empty-state">No clears yet.</p>';
       return;
     }
 
@@ -1341,10 +1341,9 @@ const FamHack = {
     if (ctf.locked) {
       shell.innerHTML = `
         <section class="ctf-challenge-card ctf-challenge-card-locked">
-          <p class="ctf-step-kicker">Challenge 0 / ${ctf.challengeCount}</p>
-          <h2 class="ctf-challenge-title">The board is locked.</h2>
-          <p class="ctf-challenge-copy">No one can move past this gate until launch.</p>
-          <p class="ctf-challenge-clue">Challenge one opens once the launch password is added on the server.</p>
+          <p class="ctf-step-kicker">Opens Soon</p>
+          <h2 class="ctf-challenge-title">The CTF is not live yet.</h2>
+          <p class="ctf-challenge-copy">Challenge one opens at launch.</p>
         </section>
       `;
       return;
