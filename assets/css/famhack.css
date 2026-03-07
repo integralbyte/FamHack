@@ -267,10 +267,6 @@ body.menu-open {
   gap: 16px;
 }
 
-.about-content .famhack-button-row {
-  justify-content: center;
-}
-
 .famhack-about-preview .button-link[href="/tracks"] .button-label {
   color: #d50e00;
 }

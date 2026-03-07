@@ -16,7 +16,6 @@ const CTF_PROOF_SEED = 'famhack-ctf-seed';
 const CTF_DEFAULT_ACCESS_SECRET = 'famhack-ctf-local-dev-secret';
 const CTF_KONAMI_ITERATIONS = 6000;
 const CTF_KONAMI_CODEPOINTS = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
-const CTF_RELEASE_AT_FALLBACK = '2026-03-08T16:25:00Z';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const CTF_PRIVATE_ASSET_DIR = path.resolve(__dirname, '../../private/ctf');
@@ -191,7 +190,11 @@ function getAccessSecret() {
 }
 
 function getReleaseAt() {
-  const value = String(process.env.CTF_RELEASE_AT || CTF_RELEASE_AT_FALLBACK).trim();
+  const value = String(process.env.CTF_RELEASE_AT || '').trim();
+  if (!value) {
+    return null;
+  }
+
   const releaseDate = new Date(value);
 
   if (Number.isNaN(releaseDate.getTime())) {
@@ -255,13 +258,14 @@ function buildLockedViewer(user) {
 
 export function getCtfReleaseGate(req) {
   const releaseAt = getReleaseAt();
-  const releaseAtIso = releaseAt.toISOString();
+  const releaseAtIso = releaseAt ? releaseAt.toISOString() : null;
   const launchOverride = Boolean(getLaunchSecret());
-  const launched = launchOverride || Date.now() >= releaseAt.getTime();
+  const timeReleased = Boolean(releaseAt && Date.now() >= releaseAt.getTime());
+  const launched = launchOverride || timeReleased;
 
   return {
     granted: launched,
-    released: Date.now() >= releaseAt.getTime(),
+    released: timeReleased,
     launchConfigured: launchOverride,
     releaseAt: releaseAtIso,
   };
