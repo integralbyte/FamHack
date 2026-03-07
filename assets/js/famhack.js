@@ -1838,14 +1838,11 @@ const FamHack = {
       if (dashboard.viewer.role === 'child' && dashboard.viewer.status === 'pending') {
         statusBanner.hidden = false;
         statusBanner.textContent = 'Your join request is pending parent approval.';
-      } else if (dashboard.viewer.role === 'child') {
-        statusBanner.hidden = false;
-        statusBanner.textContent = `You are approved as a child in ${dashboard.team.name}.`;
       } else if (dashboard.team.isFull) {
         statusBanner.hidden = false;
         statusBanner.textContent = `This family is full at ${dashboard.team.approvedCount}/${dashboard.team.maxMembers}. Pending requests can be declined, but no further approvals can go through until someone leaves.`;
       } else {
-        statusBanner.hidden = false;
+        statusBanner.hidden = dashboard.viewer.role !== 'parent';
         statusBanner.textContent = 'Share the family code or the invite link below with your children.';
       }
     }
