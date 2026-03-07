@@ -1144,15 +1144,15 @@ const FamHack = {
     const returnLink = document.querySelector('.ctf-return-link');
     const signOutButton = document.getElementById('ctf-sign-out-btn');
     const isGuest = Boolean(ctf.viewer?.guest);
-    const releaseLabel = ctf.releaseAt ? this.formatLaunchDateTime(ctf.releaseAt) : '';
 
     if (ctf.locked) {
       if (playerName) {
-        playerName.textContent = 'FamHack CTF';
+        playerName.textContent = 'Challenge Board';
       }
 
       if (playerLevel) {
-        playerLevel.textContent = releaseLabel ? `Opens ${releaseLabel}` : 'Opens soon';
+        playerLevel.textContent = '';
+        playerLevel.hidden = true;
       }
 
       if (memberProgress) {
@@ -1175,9 +1175,7 @@ const FamHack = {
       if (statusBanner) {
         statusBanner.hidden = false;
         statusBanner.classList.remove('is-success');
-        statusBanner.textContent = releaseLabel
-          ? `The CTF opens ${releaseLabel} - which just happens to be on Pi Day :)`
-          : 'The CTF is locked until launch.';
+        statusBanner.textContent = 'The CTF opens on π day, π pm (14 March, 3:14 PM) GMT.';
       }
 
       this.renderCtfCompletedList(document.getElementById('ctf-completed-list'), ctf);
@@ -1191,6 +1189,7 @@ const FamHack = {
     }
 
     if (playerLevel) {
+      playerLevel.hidden = false;
       playerLevel.textContent = isGuest
         ? `Open practice run · ${ctf.challengeCount} challenges`
         : `Personal level ${ctf.member.highestSolvedChallenge} / ${this.config.ctfChallengeCount || ctf.challengeCount}`;
@@ -2238,21 +2237,6 @@ const FamHack = {
       month: 'short',
       hour: '2-digit',
       minute: '2-digit',
-    }).format(new Date(value));
-  },
-
-  formatLaunchDateTime(value) {
-    if (!value) {
-      return '';
-    }
-
-    return new Intl.DateTimeFormat('en-GB', {
-      weekday: 'short',
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short',
     }).format(new Date(value));
   },
 
