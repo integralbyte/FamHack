@@ -2578,13 +2578,23 @@ button.button-link:disabled {
   }
 
   .members-section-primary > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
-    top: 18px;
+    top: 24px;
     left: 14px;
   }
 
   #pending-section > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
     top: 18px;
     left: 14px;
+  }
+
+  .members-section-primary > .bracket[data-wf--bracket--variant="bottom-right"] {
+    right: 14px;
+    bottom: 8px;
+  }
+
+  #pending-section > .bracket[data-wf--bracket--variant="bottom-right"] {
+    right: 14px;
+    bottom: 8px;
   }
 
   .members-heading,
@@ -2765,10 +2775,29 @@ button.button-link:disabled {
   }
 
   .members-section-primary > .bracket:not([data-wf--bracket--variant="bottom-right"]),
-  #pending-section > .bracket:not([data-wf--bracket--variant="bottom-right"]),
   .ctf-panel > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
     top: 12px;
     left: 10px;
+  }
+
+  #pending-section > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
+    top: 12px;
+    left: 10px;
+  }
+
+  .members-section-primary > .bracket:not([data-wf--bracket--variant="bottom-right"]) {
+    top: 18px;
+    left: 10px;
+  }
+
+  .members-section-primary > .bracket[data-wf--bracket--variant="bottom-right"] {
+    right: 10px;
+    bottom: 6px;
+  }
+
+  #pending-section > .bracket[data-wf--bracket--variant="bottom-right"] {
+    right: 10px;
+    bottom: 6px;
   }
 
   .ctf-panel > .bracket[data-wf--bracket--variant="bottom-right"] {
