@@ -945,10 +945,12 @@ button.role-card {
   margin-bottom: 28px;
   padding: 34px 40px 36px;
   background:
-    radial-gradient(circle at top right, rgba(252, 47, 32, 0.12), transparent 42%),
-    linear-gradient(180deg, rgba(255, 233, 206, 0.04), rgba(255, 233, 206, 0.02)),
-    #101010;
-  border: 1px solid rgba(255, 233, 206, 0.08);
+    radial-gradient(circle at top right, rgba(231, 182, 79, 0.2), transparent 40%),
+    radial-gradient(circle at 18% 82%, rgba(242, 195, 76, 0.1), transparent 34%),
+    linear-gradient(180deg, rgba(255, 233, 206, 0.075), rgba(255, 233, 206, 0.025)),
+    #11100d;
+  border: 1px solid rgba(231, 182, 79, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 233, 206, 0.08);
 }
 
 .ctf-launch-copy-wrap {
@@ -971,6 +973,10 @@ button.role-card {
 
 .ctf-page-kicker {
   margin-bottom: 14px;
+}
+
+.ctf-launch-kicker {
+  color: rgba(242, 195, 76, 0.96);
 }
 
 .ctf-launch-title {

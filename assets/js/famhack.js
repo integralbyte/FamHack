@@ -1837,7 +1837,7 @@ const FamHack = {
     if (statusBanner) {
       if (dashboard.viewer.role === 'child' && dashboard.viewer.status === 'pending') {
         statusBanner.hidden = false;
-        statusBanner.textContent = 'Your join request is pending parent approval. You can cancel it from this page if you picked the wrong family.';
+        statusBanner.textContent = 'Your join request is pending parent approval.';
       } else if (dashboard.viewer.role === 'child') {
         statusBanner.hidden = false;
         statusBanner.textContent = `You are approved as a child in ${dashboard.team.name}.`;
