@@ -1176,7 +1176,7 @@ const FamHack = {
         statusBanner.hidden = false;
         statusBanner.classList.remove('is-success');
         statusBanner.textContent = releaseLabel
-          ? `The CTF opens ${releaseLabel}.`
+          ? `The CTF opens ${releaseLabel} - which just happens to be on Pi Day :)`
           : 'The CTF is locked until launch.';
       }
 
