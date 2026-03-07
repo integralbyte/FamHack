@@ -1506,6 +1506,10 @@ button.role-card {
     transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.dashboard-danger:not(.is-expanded) .danger-toggle-bracket {
+  opacity: 0;
+}
+
 .dashboard-danger.is-expanded .danger-toggle-bracket {
   opacity: 0;
   transform: scale(0.84);
