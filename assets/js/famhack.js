@@ -1827,7 +1827,7 @@ const FamHack = {
 
     if (ctfLaunchTitle && ctfLaunchCopy && ctfLaunchLink) {
       ctfLaunchTitle.textContent = 'Take on the CTF';
-      ctfLaunchCopy.textContent = 'First to clear all six challenges wins £20 and a certificate.';
+      ctfLaunchCopy.textContent = 'First to clear all challenges wins £20 and a certificate.';
       ctfLaunchLink.href = '/ctf';
       ctfLaunchLink.removeAttribute('aria-disabled');
       ctfLaunchLink.classList.remove('is-disabled');
