@@ -1359,7 +1359,7 @@ const FamHack = {
 
     if (challenge.mode === 'konami') {
       const konamiClass = this.state.ctfKonamiSolved ? ' is-solved' : '';
-      const konamiText = challenge.prompt;
+      const konamiText = this.state.ctfKonamiSolved ? 'Konami noticed.' : challenge.prompt;
 
       shell.innerHTML = `
         <section class="ctf-challenge-card ctf-challenge-card-konami">

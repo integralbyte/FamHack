@@ -70,8 +70,8 @@ const CTF_CHALLENGES = [
     inputLabel: 'Answer',
     placeholder: 'Enter answer',
     actionLabel: 'Submit',
-    successTitle: 'Metadata mapped.',
-    successCopy: 'You read the clue, checked the dimensions, and landed the number.',
+    successTitle: 'Signal decoded.',
+    successCopy: 'You caught the clue, worked the dimensions, and nailed it.',
   },
   {
     number: 5,
