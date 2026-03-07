@@ -16,6 +16,7 @@ const CTF_PROOF_SEED = 'famhack-ctf-seed';
 const CTF_DEFAULT_ACCESS_SECRET = 'famhack-ctf-local-dev-secret';
 const CTF_KONAMI_ITERATIONS = 6000;
 const CTF_KONAMI_CODEPOINTS = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+const CTF_RELEASE_AT_FALLBACK = '2026-03-14T16:00:00Z';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const CTF_PRIVATE_ASSET_DIR = path.resolve(__dirname, '../../private/ctf');
@@ -189,6 +190,21 @@ function getAccessSecret() {
     || CTF_DEFAULT_ACCESS_SECRET;
 }
 
+function getReleaseAt() {
+  const value = String(process.env.CTF_RELEASE_AT || CTF_RELEASE_AT_FALLBACK).trim();
+  const releaseDate = new Date(value);
+
+  if (Number.isNaN(releaseDate.getTime())) {
+    throw new Error('Invalid CTF_RELEASE_AT value');
+  }
+
+  return releaseDate;
+}
+
+function getLaunchSecret() {
+  return String(process.env.CTF_LAUNCH_SECRET || '').trim();
+}
+
 function signTokenPayload(payload) {
   const encodedPayload = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
   const signature = createHmac('sha256', getAccessSecret()).update(encodedPayload).digest('base64url');
@@ -214,6 +230,71 @@ function verifySignedToken(token) {
   } catch (error) {
     throw createStatusError(403, 'This challenge gate is no longer valid. Refresh the page and try again.');
   }
+}
+
+function buildLockedViewer(user) {
+  if (!user) {
+    return {
+      id: null,
+      email: null,
+      name: 'Guest Run',
+      guest: true,
+    };
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: getDisplayName({
+      full_name: user.user_metadata?.full_name,
+      email: user.email,
+    }, user.email),
+    guest: false,
+  };
+}
+
+export function getCtfReleaseGate(req) {
+  const releaseAt = getReleaseAt();
+  const releaseAtIso = releaseAt.toISOString();
+  const launched = Boolean(getLaunchSecret());
+
+  return {
+    granted: launched,
+    released: launched,
+    launchConfigured: launched,
+    releaseAt: releaseAtIso,
+  };
+}
+
+export function assertCtfReleaseAccess(req) {
+  const gate = getCtfReleaseGate(req);
+
+  if (!gate.granted) {
+    throw createStatusError(423, 'The CTF is locked until launch.');
+  }
+
+  return gate;
+}
+
+export function getLockedCtfState(user, req) {
+  const gate = getCtfReleaseGate(req);
+
+  return {
+    locked: true,
+    releaseAt: gate.releaseAt,
+    viewer: buildLockedViewer(user),
+    challengeCount: CTF_CHALLENGE_COUNT,
+    member: {
+      solvedChallenges: [],
+      highestSolvedChallenge: 0,
+      currentChallengeNumber: 1,
+      completed: false,
+    },
+    solvedChallenges: [],
+    currentChallenge: null,
+    leaderboard: [],
+    completionMessage: null,
+  };
 }
 
 function sanitizeSolvedChallengeNumbers(solvedChallenges) {

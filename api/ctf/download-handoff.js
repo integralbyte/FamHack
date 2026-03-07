@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { CTF_PDF_FILENAME, getPrivateCtfAssetPath } from '../_lib/ctf.js';
+import { assertCtfReleaseAccess, CTF_PDF_FILENAME, getPrivateCtfAssetPath } from '../_lib/ctf.js';
 import { allowMethods, sendError } from '../_lib/http.js';
 
 export default async function handler(req, res) {
@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    assertCtfReleaseAccess(req);
     const fileBuffer = await readFile(getPrivateCtfAssetPath('ctf-handoff.pdf'));
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${CTF_PDF_FILENAME}"`);

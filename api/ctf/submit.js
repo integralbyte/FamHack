@@ -1,6 +1,6 @@
 import { getOptionalUser } from '../_lib/auth.js';
 import { readJsonBody, allowMethods, sendError } from '../_lib/http.js';
-import { submitCtfAnswerForUser, submitGuestCtfAnswer } from '../_lib/ctf.js';
+import { assertCtfReleaseAccess, submitCtfAnswerForUser, submitGuestCtfAnswer } from '../_lib/ctf.js';
 
 export default async function handler(req, res) {
   if (!allowMethods(req, res, ['POST'])) {
@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    assertCtfReleaseAccess(req);
     const body = readJsonBody(req);
     const user = await getOptionalUser(req);
     const state = user

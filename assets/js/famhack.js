@@ -1144,6 +1144,47 @@ const FamHack = {
     const returnLink = document.querySelector('.ctf-return-link');
     const signOutButton = document.getElementById('ctf-sign-out-btn');
     const isGuest = Boolean(ctf.viewer?.guest);
+    const releaseLabel = ctf.releaseAt ? this.formatLaunchDateTime(ctf.releaseAt) : '';
+
+    if (ctf.locked) {
+      if (playerName) {
+        playerName.textContent = 'CTF Locked';
+      }
+
+      if (playerLevel) {
+        playerLevel.textContent = releaseLabel ? `Opens ${releaseLabel}` : 'Launch pending';
+      }
+
+      if (memberProgress) {
+        memberProgress.textContent = 'Challenge zero is holding the board shut right now.';
+      }
+
+      if (playerRank) {
+        playerRank.textContent = 'Leaderboard opens at launch';
+      }
+
+      if (returnLink) {
+        returnLink.href = this.state.session ? '/dashboard' : '/register';
+        returnLink.textContent = this.state.session ? 'Back to Dashboard' : 'Back to Register';
+      }
+
+      if (signOutButton) {
+        signOutButton.hidden = !this.state.session;
+      }
+
+      if (statusBanner) {
+        statusBanner.hidden = false;
+        statusBanner.classList.remove('is-success');
+        statusBanner.textContent = releaseLabel
+          ? `The CTF opens ${releaseLabel}.`
+          : 'The CTF is locked until launch.';
+      }
+
+      this.renderCtfCompletedList(document.getElementById('ctf-completed-list'), ctf);
+      this.renderCtfLeaderboard(document.getElementById('ctf-leaderboard-list'), ctf);
+      this.renderCtfChallenge();
+      return;
+    }
 
     if (playerName) {
       playerName.textContent = isGuest ? 'Guest Run' : ctf.viewer.name;
@@ -1213,6 +1254,11 @@ const FamHack = {
       return;
     }
 
+    if (ctf.locked) {
+      container.innerHTML = '<p class="empty-state">No clears yet. Everything opens at launch.</p>';
+      return;
+    }
+
     const solved = ctf.solvedChallenges || [];
     if (!solved.length) {
       container.innerHTML = ctf.viewer?.guest
@@ -1231,6 +1277,11 @@ const FamHack = {
 
   renderCtfLeaderboard(container, ctf) {
     if (!container) {
+      return;
+    }
+
+    if (ctf.locked) {
+      container.innerHTML = '<p class="empty-state">Board locked until launch.</p>';
       return;
     }
 
@@ -1284,6 +1335,18 @@ const FamHack = {
     const ctf = this.state.ctf;
     if (!ctf) {
       shell.innerHTML = '';
+      return;
+    }
+
+    if (ctf.locked) {
+      shell.innerHTML = `
+        <section class="ctf-challenge-card ctf-challenge-card-locked">
+          <p class="ctf-step-kicker">Challenge 0 / ${ctf.challengeCount}</p>
+          <h2 class="ctf-challenge-title">The board is locked.</h2>
+          <p class="ctf-challenge-copy">No one can move past this gate until launch.</p>
+          <p class="ctf-challenge-clue">Challenge one opens once the launch password is added on the server.</p>
+        </section>
+      `;
       return;
     }
 
@@ -2176,6 +2239,21 @@ const FamHack = {
       month: 'short',
       hour: '2-digit',
       minute: '2-digit',
+    }).format(new Date(value));
+  },
+
+  formatLaunchDateTime(value) {
+    if (!value) {
+      return '';
+    }
+
+    return new Intl.DateTimeFormat('en-GB', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short',
     }).format(new Date(value));
   },
 

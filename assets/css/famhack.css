@@ -1289,6 +1289,11 @@ button.role-card {
   justify-content: center;
 }
 
+.ctf-challenge-card-locked {
+  min-height: 280px;
+  justify-content: center;
+}
+
 .ctf-gate-actions {
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import { getOptionalUser } from '../_lib/auth.js';
-import { getCtfAssetForRequest, getPrivateCtfAssetPath } from '../_lib/ctf.js';
+import { assertCtfReleaseAccess, getCtfAssetForRequest, getPrivateCtfAssetPath } from '../_lib/ctf.js';
 import { allowMethods, sendError } from '../_lib/http.js';
 
 export default async function handler(req, res) {
@@ -10,6 +10,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    assertCtfReleaseAccess(req);
     const user = await getOptionalUser(req);
     const asset = await getCtfAssetForRequest({
       user,
