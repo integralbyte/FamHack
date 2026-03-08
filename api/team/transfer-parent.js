@@ -116,11 +116,11 @@ export default async function handler(req, res) {
     });
 
     if (rpcError) {
-      if (String(rpcError.message || '').includes('Could not find the function')) {
+      if (
+        String(rpcError.message || '').includes('Could not find the function')
+        || isParentTransferError(rpcError)
+      ) {
         await transferParentFallback(supabase, actingMembership, targetMembership, user.id);
-      } else if (isParentTransferError(rpcError)) {
-        sendError(res, 409, 'Unable to transfer primary parent ownership right now');
-        return;
       } else {
         throw new Error(rpcError.message);
       }
