@@ -8,6 +8,7 @@ import {
   getTeamByCode,
   MAX_TEAM_SIZE,
   sanitizeFullName,
+  sanitizeStudyYear,
   upsertProfile,
 } from '../_lib/teams.js';
 import { getServiceClient } from '../_lib/supabase.js';
@@ -23,6 +24,7 @@ export default async function handler(req, res) {
 
     const body = readJsonBody(req);
     const fullName = sanitizeFullName(body.fullName);
+    const studyYear = sanitizeStudyYear(body.studyYear);
     const joinCode = String(body.joinCode || '').trim().toUpperCase();
 
     if (!fullName) {
@@ -32,6 +34,11 @@ export default async function handler(req, res) {
 
     if (!joinCode) {
       sendError(res, 400, 'A join code is required');
+      return;
+    }
+
+    if (!studyYear) {
+      sendError(res, 400, 'Choose your year of study');
       return;
     }
 
@@ -78,7 +85,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    await upsertProfile(user, fullName);
+    await upsertProfile(user, fullName, studyYear);
 
     const supabase = getServiceClient();
     const { error } = await supabase.from('team_memberships').upsert(

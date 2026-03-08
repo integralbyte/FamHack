@@ -28,9 +28,22 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text not null unique,
   full_name text,
+  study_year text,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.profiles
+  add column if not exists study_year text;
+
+alter table public.profiles
+  drop constraint if exists profiles_study_year_check;
+alter table public.profiles
+  add constraint profiles_study_year_check
+  check (
+    study_year is null
+    or study_year in ('year_1', 'year_2', 'year_3', 'year_4', 'masters', 'phd')
+  );
 
 create table if not exists public.teams (
   id uuid primary key default gen_random_uuid(),

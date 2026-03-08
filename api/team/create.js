@@ -5,6 +5,7 @@ import {
   createUniqueJoinCode,
   getMembershipByUserId,
   sanitizeFullName,
+  sanitizeStudyYear,
   sanitizeTeamName,
   upsertProfile,
 } from '../_lib/teams.js';
@@ -21,6 +22,7 @@ export default async function handler(req, res) {
 
     const body = readJsonBody(req);
     const fullName = sanitizeFullName(body.fullName);
+    const studyYear = sanitizeStudyYear(body.studyYear);
     const teamName = sanitizeTeamName(body.teamName);
 
     if (!fullName) {
@@ -30,6 +32,11 @@ export default async function handler(req, res) {
 
     if (teamName.length < 3) {
       sendError(res, 400, 'Team name must be at least 3 characters');
+      return;
+    }
+
+    if (!studyYear) {
+      sendError(res, 400, 'Choose your year of study');
       return;
     }
 
@@ -44,7 +51,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    await upsertProfile(user, fullName);
+    await upsertProfile(user, fullName, studyYear);
 
     const supabase = getServiceClient();
     const joinCode = await createUniqueJoinCode();

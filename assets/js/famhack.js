@@ -153,6 +153,10 @@ const FamHack = {
     return String(joinCode || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   },
 
+  getSelectedStudyYear() {
+    return String(document.getElementById('study-year-input')?.value || '').trim().toLowerCase();
+  },
+
   setText(id, value) {
     const element = document.getElementById(id);
     if (element) {
@@ -975,6 +979,7 @@ const FamHack = {
   async handleCreateTeam() {
     const createButton = document.getElementById('create-team-btn');
     const fullName = document.getElementById('full-name-input')?.value?.trim() || '';
+    const studyYear = this.getSelectedStudyYear();
     const teamName = document.getElementById('team-name-input')?.value?.trim() || '';
 
     this.showFieldError('team-error', '');
@@ -989,6 +994,11 @@ const FamHack = {
       return;
     }
 
+    if (!studyYear) {
+      this.showFieldError('team-error', 'Choose your year of study');
+      return;
+    }
+
     this.setButtonState(createButton, {
       busy: true,
       label: 'Creating...',
@@ -1000,6 +1010,7 @@ const FamHack = {
         method: 'POST',
         body: {
           fullName,
+          studyYear,
           teamName,
         },
       });
@@ -1020,6 +1031,7 @@ const FamHack = {
   async handleJoinRequest() {
     const joinButton = document.getElementById('request-join-btn');
     const fullName = document.getElementById('full-name-input')?.value?.trim() || '';
+    const studyYear = this.getSelectedStudyYear();
     const joinCode = this.normalizeJoinCode(document.getElementById('join-code-input')?.value || this.state.teamPreview?.joinCode);
 
     this.showFieldError('join-request-error', '');
@@ -1027,6 +1039,11 @@ const FamHack = {
 
     if (!fullName) {
       this.showFieldError('join-request-error', 'Your name is required');
+      return;
+    }
+
+    if (!studyYear) {
+      this.showFieldError('join-request-error', 'Choose your year of study');
       return;
     }
 
@@ -1055,6 +1072,7 @@ const FamHack = {
         method: 'POST',
         body: {
           fullName,
+          studyYear,
           joinCode,
         },
       });
@@ -1916,6 +1934,8 @@ const FamHack = {
     const email = this.escapeHtml(member.email || '');
     const roleLabel = member.role === 'parent' ? 'Parent' : 'Child';
     const statusLabel = member.status.charAt(0).toUpperCase() + member.status.slice(1);
+    const studyYearLabel = this.escapeHtml(member.studyYearLabel || '');
+    const memberMeta = studyYearLabel ? `${roleLabel} · ${studyYearLabel}` : roleLabel;
     const dashboard = options.dashboard || this.state.dashboard;
     const canTransferParent = dashboard?.viewer?.role === 'parent'
       && member.role === 'child'
@@ -1929,7 +1949,7 @@ const FamHack = {
           <div class="member-info">
             <p class="member-name">${displayName}</p>
             <p class="member-email">${email}</p>
-            <p class="member-meta">${roleLabel} Request</p>
+            <p class="member-meta">${studyYearLabel ? `${studyYearLabel} · ${roleLabel} Request` : `${roleLabel} Request`}</p>
           </div>
           <div class="member-card-actions">
             <button class="action-btn action-approve" data-review-membership="${member.id}" data-review-decision="approved" ${approveDisabled ? 'disabled' : ''}>${approveLabel}</button>
@@ -1948,7 +1968,7 @@ const FamHack = {
         <div class="member-info">
           <p class="member-name">${displayName}</p>
           <p class="member-email">${email}</p>
-          <p class="member-meta">${roleLabel}</p>
+          <p class="member-meta">${memberMeta}</p>
         </div>
         ${trailingMarkup}
       </div>

@@ -6,6 +6,7 @@ const JOIN_CODE_LENGTH = 6;
 export const MAX_TEAM_SIZE = 15;
 export const TEAM_LIMIT_ERROR_CODE = 'team_member_limit_reached';
 export const PARENT_TRANSFER_ERROR_CODE = 'parent_transfer_failed';
+export const STUDY_YEAR_OPTIONS = ['year_1', 'year_2', 'year_3', 'year_4', 'masters', 'phd'];
 
 export function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -28,6 +29,30 @@ export function sanitizeFullName(fullName) {
   return String(fullName || '').trim().replace(/\s+/g, ' ');
 }
 
+export function sanitizeStudyYear(studyYear) {
+  const normalizedStudyYear = String(studyYear || '').trim().toLowerCase();
+  return STUDY_YEAR_OPTIONS.includes(normalizedStudyYear) ? normalizedStudyYear : '';
+}
+
+export function formatStudyYearLabel(studyYear) {
+  switch (sanitizeStudyYear(studyYear)) {
+    case 'year_1':
+      return 'Year 1';
+    case 'year_2':
+      return 'Year 2';
+    case 'year_3':
+      return 'Year 3';
+    case 'year_4':
+      return 'Year 4';
+    case 'masters':
+      return "Master's";
+    case 'phd':
+      return 'PhD';
+    default:
+      return '';
+  }
+}
+
 export function sanitizeTeamName(teamName) {
   return String(teamName || '').trim().replace(/\s+/g, ' ');
 }
@@ -36,12 +61,13 @@ export function makeInviteLink(origin, joinCode) {
   return `${origin.replace(/\/$/, '')}/join?code=${encodeURIComponent(joinCode)}`;
 }
 
-export async function upsertProfile(user, fullName) {
+export async function upsertProfile(user, fullName, studyYear = '') {
   const supabase = getServiceClient();
   const payload = {
     id: user.id,
     email: normalizeEmail(user.email),
     full_name: sanitizeFullName(fullName) || null,
+    study_year: sanitizeStudyYear(studyYear) || null,
   };
 
   const { error } = await supabase.from('profiles').upsert(payload, {
@@ -132,7 +158,7 @@ export async function getTeamMembers(teamId) {
   const profileIds = memberships.map((membership) => membership.user_id);
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
-    .select('id, email, full_name')
+    .select('id, email, full_name, study_year')
     .in('id', profileIds);
 
   if (profilesError) {
@@ -215,5 +241,7 @@ export function serializeMembership(member) {
     createdAt: member.created_at,
     fullName: member.profile?.full_name || '',
     email: member.profile?.email || '',
+    studyYear: member.profile?.study_year || '',
+    studyYearLabel: formatStudyYearLabel(member.profile?.study_year),
   };
 }
