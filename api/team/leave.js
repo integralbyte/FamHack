@@ -1,6 +1,6 @@
 import { requireUser } from '../_lib/auth.js';
 import { allowMethods, sendError, statusFromError } from '../_lib/http.js';
-import { assertAllowedEmail, getMembershipByUserId, getTeamMembers } from '../_lib/teams.js';
+import { assertAllowedEmail, getMembershipByUserId, getTeamById, getTeamMembers } from '../_lib/teams.js';
 import { getServiceClient } from '../_lib/supabase.js';
 
 export default async function handler(req, res) {
@@ -19,7 +19,15 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (membership.role === 'parent' && membership.status === 'approved') {
+    const team = await getTeamById(membership.team_id);
+    const isLeadParent = Boolean(
+      team
+      && membership.role === 'parent'
+      && membership.status === 'approved'
+      && team.created_by === user.id
+    );
+
+    if (isLeadParent) {
       const members = await getTeamMembers(membership.team_id);
       const otherActiveMembers = members.filter(
         (member) => member.user_id !== user.id && member.status !== 'declined'
@@ -41,7 +49,7 @@ export default async function handler(req, res) {
         return;
       }
 
-      sendError(res, 409, 'Transfer parent ownership before leaving this family');
+      sendError(res, 409, 'Transfer primary parent ownership before leaving this family');
       return;
     }
 

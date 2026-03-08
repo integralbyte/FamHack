@@ -4,44 +4,25 @@ import {
   assertAllowedEmail,
   getMembershipById,
   getMembershipByUserId,
+  getTeamById,
   isParentTransferError,
 } from '../_lib/teams.js';
 import { getServiceClient } from '../_lib/supabase.js';
 
 async function transferParentFallback(supabase, actingMembership, targetMembership, actingUserId) {
-  const { error: promoteError } = await supabase
-    .from('team_memberships')
-    .update({
-      role: 'parent',
-      reviewed_by: actingUserId,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq('id', targetMembership.id);
-
-  if (promoteError) {
-    throw new Error(promoteError.message);
-  }
-
-  const { error: demoteError } = await supabase
-    .from('team_memberships')
-    .update({
-      role: 'child',
-      reviewed_by: actingUserId,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq('id', actingMembership.id);
-
-  if (demoteError) {
-    await supabase
+  if (targetMembership.role !== 'parent') {
+    const { error: promoteError } = await supabase
       .from('team_memberships')
       .update({
-        role: 'child',
+        role: 'parent',
         reviewed_by: actingUserId,
         reviewed_at: new Date().toISOString(),
       })
       .eq('id', targetMembership.id);
 
-    throw new Error(demoteError.message);
+    if (promoteError) {
+      throw new Error(promoteError.message);
+    }
   }
 
   const { error: teamError } = await supabase
@@ -52,24 +33,6 @@ async function transferParentFallback(supabase, actingMembership, targetMembersh
     .eq('id', actingMembership.team_id);
 
   if (teamError) {
-    await supabase
-      .from('team_memberships')
-      .update({
-        role: 'parent',
-        reviewed_by: actingUserId,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', actingMembership.id);
-
-    await supabase
-      .from('team_memberships')
-      .update({
-        role: 'child',
-        reviewed_by: actingUserId,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', targetMembership.id);
-
     throw new Error(teamError.message);
   }
 }
@@ -85,14 +48,20 @@ export default async function handler(req, res) {
 
     const actingMembership = await getMembershipByUserId(user.id);
     if (!actingMembership || actingMembership.role !== 'parent' || actingMembership.status !== 'approved') {
-      sendError(res, 403, 'Only the current parent can assign a new parent');
+      sendError(res, 403, 'Only an approved parent can reassign the primary parent');
+      return;
+    }
+
+    const team = await getTeamById(actingMembership.team_id);
+    if (!team || team.created_by !== user.id) {
+      sendError(res, 403, 'Only the primary parent can reassign the primary parent');
       return;
     }
 
     const body = readJsonBody(req);
     const membershipId = String(body.membershipId || '').trim();
     if (!membershipId) {
-      sendError(res, 400, 'An approved child must be selected');
+      sendError(res, 400, 'An approved family member must be selected');
       return;
     }
 
@@ -102,8 +71,13 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (targetMembership.role !== 'child' || targetMembership.status !== 'approved') {
-      sendError(res, 409, 'Only approved children can become the new parent');
+    if (targetMembership.user_id === user.id) {
+      sendError(res, 409, 'Choose another approved family member');
+      return;
+    }
+
+    if (targetMembership.status !== 'approved') {
+      sendError(res, 409, 'Only approved family members can become the primary parent');
       return;
     }
 

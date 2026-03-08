@@ -7,6 +7,7 @@ export const MAX_TEAM_SIZE = 15;
 export const TEAM_LIMIT_ERROR_CODE = 'team_member_limit_reached';
 export const PARENT_TRANSFER_ERROR_CODE = 'parent_transfer_failed';
 export const STUDY_YEAR_OPTIONS = ['year_1', 'year_2', 'year_3', 'year_4', 'masters', 'phd'];
+export const JOIN_ROLE_OPTIONS = ['parent', 'child'];
 
 export function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -34,6 +35,14 @@ export function sanitizeStudyYear(studyYear) {
   return STUDY_YEAR_OPTIONS.includes(normalizedStudyYear) ? normalizedStudyYear : '';
 }
 
+export function sanitizeJoinRole(role) {
+  const normalizedRole = String(role || '').trim().toLowerCase();
+  if (normalizedRole === 'student') {
+    return 'child';
+  }
+  return JOIN_ROLE_OPTIONS.includes(normalizedRole) ? normalizedRole : '';
+}
+
 export function formatStudyYearLabel(studyYear) {
   switch (sanitizeStudyYear(studyYear)) {
     case 'year_1':
@@ -51,6 +60,14 @@ export function formatStudyYearLabel(studyYear) {
     default:
       return '';
   }
+}
+
+export function formatMemberRoleLabel(role, { lead = false } = {}) {
+  if (lead && role === 'parent') {
+    return 'Primary Parent';
+  }
+
+  return role === 'parent' ? 'Parent' : 'Student';
 }
 
 export function sanitizeTeamName(teamName) {
@@ -235,6 +252,7 @@ export async function createUniqueJoinCode() {
 export function serializeMembership(member) {
   return {
     id: member.id,
+    userId: member.user_id,
     role: member.role,
     status: member.status,
     reviewedAt: member.reviewed_at,

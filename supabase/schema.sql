@@ -129,7 +129,6 @@ begin
   from public.team_memberships
   where id = p_new_parent_membership_id
     and team_id = p_team_id
-    and role = 'child'
     and status = 'approved'
   for update;
 
@@ -137,17 +136,13 @@ begin
     raise exception 'parent_transfer_failed';
   end if;
 
-  update public.team_memberships
-  set role = 'child',
-      reviewed_by = p_current_parent_id,
-      reviewed_at = timezone('utc', now())
-  where id = current_parent_membership.id;
-
-  update public.team_memberships
-  set role = 'parent',
-      reviewed_by = p_current_parent_id,
-      reviewed_at = timezone('utc', now())
-  where id = new_parent_membership.id;
+  if new_parent_membership.role <> 'parent' then
+    update public.team_memberships
+    set role = 'parent',
+        reviewed_by = p_current_parent_id,
+        reviewed_at = timezone('utc', now())
+    where id = new_parent_membership.id;
+  end if;
 
   update public.teams
   set created_by = new_parent_membership.user_id

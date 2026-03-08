@@ -44,6 +44,7 @@ export default async function handler(req, res) {
       team: {
         id: team.id,
         name: team.name,
+        ownerId: team.created_by,
         joinCode: team.join_code,
         createdAt: team.created_at,
         maxMembers: MAX_TEAM_SIZE,

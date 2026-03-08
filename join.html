@@ -4,9 +4,9 @@
 <head>
   <meta charset="utf-8" />
   <title>Join a Family | FamHack</title>
-  <meta content="Join your academic family at FamHack using the family code from your academic parent." name="description" />
+  <meta content="Join your academic family at FamHack using the family code from an approved family member." name="description" />
   <meta content="Join a Family | FamHack" property="og:title" />
-  <meta content="Join your academic family at FamHack using the family code from your academic parent." property="og:description" />
+  <meta content="Join your academic family at FamHack using the family code from an approved family member." property="og:description" />
   <meta content="assets/images/famhack-logo.png" property="og:image" />
   <meta property="og:type" content="website" />
   <meta content="summary_large_image" name="twitter:card" />
@@ -253,7 +253,7 @@
               </div>
 
               <h1 class="join-heading">Join Your Academic Family</h1>
-              <p class="register-subheading">Use the family code from your academic parent and request approval.</p>
+              <p class="register-subheading">Use the family code from an approved family member and request approval.</p>
               <p id="join-page-message" class="success-message page-message"></p>
 
               <div class="register-step active" data-step="email">
@@ -335,6 +335,14 @@
                       autocomplete="name" />
                   </div>
                   <div class="form-group">
+                    <label class="form-label" for="join-role-input">Join as</label>
+                    <select id="join-role-input" class="form-input form-select" autocomplete="off">
+                      <option value="">Select your role</option>
+                      <option value="parent">Parent</option>
+                      <option value="student">Student</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
                     <label class="form-label" for="study-year-input">Year of Study</label>
                     <select id="study-year-input" class="form-input form-select" autocomplete="off">
                       <option value="">Select your year</option>
@@ -346,7 +354,7 @@
                       <option value="phd">PhD</option>
                     </select>
                   </div>
-                  <p class="register-subheading helper-copy">Your parent will review this request from the dashboard.
+                  <p class="register-subheading helper-copy">An approved parent will review this request from the dashboard.
                   </p>
                   <p class="error-message" id="join-request-error"></p>
                   <button id="request-join-btn" class="button-link w-inline-block" style="width: 100%;">

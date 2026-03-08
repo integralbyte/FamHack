@@ -8,6 +8,7 @@ import {
   getTeamByCode,
   MAX_TEAM_SIZE,
   sanitizeFullName,
+  sanitizeJoinRole,
   sanitizeStudyYear,
   upsertProfile,
 } from '../_lib/teams.js';
@@ -24,6 +25,7 @@ export default async function handler(req, res) {
 
     const body = readJsonBody(req);
     const fullName = sanitizeFullName(body.fullName);
+    const requestedRole = sanitizeJoinRole(body.role);
     const studyYear = sanitizeStudyYear(body.studyYear);
     const joinCode = String(body.joinCode || '').trim().toUpperCase();
 
@@ -34,6 +36,11 @@ export default async function handler(req, res) {
 
     if (!joinCode) {
       sendError(res, 400, 'A join code is required');
+      return;
+    }
+
+    if (!requestedRole) {
+      sendError(res, 400, 'Choose whether you are joining as a parent or a student');
       return;
     }
 
@@ -49,15 +56,6 @@ export default async function handler(req, res) {
     }
 
     const existingMembership = await getMembershipByUserId(user.id);
-    if (existingMembership?.role === 'parent' && existingMembership.status === 'approved') {
-      if (existingMembership.team_id === team.id) {
-        sendError(res, 409, 'You already manage this family');
-        return;
-      }
-
-      sendError(res, 409, 'Parents cannot join another family until they transfer ownership and leave their current one');
-      return;
-    }
 
     if (existingMembership?.status === 'approved') {
       if (existingMembership.team_id === team.id) {
@@ -92,7 +90,7 @@ export default async function handler(req, res) {
       {
         user_id: user.id,
         team_id: team.id,
-        role: 'child',
+        role: requestedRole,
         status: 'pending',
         reviewed_by: null,
         reviewed_at: null,

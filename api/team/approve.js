@@ -7,6 +7,7 @@ import {
   getTeamLimitMessage,
   isTeamLimitError,
   MAX_TEAM_SIZE,
+  sanitizeJoinRole,
 } from '../_lib/teams.js';
 import { getServiceClient } from '../_lib/supabase.js';
 
@@ -28,9 +29,15 @@ export default async function handler(req, res) {
     const body = readJsonBody(req);
     const membershipId = String(body.membershipId || '').trim();
     const decision = body.decision === 'declined' ? 'declined' : body.decision === 'approved' ? 'approved' : null;
+    const approvedRole = sanitizeJoinRole(body.role);
 
     if (!membershipId || !decision) {
       sendError(res, 400, 'A membership id and valid decision are required');
+      return;
+    }
+
+    if (decision === 'approved' && !approvedRole) {
+      sendError(res, 400, 'Choose whether this person is joining as a parent or a student');
       return;
     }
 
@@ -50,8 +57,8 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (targetMembership.role !== 'child' || targetMembership.status !== 'pending') {
-      sendError(res, 409, 'Only pending child requests can be reviewed');
+    if (targetMembership.status !== 'pending') {
+      sendError(res, 409, 'Only pending join requests can be reviewed');
       return;
     }
 
@@ -66,6 +73,7 @@ export default async function handler(req, res) {
     const { error } = await supabase
       .from('team_memberships')
       .update({
+        ...(decision === 'approved' ? { role: approvedRole } : {}),
         status: decision,
         reviewed_by: user.id,
         reviewed_at: new Date().toISOString(),

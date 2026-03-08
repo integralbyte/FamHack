@@ -157,6 +157,18 @@ const FamHack = {
     return String(document.getElementById('study-year-input')?.value || '').trim().toLowerCase();
   },
 
+  formatDashboardRole(role, { primary = false, request = false } = {}) {
+    if (primary && role === 'parent') {
+      return 'Primary Parent';
+    }
+
+    if (request) {
+      return role === 'parent' ? 'Parent Request' : 'Student Request';
+    }
+
+    return role === 'parent' ? 'Parent' : 'Student';
+  },
+
   setText(id, value) {
     const element = document.getElementById(id);
     if (element) {
@@ -199,7 +211,7 @@ const FamHack = {
       return;
     }
 
-    emailLabel.textContent = 'Parent Email Address';
+    emailLabel.textContent = 'Your Email Address';
     emailInput.placeholder = 's1234567@ed.ac.uk';
   },
 
@@ -466,7 +478,7 @@ const FamHack = {
 
       return {
         destination: '/dashboard',
-        label: dashboard.viewer?.role === 'parent' ? 'Manage My Team' : 'View My Team',
+        label: dashboard.viewer?.role === 'parent' ? 'Manage My Family' : 'View My Family',
       };
     })();
 
@@ -640,7 +652,7 @@ const FamHack = {
     this.setRegisterEmailMode('parent');
     this.setRegisterIntro(
       'Create your academic family',
-      'Academic parents verify their email first, then create the family dashboard.'
+      'Parents verify their email first, then create the family dashboard.'
     );
 
     if (this.state.session) {
@@ -680,7 +692,7 @@ const FamHack = {
     this.showPageMessage('register-page-message', '');
     this.setRegisterIntro(
       'Join an existing family',
-      'Enter the family code from your academic parent, or open the invite link they sent you.'
+      'Enter the family code from an approved parent, or open the invite link they sent you.'
     );
     this.showStep('child');
     document.getElementById('role-family-code-input')?.focus();
@@ -836,7 +848,7 @@ const FamHack = {
         }
 
         this.showStep('join-team');
-        this.showPageMessage('join-page-message', 'Verified. Submit your request and your parent can review it.');
+        this.showPageMessage('join-page-message', 'Verified. Submit your request and an approved parent can review it.');
       }
     } catch (error) {
       console.error(error);
@@ -1034,6 +1046,7 @@ const FamHack = {
   async handleJoinRequest() {
     const joinButton = document.getElementById('request-join-btn');
     const fullName = document.getElementById('full-name-input')?.value?.trim() || '';
+    const joinRole = String(document.getElementById('join-role-input')?.value || '').trim().toLowerCase();
     const studyYear = this.getSelectedStudyYear();
     const joinCode = this.normalizeJoinCode(document.getElementById('join-code-input')?.value || this.state.teamPreview?.joinCode);
 
@@ -1042,6 +1055,11 @@ const FamHack = {
 
     if (!fullName) {
       this.showFieldError('join-request-error', 'Your name is required');
+      return;
+    }
+
+    if (!joinRole) {
+      this.showFieldError('join-request-error', 'Choose whether you are joining as a parent or a student');
       return;
     }
 
@@ -1075,6 +1093,7 @@ const FamHack = {
         method: 'POST',
         body: {
           fullName,
+          role: joinRole,
           studyYear,
           joinCode,
         },
@@ -1771,9 +1790,14 @@ const FamHack = {
 
   renderDashboard(dashboard) {
     this.state.dashboard = dashboard;
-    const canDeleteFamily = dashboard.viewer.role === 'parent'
+    const isLeadParent = dashboard.viewer.role === 'parent'
+      && dashboard.viewer.status === 'approved'
+      && dashboard.viewer.id === dashboard.team.ownerId;
+    const canDeleteFamily = isLeadParent
       && dashboard.members.length === 1
       && dashboard.pendingRequests.length === 0;
+    const canCancelPending = dashboard.viewer.status === 'pending';
+    const canLeaveFamily = dashboard.viewer.status === 'approved' && !isLeadParent;
     const capacityCopy = document.getElementById('dashboard-capacity-copy');
     const teamName = document.getElementById('dashboard-team-name');
     const joinCodeDisplay = document.getElementById('join-code-display');
@@ -1821,12 +1845,12 @@ const FamHack = {
         deleteTeamConfirmInput.value = '';
       }
 
-      if (dashboard.viewer.role === 'child') {
+      if (canCancelPending || canLeaveFamily) {
         dangerSection.hidden = false;
         dangerPanel.hidden = false;
         leaveTeamButton.hidden = false;
-        leaveTeamButton.textContent = dashboard.viewer.status === 'pending' ? 'Cancel Request' : 'Leave Family';
-        dangerCopy.textContent = dashboard.viewer.status === 'pending'
+        leaveTeamButton.textContent = canCancelPending ? 'Cancel Request' : 'Leave Family';
+        dangerCopy.textContent = canCancelPending
           ? 'Cancel this join request if you selected the wrong family.'
           : 'Leave this family. You will need a new family code or invite link to join again.';
         this.setDangerPanelOpen(true, { instant: true });
@@ -1854,7 +1878,7 @@ const FamHack = {
     }
 
     if (inviteGrid) {
-      inviteGrid.hidden = dashboard.viewer.role !== 'parent';
+      inviteGrid.hidden = !(dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved');
     }
 
     if (ctfLaunchTitle && ctfLaunchCopy && ctfLaunchLink) {
@@ -1867,21 +1891,23 @@ const FamHack = {
     }
 
     if (statusBanner) {
-      if (dashboard.viewer.role === 'child' && dashboard.viewer.status === 'pending') {
+      if (dashboard.viewer.status === 'pending') {
         statusBanner.hidden = false;
-        statusBanner.textContent = 'Your join request is pending parent approval.';
+        statusBanner.textContent = dashboard.viewer.role === 'parent'
+          ? 'Your request to join this family as a parent is pending parent approval.'
+          : 'Your join request is pending parent approval.';
       } else if (dashboard.team.isFull) {
         statusBanner.hidden = false;
         statusBanner.textContent = `This family is full at ${dashboard.team.approvedCount}/${dashboard.team.maxMembers}. Pending requests can be declined, but no further approvals can go through until someone leaves.`;
       } else {
-        statusBanner.hidden = dashboard.viewer.role !== 'parent';
-        statusBanner.textContent = 'Share the family code or the invite link below with your children.';
+        statusBanner.hidden = !(dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved');
+        statusBanner.textContent = 'Share the family code or the invite link below with other parents and students.';
       }
     }
 
     this.renderApprovedMembers(membersList, dashboard.members, dashboard);
 
-    if (dashboard.viewer.role === 'parent') {
+    if (dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved') {
       pendingSection.hidden = false;
       this.renderPendingMembers(pendingList, dashboard.pendingRequests, dashboard);
     } else if (pendingSection) {
@@ -1894,7 +1920,7 @@ const FamHack = {
 
     container.innerHTML = '';
     if (!members.length) {
-      container.innerHTML = '<p class="empty-state">No approved members yet.</p>';
+      container.innerHTML = '<p class="empty-state">No approved family members yet.</p>';
       return;
     }
 
@@ -1906,6 +1932,13 @@ const FamHack = {
       button.addEventListener('click', async () => {
         const membershipId = button.dataset.transferParent;
         await this.handleTransferParent(button, membershipId);
+      });
+    });
+
+    container.querySelectorAll('[data-make-parent]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const membershipId = button.dataset.makeParent;
+        await this.handleMakeParent(button, membershipId);
       });
     });
   },
@@ -1933,37 +1966,54 @@ const FamHack = {
   },
 
   memberCardTemplate(member, options = {}) {
+    const dashboard = options.dashboard || this.state.dashboard;
     const displayName = this.escapeHtml(member.fullName || member.email || 'Unknown member');
     const email = this.escapeHtml(member.email || '');
-    const roleLabel = member.role === 'parent' ? 'Parent' : 'Child';
+    const isPrimaryParent = dashboard?.team?.ownerId && member.userId === dashboard.team.ownerId && member.role === 'parent';
+    const roleLabel = this.formatDashboardRole(member.role, { primary: isPrimaryParent });
     const statusLabel = member.status.charAt(0).toUpperCase() + member.status.slice(1);
     const studyYearLabel = this.escapeHtml(member.studyYearLabel || '');
     const memberMeta = studyYearLabel ? `${roleLabel} · ${studyYearLabel}` : roleLabel;
-    const dashboard = options.dashboard || this.state.dashboard;
-    const canTransferParent = dashboard?.viewer?.role === 'parent'
+    const canPromoteParent = dashboard?.viewer?.role === 'parent'
+      && dashboard?.viewer?.status === 'approved'
       && member.role === 'child'
+      && member.status === 'approved';
+    const canTransferParent = dashboard?.viewer?.role === 'parent'
+      && dashboard?.viewer?.status === 'approved'
+      && dashboard?.viewer?.id === dashboard?.team?.ownerId
+      && member.userId !== dashboard?.viewer?.id
       && member.status === 'approved';
 
     if (options.reviewable) {
       const approveDisabled = Boolean(dashboard?.team?.isFull);
-      const approveLabel = approveDisabled ? 'Family Full' : 'Approve';
+      const approveStudentLabel = approveDisabled ? 'Family Full' : 'Approve as Student';
+      const approveParentLabel = approveDisabled ? 'Family Full' : 'Approve as Parent';
       return `
         <div class="member-card">
           <div class="member-info">
             <p class="member-name">${displayName}</p>
             <p class="member-email">${email}</p>
-            <p class="member-meta">${studyYearLabel ? `${studyYearLabel} · ${roleLabel} Request` : `${roleLabel} Request`}</p>
+            <p class="member-meta">${studyYearLabel ? `${studyYearLabel} · ${this.formatDashboardRole(member.role, { request: true })}` : this.formatDashboardRole(member.role, { request: true })}</p>
           </div>
           <div class="member-card-actions">
-            <button class="action-btn action-approve" data-review-membership="${member.id}" data-review-decision="approved" ${approveDisabled ? 'disabled' : ''}>${approveLabel}</button>
+            <button class="action-btn action-approve" data-review-membership="${member.id}" data-review-decision="approved" data-review-role="child" ${approveDisabled ? 'disabled' : ''}>${approveStudentLabel}</button>
+            <button class="action-btn action-approve" data-review-membership="${member.id}" data-review-decision="approved" data-review-role="parent" ${approveDisabled ? 'disabled' : ''}>${approveParentLabel}</button>
             <button class="action-btn action-decline" data-review-membership="${member.id}" data-review-decision="declined">Decline</button>
           </div>
         </div>
       `;
     }
 
-    const trailingMarkup = canTransferParent
-      ? `<div class="member-card-actions"><button class="action-btn action-transfer" data-transfer-parent="${member.id}">Make Parent</button><span class="member-status ${this.escapeHtml(member.status)}">${statusLabel}</span></div>`
+    const actionButtons = [];
+    if (canPromoteParent) {
+      actionButtons.push(`<button class="action-btn action-transfer" data-make-parent="${member.id}">Make Parent</button>`);
+    }
+    if (canTransferParent) {
+      actionButtons.push(`<button class="action-btn action-transfer" data-transfer-parent="${member.id}">Make Primary Parent</button>`);
+    }
+
+    const trailingMarkup = actionButtons.length
+      ? `<div class="member-card-actions">${actionButtons.join('')}<span class="member-status ${this.escapeHtml(member.status)}">${statusLabel}</span></div>`
       : `<span class="member-status ${this.escapeHtml(member.status)}">${statusLabel}</span>`;
 
     return `
@@ -1982,6 +2032,9 @@ const FamHack = {
     const originalText = button.textContent;
     button.disabled = true;
     button.textContent = decision === 'approved' ? 'Approving...' : 'Declining...';
+    const approvedRole = decision === 'approved'
+      ? String(button.dataset.reviewRole || '').trim().toLowerCase()
+      : '';
 
     try {
       await this.apiRequest('/api/team/approve', {
@@ -1989,6 +2042,7 @@ const FamHack = {
         body: {
           membershipId,
           decision,
+          ...(approvedRole ? { role: approvedRole } : {}),
         },
       });
 
@@ -2002,7 +2056,7 @@ const FamHack = {
   },
 
   async handleTransferParent(button, membershipId) {
-    const confirmed = window.confirm('Make this approved child the new parent for the family?');
+    const confirmed = window.confirm('Make this approved family member the new primary parent for the family?');
     if (!confirmed) {
       return;
     }
@@ -2022,7 +2076,34 @@ const FamHack = {
       await this.loadDashboard();
     } catch (error) {
       console.error(error);
-      window.alert(error.message || 'Unable to transfer parent ownership');
+      window.alert(error.message || 'Unable to transfer primary parent ownership');
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  },
+
+  async handleMakeParent(button, membershipId) {
+    const confirmed = window.confirm('Make this approved family member a parent?');
+    if (!confirmed) {
+      return;
+    }
+
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Updating...';
+
+    try {
+      await this.apiRequest('/api/team/make-parent', {
+        method: 'POST',
+        body: {
+          membershipId,
+        },
+      });
+
+      await this.loadDashboard();
+    } catch (error) {
+      console.error(error);
+      window.alert(error.message || 'Unable to change this family role');
       button.disabled = false;
       button.textContent = originalText;
     }
@@ -2158,10 +2239,13 @@ const FamHack = {
       return;
     }
 
-    const isDeletingFamily = dashboard.viewer.role === 'parent'
+    const isPrimaryParent = dashboard.viewer.role === 'parent'
+      && dashboard.viewer.status === 'approved'
+      && dashboard.viewer.id === dashboard.team.ownerId;
+    const isDeletingFamily = isPrimaryParent
       && dashboard.members.length === 1
       && dashboard.pendingRequests.length === 0;
-    const isPending = dashboard.viewer.role === 'child' && dashboard.viewer.status === 'pending';
+    const isPending = dashboard.viewer.status === 'pending';
 
     this.showFieldError('delete-team-confirm-error', '');
 
