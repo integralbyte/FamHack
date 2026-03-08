@@ -29,18 +29,12 @@ create table if not exists public.profiles (
   email text not null unique,
   full_name text,
   study_year text,
-  registration_role text,
-  registration_registered_at timestamptz,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
 
 alter table public.profiles
   add column if not exists study_year text;
-alter table public.profiles
-  add column if not exists registration_role text;
-alter table public.profiles
-  add column if not exists registration_registered_at timestamptz;
 
 alter table public.profiles
   drop constraint if exists profiles_study_year_check;
@@ -49,15 +43,6 @@ alter table public.profiles
   check (
     study_year is null
     or study_year in ('year_1', 'year_2', 'year_3', 'year_4', 'masters', 'phd')
-  );
-
-alter table public.profiles
-  drop constraint if exists profiles_registration_role_check;
-alter table public.profiles
-  add constraint profiles_registration_role_check
-  check (
-    registration_role is null
-    or registration_role in ('parent', 'child')
   );
 
 create table if not exists public.teams (

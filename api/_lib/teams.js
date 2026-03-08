@@ -8,7 +8,6 @@ export const TEAM_LIMIT_ERROR_CODE = 'team_member_limit_reached';
 export const PARENT_TRANSFER_ERROR_CODE = 'parent_transfer_failed';
 export const STUDY_YEAR_OPTIONS = ['year_1', 'year_2', 'year_3', 'year_4', 'masters', 'phd'];
 export const JOIN_ROLE_OPTIONS = ['parent', 'child'];
-export const REGISTRATION_ROLE_OPTIONS = ['parent', 'child'];
 
 export function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -42,14 +41,6 @@ export function sanitizeJoinRole(role) {
     return 'child';
   }
   return JOIN_ROLE_OPTIONS.includes(normalizedRole) ? normalizedRole : '';
-}
-
-export function sanitizeRegistrationRole(role) {
-  const normalizedRole = String(role || '').trim().toLowerCase();
-  if (normalizedRole === 'student') {
-    return 'child';
-  }
-  return REGISTRATION_ROLE_OPTIONS.includes(normalizedRole) ? normalizedRole : '';
 }
 
 export function formatStudyYearLabel(studyYear) {
@@ -103,59 +94,6 @@ export async function upsertProfile(user, fullName, studyYear = '') {
   if (error) {
     throw new Error(error.message);
   }
-}
-
-export async function getProfileByUserId(userId) {
-  const supabase = getServiceClient();
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, email, full_name, study_year, registration_role, registration_registered_at')
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
-}
-
-export async function upsertRegistrationInterest(user, role) {
-  const registrationRole = sanitizeRegistrationRole(role);
-  if (!registrationRole) {
-    throw new Error('Choose whether you are registering as a parent or a child');
-  }
-
-  const existingProfile = await getProfileByUserId(user.id);
-  const existingRole = sanitizeRegistrationRole(existingProfile?.registration_role);
-
-  if (existingRole && existingRole !== registrationRole) {
-    const conflictRole = existingRole === 'parent' ? 'parent' : 'child';
-    const error = new Error(`This email is already registered as a ${conflictRole}.`);
-    error.status = 409;
-    throw error;
-  }
-
-  const registeredAt = existingProfile?.registration_registered_at || new Date().toISOString();
-  const supabase = getServiceClient();
-  const { error } = await supabase.from('profiles').upsert({
-    id: user.id,
-    email: normalizeEmail(user.email),
-    registration_role: registrationRole,
-    registration_registered_at: registeredAt,
-  }, {
-    onConflict: 'id',
-  });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return {
-    role: registrationRole,
-    registeredAt,
-    alreadyRegistered: Boolean(existingRole),
-  };
 }
 
 export async function getMembershipByUserId(userId) {
