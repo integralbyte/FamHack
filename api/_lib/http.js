@@ -45,5 +45,19 @@ export function statusFromError(error) {
     return 400;
   }
 
+  if (
+    message === 'Choose whether you are registering as a Parent or Child'
+    || message === 'Normal participation opens on 14 March.'
+    || message === 'Registration has closed for this account.'
+    || message === 'Only accounts registered as a Parent can create a Family.'
+    || message === 'Only accounts registered as a Child can join a Family.'
+  ) {
+    return (
+      message === 'Normal participation opens on 14 March.'
+      || message === 'Registration has closed for this account.'
+      || message.startsWith('Only accounts registered as a ')
+    ) ? 403 : 400;
+  }
+
   return 500;
 }

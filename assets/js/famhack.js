@@ -1,4 +1,9 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import {
+  getLaunchState,
+  REGISTRATION_CONFIRMATION_COPY,
+  REGISTRATION_CONFIRMATION_TITLE,
+} from '../../shared/launch-state.js';
 
 const FamHack = {
   config: {
@@ -9,7 +14,9 @@ const FamHack = {
 
   state: {
     page: null,
+    launch: null,
     session: null,
+    registration: null,
     pendingEmail: '',
     registerIntent: 'role',
     teamPreview: null,
@@ -34,6 +41,7 @@ const FamHack = {
 
   async init() {
     this.state.page = this.getPage();
+    this.state.launch = getLaunchState();
     this.initOTPInputs();
     this.initNavigation();
 
@@ -166,7 +174,12 @@ const FamHack = {
       return 'Primary Parent';
     }
 
-    return role === 'parent' ? 'Parent' : 'Student';
+    return role === 'parent' ? 'Parent' : 'Child';
+  },
+
+  getCurrentLaunchState() {
+    this.state.launch = getLaunchState();
+    return this.state.launch;
   },
 
   setText(id, value) {
@@ -205,14 +218,38 @@ const FamHack = {
       return;
     }
 
-    if (mode === 'signin') {
-      emailLabel.textContent = 'Email Address';
-      emailInput.placeholder = 's1234567@ed.ac.uk';
+    emailLabel.textContent = mode === 'signin' ? 'Email' : 'Email';
+    emailInput.placeholder = 's1234567@ed.ac.uk';
+  },
+
+  syncRegisterEmailInput({ lockToSession = false } = {}) {
+    if (this.state.page !== 'register') {
       return;
     }
 
-    emailLabel.textContent = 'Your Email Address';
-    emailInput.placeholder = 's1234567@ed.ac.uk';
+    const emailInput = document.getElementById('email-input');
+    if (!emailInput) {
+      return;
+    }
+
+    if (lockToSession && this.state.session?.user?.email) {
+      emailInput.value = this.state.session.user.email;
+      emailInput.disabled = true;
+      return;
+    }
+
+    emailInput.disabled = false;
+  },
+
+  setRegisteredConfirmation(registration) {
+    if (this.state.page !== 'register') {
+      return;
+    }
+
+    this.state.registration = registration || null;
+    this.setText('registered-heading', REGISTRATION_CONFIRMATION_TITLE);
+    this.setText('registered-copy', REGISTRATION_CONFIRMATION_COPY);
+    this.setText('registered-role', registration?.roleLabel ? `Registered as ${registration.roleLabel}.` : '');
   },
 
   resetAuthFlowState() {
@@ -223,6 +260,7 @@ const FamHack = {
     this.state.pendingEmail = '';
     this.state.teamPreview = null;
     this.state.dashboard = null;
+    this.state.registration = null;
     this.state.ctf = null;
     this.state.ctfPendingAdvanceState = null;
     this.state.ctfRecentKeys = [];
@@ -461,7 +499,16 @@ const FamHack = {
     }
 
     this.state.participateCheckPromise = (async () => {
+      const launch = this.getCurrentLaunchState();
+
       if (!this.state.session) {
+        return {
+          destination: '/register',
+          label: launch.isRegistrationOpen ? 'Participate' : 'Sign In',
+        };
+      }
+
+      if (launch.isRegistrationOpen) {
         return {
           destination: '/register',
           label: 'Participate',
@@ -472,7 +519,7 @@ const FamHack = {
       if (!dashboard) {
         return {
           destination: '/register',
-          label: 'Participate',
+          label: 'Sign In',
         };
       }
 
@@ -494,7 +541,8 @@ const FamHack = {
 
   async initRegisterPage() {
     document.getElementById('choose-parent-btn')?.addEventListener('click', () => this.handleChooseParent());
-    document.getElementById('choose-student-btn')?.addEventListener('click', () => this.handleChooseStudent());
+    document.getElementById('choose-child-btn')?.addEventListener('click', () => this.handleChooseChildRole());
+    document.getElementById('choose-student-btn')?.addEventListener('click', () => this.handleChooseChildRole());
     document.getElementById('choose-signin-btn')?.addEventListener('click', () => this.handleChooseSignIn());
     document.getElementById('continue-child-btn')?.addEventListener('click', () => this.handleChooseChild());
     document.getElementById('back-to-role-btn')?.addEventListener('click', () => this.handleBackToRole());
@@ -525,23 +573,83 @@ const FamHack = {
       }
     });
 
-    this.setRegisterIntro('What are you?', 'Choose how you want to enter FamHack.');
-    this.setRegisterEmailMode('parent');
-    this.state.registerIntent = 'role';
-
-    if (this.state.session) {
-      const dashboard = await this.fetchDashboard({ suppressMissing: true });
-      if (dashboard) {
-        this.redirectToDashboard();
-        return;
-      }
-
-      this.showStep('role');
-      this.showPageMessage(
-        'register-page-message',
-        'You are already signed in. Choose whether you are creating a family or joining one.'
-      );
+    if (this.getCurrentLaunchState().isRegistrationOpen) {
+      await this.initPrelaunchRegisterPage();
+      return;
     }
+
+    await this.initPostLaunchRegisterPage();
+  },
+
+  async initPrelaunchRegisterPage() {
+    this.state.registerIntent = 'role';
+    this.setRegisterIntro('Register', 'Choose whether you are joining as a Parent or Child.');
+    this.setRegisterEmailMode('register');
+    this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
+    this.setRegisteredConfirmation(this.state.registration);
+    this.setButtonLabel(document.getElementById('send-otp-btn'), this.state.session ? 'Continue' : 'Send verification code');
+
+    if (!this.state.session) {
+      this.showStep('role');
+      return;
+    }
+
+    const status = await this.fetchRegistrationStatus({ suppressMissing: true });
+    if (status?.registration) {
+      this.showRegisteredConfirmation(status.registration);
+      return;
+    }
+
+    this.showStep('role');
+  },
+
+  async initPostLaunchRegisterPage() {
+    this.state.registerIntent = 'signin';
+    this.setRegisterIntro('Sign in', 'Use your email to continue into FamHack.');
+    this.setRegisterEmailMode('signin');
+    this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
+    this.setButtonLabel(document.getElementById('send-otp-btn'), this.state.session ? 'Continue' : 'Send sign-in code');
+
+    const backButton = document.getElementById('back-from-parent-btn');
+    if (backButton) {
+      backButton.hidden = true;
+    }
+
+    if (!this.state.session) {
+      this.showStep('email');
+      return;
+    }
+
+    await this.routePostLaunchRegisterUser();
+  },
+
+  async routePostLaunchRegisterUser() {
+    const dashboard = await this.fetchDashboard({ suppressMissing: true });
+    if (dashboard) {
+      this.redirectToDashboard();
+      return;
+    }
+
+    const status = await this.fetchRegistrationStatus({ suppressMissing: true });
+    const registration = status?.registration || null;
+
+    if (!registration?.role) {
+      this.showStep('email');
+      this.showPageMessage('register-page-message', 'Registration has closed for this account.');
+      return;
+    }
+
+    this.state.registration = registration;
+
+    if (registration.role === 'parent') {
+      this.state.registerIntent = 'parent';
+      this.setRegisterIntro('Create a Family', 'Parents create the family first on 14 March.');
+      this.showStep('create-team');
+      this.showPageMessage('register-page-message', 'Signed in. Create a Family to continue.');
+      return;
+    }
+
+    this.redirect('/join');
   },
 
   async initJoinPage() {
@@ -590,6 +698,11 @@ const FamHack = {
       const dashboard = await this.fetchDashboard({ suppressMissing: true });
       if (dashboard) {
         this.redirectToDashboard();
+        return;
+      }
+
+      const canJoin = await this.ensureJoinAccess();
+      if (!canJoin) {
         return;
       }
 
@@ -649,20 +762,15 @@ const FamHack = {
     this.state.registerIntent = 'parent';
     this.showFieldError('role-error', '');
     this.showPageMessage('register-page-message', '');
-    this.setRegisterEmailMode('parent');
+    this.setRegisterEmailMode('register');
     this.setRegisterIntro(
-      'Create your academic family',
-      'Parents verify their email first, then create the family dashboard.'
+      'Register as Parent',
+      'Use your email to save your place before 14 March.'
     );
 
-    if (this.state.session) {
-      this.showStep('create-team');
-      this.showPageMessage('register-page-message', 'You are signed in. Finish creating your family.');
-      return;
-    }
-
+    this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
+    this.setButtonLabel(document.getElementById('send-otp-btn'), this.state.session ? 'Continue' : 'Send verification code');
     this.showStep('email');
-    this.showPageMessage('register-page-message', '');
     document.getElementById('email-input')?.focus();
   },
 
@@ -672,35 +780,40 @@ const FamHack = {
     this.showPageMessage('register-page-message', '');
     this.setRegisterEmailMode('signin');
     this.setRegisterIntro(
-      'Sign in to FamHack',
-      'Use your email to get back into your account. If you already have a family, you will land on your dashboard.'
+      'Sign in',
+      'Use your email to continue into FamHack.'
     );
 
     if (this.state.session) {
-      this.showPageMessage('register-page-message', 'You are already signed in.');
+      this.routePostLaunchRegisterUser().catch((error) => {
+        console.error(error);
+        this.showPageMessage('register-page-message', error.message || 'Unable to continue right now.');
+      });
       return;
     }
 
+    this.syncRegisterEmailInput({ lockToSession: false });
+    this.setButtonLabel(document.getElementById('send-otp-btn'), 'Send sign-in code');
     this.showStep('email');
-    this.showPageMessage('register-page-message', '');
     document.getElementById('email-input')?.focus();
   },
 
-  handleChooseStudent() {
-    this.state.registerIntent = 'student';
+  handleChooseChildRole() {
+    this.state.registerIntent = 'child';
     this.showFieldError('role-error', '');
     this.showPageMessage('register-page-message', '');
     this.setRegisterIntro(
-      'Join an existing family',
-      'Enter the family code from an approved parent, or open the invite link they sent you.'
+      'Register as Child',
+      'Use your email to save your place before 14 March.'
     );
-    this.showStep('child');
-    document.getElementById('role-family-code-input')?.focus();
+
+    this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
+    this.setButtonLabel(document.getElementById('send-otp-btn'), this.state.session ? 'Continue' : 'Send verification code');
+    this.showStep('email');
+    document.getElementById('email-input')?.focus();
   },
 
   handleChooseChild() {
-    this.showFieldError('role-error', '');
-
     const joinCodeInput = document.getElementById('role-family-code-input');
     const joinCode = this.normalizeJoinCode(joinCodeInput?.value);
 
@@ -713,17 +826,86 @@ const FamHack = {
   },
 
   handleBackToRole() {
-    this.state.registerIntent = 'role';
     this.showFieldError('role-error', '');
-    this.setRegisterEmailMode('parent');
-    this.setRegisterIntro('What are you?', 'Choose how you want to enter FamHack.');
-    this.showStep('role');
+    this.showFieldError('email-error', '');
+    this.showFieldError('otp-error', '');
+
+    if (this.getCurrentLaunchState().isRegistrationOpen) {
+      this.state.registerIntent = 'role';
+      this.setRegisterEmailMode('register');
+      this.setRegisterIntro('Register', 'Choose whether you are joining as a Parent or Child.');
+      this.showStep('role');
+      return;
+    }
+
+    this.state.registerIntent = 'signin';
+    this.setRegisterEmailMode('signin');
+    this.setRegisterIntro('Sign in', 'Use your email to continue into FamHack.');
+    this.showStep('email');
+  },
+
+  async fetchRegistrationStatus({ suppressMissing } = {}) {
+    try {
+      const payload = await this.apiRequest('/api/registration/status');
+      this.state.registration = payload.registration || null;
+      return payload;
+    } catch (error) {
+      if (suppressMissing && (error.status === 401 || error.status === 404)) {
+        this.state.registration = null;
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  showRegisteredConfirmation(registration, message = '') {
+    this.setRegisteredConfirmation(registration);
+    this.showStep('registered');
+    this.showPageMessage('register-page-message', message);
+  },
+
+  async completePrelaunchRegistration() {
+    const requestedRole = this.state.registerIntent;
+    if (!['parent', 'child'].includes(requestedRole)) {
+      this.showFieldError('role-error', 'Choose Parent or Child before continuing.');
+      this.handleBackToRole();
+      return;
+    }
+
+    try {
+      const payload = await this.apiRequest('/api/registration/complete', {
+        method: 'POST',
+        body: {
+          role: requestedRole,
+        },
+      });
+
+      this.showRegisteredConfirmation(payload.registration);
+    } catch (error) {
+      if (error.status === 409 && error.details?.registration) {
+        this.showRegisteredConfirmation(error.details.registration, error.message);
+        return;
+      }
+
+      throw error;
+    }
+  },
+
+  async ensureJoinAccess() {
+    const status = await this.fetchRegistrationStatus({ suppressMissing: true });
+    if (status?.registration?.role === 'child') {
+      return true;
+    }
+
+    this.redirect('/register');
+    return false;
   },
 
   async handleSendOTP() {
+    const launch = this.getCurrentLaunchState();
     const sendButton = document.getElementById('send-otp-btn');
     const emailInput = document.getElementById('email-input');
-    const email = this.normalizeEmail(emailInput?.value);
+    const email = this.normalizeEmail(this.state.session?.user?.email || emailInput?.value);
 
     this.showFieldError('email-error', '');
     this.showFieldError('join-code-error', '');
@@ -749,7 +931,11 @@ const FamHack = {
 
     if (this.state.session) {
       if (this.state.page === 'register') {
-        this.showStep('create-team');
+        if (launch.isRegistrationOpen) {
+          await this.completePrelaunchRegistration();
+        } else {
+          await this.routePostLaunchRegisterUser();
+        }
       } else if (this.state.page === 'join') {
         this.showStep('join-team');
       }
@@ -764,7 +950,11 @@ const FamHack = {
     this.setButtonState(sendButton, {
       busy: true,
       label: 'Sending...',
-      idleLabel: this.state.page === 'join' && this.state.session ? 'Continue' : 'Send OTP',
+      idleLabel: this.state.page === 'join'
+        ? (this.state.session ? 'Continue' : 'Send OTP')
+        : launch.isRegistrationOpen
+          ? 'Send verification code'
+          : 'Send sign-in code',
     });
 
     try {
@@ -794,12 +984,17 @@ const FamHack = {
       this.setButtonState(sendButton, {
         busy: false,
         label: 'Sending...',
-        idleLabel: this.state.page === 'join' && this.state.session ? 'Continue' : 'Send OTP',
+        idleLabel: this.state.page === 'join'
+          ? (this.state.session ? 'Continue' : 'Send OTP')
+          : launch.isRegistrationOpen
+            ? 'Send verification code'
+            : 'Send sign-in code',
       });
     }
   },
 
   async handleVerifyOTP() {
+    const launch = this.getCurrentLaunchState();
     const verifyButton = document.getElementById('verify-otp-btn');
     const emailInput = document.getElementById('email-input');
     const otp = this.getOTPValue();
@@ -822,24 +1017,19 @@ const FamHack = {
       const data = await this.verifyEmailOtp(email, otp);
 
       this.state.session = data.session;
-      const dashboard = await this.fetchDashboard({ suppressMissing: true });
-      if (dashboard) {
-        this.redirectToDashboard();
-        return;
-      }
 
       if (this.state.page === 'register') {
-        if (this.state.registerIntent === 'signin') {
-          this.handleBackToRole();
-          this.showPageMessage(
-            'register-page-message',
-            'Signed in. Choose whether you are creating a family or joining one.'
-          );
+        if (launch.isRegistrationOpen) {
+          await this.completePrelaunchRegistration();
         } else {
-          this.showStep('create-team');
-          this.showPageMessage('register-page-message', 'Verified. Finish creating your family.');
+          await this.routePostLaunchRegisterUser();
         }
       } else if (this.state.page === 'join') {
+        const canJoin = await this.ensureJoinAccess();
+        if (!canJoin) {
+          return;
+        }
+
         const joinCode = this.normalizeJoinCode(document.getElementById('join-code-input')?.value);
         const team = this.state.teamPreview || await this.lookupTeam(joinCode, { showErrors: true });
         if (!team) {
@@ -852,7 +1042,10 @@ const FamHack = {
       }
     } catch (error) {
       console.error(error);
-      this.showFieldError('otp-error', this.getFriendlyOtpErrorMessage(error));
+      this.showFieldError(
+        'otp-error',
+        error.status === 403 ? (error.message || 'This flow is not available yet.') : this.getFriendlyOtpErrorMessage(error)
+      );
       this.clearOTPInputs();
     } finally {
       this.setButtonState(verifyButton, {
@@ -1017,7 +1210,7 @@ const FamHack = {
     this.setButtonState(createButton, {
       busy: true,
       label: 'Creating...',
-      idleLabel: 'Create Family',
+      idleLabel: 'Create a Family',
     });
 
     try {
@@ -1038,7 +1231,7 @@ const FamHack = {
       this.setButtonState(createButton, {
         busy: false,
         label: 'Creating...',
-        idleLabel: 'Create Family',
+        idleLabel: 'Create a Family',
       });
     }
   },
@@ -1122,11 +1315,20 @@ const FamHack = {
     });
 
     const text = await response.text();
-    const payload = text ? JSON.parse(text) : {};
+    let payload = {};
+
+    if (text) {
+      try {
+        payload = JSON.parse(text);
+      } catch (error) {
+        payload = {};
+      }
+    }
 
     if (!response.ok) {
       const error = new Error(payload.error || 'Request failed');
       error.status = response.status;
+      error.details = payload.details;
       throw error;
     }
 
@@ -1756,7 +1958,7 @@ const FamHack = {
     try {
       return await this.apiRequest('/api/team/dashboard');
     } catch (error) {
-      if (suppressMissing && (error.status === 404 || error.status === 401)) {
+      if (suppressMissing && (error.status === 404 || error.status === 401 || error.status === 403)) {
         return null;
       }
       throw error;
@@ -1892,7 +2094,7 @@ const FamHack = {
         statusBanner.textContent = `This family is full at ${dashboard.team.approvedCount}/${dashboard.team.maxMembers}. Pending requests can be declined, but no further approvals can go through until someone leaves.`;
       } else {
         statusBanner.hidden = !(dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved');
-        statusBanner.textContent = 'Share the family code or the invite link below with other parents and students.';
+        statusBanner.textContent = 'Share the family code or the invite link below with other parents and children.';
       }
     }
 
@@ -1977,7 +2179,7 @@ const FamHack = {
 
     if (options.reviewable) {
       const approveDisabled = Boolean(dashboard?.team?.isFull);
-      const approveStudentLabel = approveDisabled ? 'Family Full' : 'Approve as Student';
+      const approveStudentLabel = approveDisabled ? 'Family Full' : 'Approve as Child';
       const approveParentLabel = approveDisabled ? 'Family Full' : 'Approve as Parent';
       return `
         <div class="member-card">

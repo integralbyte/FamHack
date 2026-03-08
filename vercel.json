@@ -1,4 +1,59 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/about",
+      "destination": "/api/page?slug=about"
+    },
+    {
+      "source": "/about.html",
+      "destination": "/api/page?slug=about"
+    },
+    {
+      "source": "/tracks",
+      "destination": "/api/page?slug=tracks"
+    },
+    {
+      "source": "/tracks.html",
+      "destination": "/api/page?slug=tracks"
+    },
+    {
+      "source": "/register",
+      "destination": "/api/page?slug=register"
+    },
+    {
+      "source": "/register.html",
+      "destination": "/api/page?slug=register"
+    },
+    {
+      "source": "/join",
+      "destination": "/api/page?slug=join"
+    },
+    {
+      "source": "/join.html",
+      "destination": "/api/page?slug=join"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/api/page?slug=dashboard"
+    },
+    {
+      "source": "/dashboard.html",
+      "destination": "/api/page?slug=dashboard"
+    },
+    {
+      "source": "/ctf",
+      "destination": "/api/page?slug=ctf"
+    },
+    {
+      "source": "/ctf.html",
+      "destination": "/api/page?slug=ctf"
+    }
+  ],
+  "functions": {
+    "api/page.js": {
+      "includeFiles": "api/_lib/launch-pages/**"
+    }
+  }
 }

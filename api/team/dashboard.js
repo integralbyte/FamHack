@@ -1,5 +1,6 @@
 import { requireUser } from '../_lib/auth.js';
 import { allowMethods, sendError, statusFromError } from '../_lib/http.js';
+import { assertNormalParticipationOpen } from '../_lib/launch.js';
 import {
   assertAllowedEmail,
   getMembershipByUserId,
@@ -15,6 +16,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    assertNormalParticipationOpen();
     const user = await requireUser(req);
     assertAllowedEmail(user.email);
 

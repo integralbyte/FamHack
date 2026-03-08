@@ -1,5 +1,6 @@
 import { requireUser } from '../_lib/auth.js';
 import { allowMethods, readJsonBody, sendError, statusFromError } from '../_lib/http.js';
+import { assertNormalParticipationOpen } from '../_lib/launch.js';
 import {
   assertAllowedEmail,
   getApprovedMemberCount,
@@ -17,6 +18,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    assertNormalParticipationOpen();
     const user = await requireUser(req);
     assertAllowedEmail(user.email);
 
@@ -37,7 +39,7 @@ export default async function handler(req, res) {
     }
 
     if (decision === 'approved' && !approvedRole) {
-      sendError(res, 400, 'Choose whether this person is joining as a parent or a student');
+      sendError(res, 400, 'Choose whether this person is joining as a Parent or Child');
       return;
     }
 

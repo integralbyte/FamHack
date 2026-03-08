@@ -29,12 +29,18 @@ create table if not exists public.profiles (
   email text not null unique,
   full_name text,
   study_year text,
+  registered_role public.team_role,
+  registration_completed_at timestamptz,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
 
 alter table public.profiles
   add column if not exists study_year text;
+alter table public.profiles
+  add column if not exists registered_role public.team_role;
+alter table public.profiles
+  add column if not exists registration_completed_at timestamptz;
 
 alter table public.profiles
   drop constraint if exists profiles_study_year_check;

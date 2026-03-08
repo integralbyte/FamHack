@@ -1,4 +1,5 @@
 import { allowMethods, sendError } from '../_lib/http.js';
+import { isNormalParticipationOpen } from '../_lib/launch.js';
 import { getTeamByCode } from '../_lib/teams.js';
 
 export default async function handler(req, res) {
@@ -9,6 +10,11 @@ export default async function handler(req, res) {
   const joinCode = String(req.query.code || '').trim().toUpperCase();
   if (!joinCode) {
     sendError(res, 400, 'A team code is required');
+    return;
+  }
+
+  if (!isNormalParticipationOpen()) {
+    sendError(res, 403, 'Normal participation opens on 14 March.');
     return;
   }
 

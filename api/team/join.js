@@ -1,7 +1,9 @@
 import { requireUser } from '../_lib/auth.js';
 import { allowMethods, readJsonBody, sendError, statusFromError } from '../_lib/http.js';
+import { assertNormalParticipationOpen } from '../_lib/launch.js';
 import {
   assertAllowedEmail,
+  assertRegisteredRole,
   getApprovedMemberCount,
   getMembershipByUserId,
   getTeamLimitMessage,
@@ -19,8 +21,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    assertNormalParticipationOpen();
     const user = await requireUser(req);
     assertAllowedEmail(user.email);
+    await assertRegisteredRole(user.id, 'child');
 
     const body = readJsonBody(req);
     const fullName = sanitizeFullName(body.fullName);

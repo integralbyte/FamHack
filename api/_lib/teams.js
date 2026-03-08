@@ -67,7 +67,7 @@ export function formatMemberRoleLabel(role, { lead = false } = {}) {
     return 'Primary Parent';
   }
 
-  return role === 'parent' ? 'Parent' : 'Student';
+  return role === 'parent' ? 'Parent' : 'Child';
 }
 
 export function sanitizeTeamName(teamName) {
@@ -94,6 +94,81 @@ export async function upsertProfile(user, fullName, studyYear = '') {
   if (error) {
     throw new Error(error.message);
   }
+}
+
+export function getRegisteredRoleMessage(role) {
+  return `You already have an account registered as a ${role === 'parent' ? 'Parent' : 'Child'}.`;
+}
+
+export function serializeRegistration(profile) {
+  if (!profile?.registered_role) {
+    return null;
+  }
+
+  return {
+    role: profile.registered_role,
+    roleLabel: formatMemberRoleLabel(profile.registered_role),
+    registeredAt: profile.registration_completed_at,
+  };
+}
+
+export async function assertRegisteredRole(userId, expectedRole) {
+  const profile = await getProfileByUserId(userId);
+  const registration = serializeRegistration(profile);
+
+  if (!registration?.role) {
+    throw new Error('Registration has closed for this account.');
+  }
+
+  if (registration.role !== expectedRole) {
+    throw new Error(
+      expectedRole === 'parent'
+        ? 'Only accounts registered as a Parent can create a Family.'
+        : 'Only accounts registered as a Child can join a Family.'
+    );
+  }
+
+  return registration;
+}
+
+export async function getProfileByUserId(userId) {
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, study_year, registered_role, registration_completed_at')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+export async function upsertRegistrationProfile(user, role) {
+  const normalizedRole = sanitizeJoinRole(role);
+  if (!normalizedRole) {
+    throw new Error('Choose whether you are registering as a Parent or Child');
+  }
+
+  const supabase = getServiceClient();
+  const payload = {
+    id: user.id,
+    email: normalizeEmail(user.email),
+    registered_role: normalizedRole,
+    registration_completed_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from('profiles').upsert(payload, {
+    onConflict: 'id',
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return getProfileByUserId(user.id);
 }
 
 export async function getMembershipByUserId(userId) {
