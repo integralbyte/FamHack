@@ -2093,10 +2093,11 @@ const FamHack = {
     button.textContent = 'Updating...';
 
     try {
-      await this.apiRequest('/api/team/make-parent', {
+      await this.apiRequest('/api/team/transfer-parent', {
         method: 'POST',
         body: {
           membershipId,
+          action: 'parent',
         },
       });
 

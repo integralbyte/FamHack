@@ -9,20 +9,24 @@ import {
 } from '../_lib/teams.js';
 import { getServiceClient } from '../_lib/supabase.js';
 
+async function promoteParentFallback(supabase, targetMembership, actingUserId) {
+  const { error } = await supabase
+    .from('team_memberships')
+    .update({
+      role: 'parent',
+      reviewed_by: actingUserId,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq('id', targetMembership.id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 async function transferParentFallback(supabase, actingMembership, targetMembership, actingUserId) {
   if (targetMembership.role !== 'parent') {
-    const { error: promoteError } = await supabase
-      .from('team_memberships')
-      .update({
-        role: 'parent',
-        reviewed_by: actingUserId,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', targetMembership.id);
-
-    if (promoteError) {
-      throw new Error(promoteError.message);
-    }
+    await promoteParentFallback(supabase, targetMembership, actingUserId);
   }
 
   const { error: teamError } = await supabase
@@ -48,21 +52,29 @@ export default async function handler(req, res) {
 
     const actingMembership = await getMembershipByUserId(user.id);
     if (!actingMembership || actingMembership.role !== 'parent' || actingMembership.status !== 'approved') {
-      sendError(res, 403, 'Only an approved parent can reassign the primary parent');
-      return;
-    }
-
-    const team = await getTeamById(actingMembership.team_id);
-    if (!team || team.created_by !== user.id) {
-      sendError(res, 403, 'Only the primary parent can reassign the primary parent');
+      sendError(res, 403, 'Only an approved parent can change family roles');
       return;
     }
 
     const body = readJsonBody(req);
     const membershipId = String(body.membershipId || '').trim();
+    const action = String(body.action || 'primary').trim().toLowerCase();
     if (!membershipId) {
       sendError(res, 400, 'An approved family member must be selected');
       return;
+    }
+
+    if (!['primary', 'parent'].includes(action)) {
+      sendError(res, 400, 'A valid family role action is required');
+      return;
+    }
+
+    if (action === 'primary') {
+      const team = await getTeamById(actingMembership.team_id);
+      if (!team || team.created_by !== user.id) {
+        sendError(res, 403, 'Only the primary parent can reassign the primary parent');
+        return;
+      }
     }
 
     const targetMembership = await getMembershipById(membershipId);
@@ -77,11 +89,26 @@ export default async function handler(req, res) {
     }
 
     if (targetMembership.status !== 'approved') {
-      sendError(res, 409, 'Only approved family members can become the primary parent');
+      sendError(res, 409, `Only approved family members can become ${action === 'parent' ? 'a parent' : 'the primary parent'}`);
       return;
     }
 
     const supabase = getServiceClient();
+    if (action === 'parent') {
+      if (targetMembership.role === 'parent') {
+        sendError(res, 409, 'This family member is already a parent');
+        return;
+      }
+
+      await promoteParentFallback(supabase, targetMembership, user.id);
+
+      res.status(200).json({
+        status: 'promoted',
+        membershipId,
+      });
+      return;
+    }
+
     const { error: rpcError } = await supabase.rpc('transfer_team_parent', {
       p_team_id: actingMembership.team_id,
       p_current_parent_id: user.id,
@@ -92,7 +119,7 @@ export default async function handler(req, res) {
       if (String(rpcError.message || '').includes('Could not find the function')) {
         await transferParentFallback(supabase, actingMembership, targetMembership, user.id);
       } else if (isParentTransferError(rpcError)) {
-        sendError(res, 409, 'Unable to transfer parent ownership right now');
+        sendError(res, 409, 'Unable to transfer primary parent ownership right now');
         return;
       } else {
         throw new Error(rpcError.message);
