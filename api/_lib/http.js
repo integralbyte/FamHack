@@ -35,6 +35,10 @@ export function readJsonBody(req) {
 }
 
 export function statusFromError(error) {
+  if (Number.isInteger(error?.status)) {
+    return error.status;
+  }
+
   const message = error?.message || '';
 
   if (message === 'Missing bearer token' || message === 'Invalid or expired session') {

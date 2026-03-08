@@ -18,6 +18,7 @@ export function getPublicConfig() {
     supabaseUrl: getEnv('SUPABASE_URL'),
     supabaseAnonKey: getEnv('SUPABASE_ANON_KEY'),
     allowedEmailDomain: getEnv('ALLOWED_EMAIL_DOMAIN', 'ed.ac.uk'),
+    familyFlowOpensAt: getEnv('FAMILY_FLOW_OPENS_AT', '2026-03-14T00:00:00Z'),
   };
 }
 
