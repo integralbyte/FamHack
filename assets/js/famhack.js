@@ -113,6 +113,17 @@ const FamHack = {
     }
 
     this.state.session = data.session;
+
+    if (!data.session) {
+      return;
+    }
+
+    const { data: userData, error: userError } = await this.supabase.auth.getUser();
+    if (userError || !userData?.user) {
+      await this.supabase.auth.signOut({ scope: 'local' });
+      this.state.session = null;
+      this.resetAuthFlowState();
+    }
   },
 
   normalizeEmail(email) {
