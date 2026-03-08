@@ -158,12 +158,12 @@ const FamHack = {
   },
 
   formatDashboardRole(role, { primary = false, request = false } = {}) {
-    if (primary && role === 'parent') {
-      return 'Primary Parent';
+    if (request) {
+      return 'Join Request';
     }
 
-    if (request) {
-      return role === 'parent' ? 'Parent Request' : 'Student Request';
+    if (primary && role === 'parent') {
+      return 'Primary Parent';
     }
 
     return role === 'parent' ? 'Parent' : 'Student';
@@ -1046,7 +1046,6 @@ const FamHack = {
   async handleJoinRequest() {
     const joinButton = document.getElementById('request-join-btn');
     const fullName = document.getElementById('full-name-input')?.value?.trim() || '';
-    const joinRole = String(document.getElementById('join-role-input')?.value || '').trim().toLowerCase();
     const studyYear = this.getSelectedStudyYear();
     const joinCode = this.normalizeJoinCode(document.getElementById('join-code-input')?.value || this.state.teamPreview?.joinCode);
 
@@ -1055,11 +1054,6 @@ const FamHack = {
 
     if (!fullName) {
       this.showFieldError('join-request-error', 'Your name is required');
-      return;
-    }
-
-    if (!joinRole) {
-      this.showFieldError('join-request-error', 'Choose whether you are joining as a parent or a student');
       return;
     }
 
@@ -1093,7 +1087,6 @@ const FamHack = {
         method: 'POST',
         body: {
           fullName,
-          role: joinRole,
           studyYear,
           joinCode,
         },
@@ -1893,9 +1886,7 @@ const FamHack = {
     if (statusBanner) {
       if (dashboard.viewer.status === 'pending') {
         statusBanner.hidden = false;
-        statusBanner.textContent = dashboard.viewer.role === 'parent'
-          ? 'Your request to join this family as a parent is pending parent approval.'
-          : 'Your join request is pending parent approval.';
+        statusBanner.textContent = 'Your join request is pending parent approval.';
       } else if (dashboard.team.isFull) {
         statusBanner.hidden = false;
         statusBanner.textContent = `This family is full at ${dashboard.team.approvedCount}/${dashboard.team.maxMembers}. Pending requests can be declined, but no further approvals can go through until someone leaves.`;
