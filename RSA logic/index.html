@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeQture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            padding: 20px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(213, 0, 108, 0.3), transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(213, 0, 108, 0.2), transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-container img {
+            max-width: 100%;
+            height: auto;
+            max-height: 80px;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+        }
+
+        .tabs-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 6px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: rgba(213, 0, 108, 0.5);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(213, 0, 108, 0.3);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .links-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .link-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 20px 24px;
+            text-decoration: none;
+            color: #ffffff;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: block;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .link-card::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(213, 0, 108, 0.4);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .link-card:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        .link-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(213, 0, 108, 0.3);
+            border-color: rgba(213, 0, 108, 0.7);
+            background: rgba(213, 0, 108, 0.25);
+        }
+
+        .link-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .link-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .link-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .icon {
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .icon img.forms-icon {
+            width: 35px;
+            height: 35px;
+        }
+
+        .access-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .access-header h2 {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .access-header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 15px;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999;
+        }
+
+        .footer a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer a:hover {
+            background: rgba(213, 0, 108, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(213, 0, 108, 0.3);
+        }
+
+        /* Password Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            animation: modalSlideIn 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(213, 0, 108, 0.2), transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .modal > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal h3 {
+            color: #ffffff;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: all 0.3s ease;
+            color: #ffffff;
+        }
+
+        .modal input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .modal input:focus {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(213, 0, 108, 0.7);
+            box-shadow: 0 0 0 4px rgba(213, 0, 108, 0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-button.submit {
+            background: rgba(213, 0, 108, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(213, 0, 108, 0.6);
+            color: white;
+        }
+
+        .modal-button.submit:hover {
+            background: rgba(213, 0, 108, 0.7);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(213, 0, 108, 0.4);
+        }
+
+        .modal-button.cancel {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+        }
+
+        .modal-button.cancel:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-top: -15px;
+            margin-bottom: 15px;
+            text-align: center;
+            display: none;
+            background: rgba(255, 107, 107, 0.15);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 36px 28px;
+            }
+
+            .logo-container img {
+                max-height: 60px;
+            }
+
+            .link-title {
+                font-size: 16px;
+            }
+
+            .link-subtitle {
+                font-size: 13px;
+            }
+
+            .modal {
+                padding: 30px 25px;
+            }
+
+            .footer {
+                bottom: 15px;
+                right: 15px;
+            }
+
+            .footer a {
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+        }
+
+        /* Smooth entrance animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .link-card {
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .link-card:nth-child(1) { animation-delay: 0.1s; }
+        .link-card:nth-child(2) { animation-delay: 0.2s; }
+        .link-card:nth-child(3) { animation-delay: 0.3s; }
+        .link-card:nth-child(4) { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-content">
+            <div class="logo-container">
+                <img src="imgbox leqture header.png" alt="LeQture">
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs-container">
+                <button class="tab active" onclick="switchTab('leqture')">LeQture</button>
+                <button class="tab" onclick="switchTab('early-access')">Early Access</button>
+            </div>
+
+            <!-- LeQture Tab Content -->
+            <div id="leqture-content" class="tab-content active">
+                <div class="links-container">
+                    <!-- Video Demo Link -->
+                    <a href="https://youtu.be/TJzqXzEW7i8" class="link-card" target="_blank">
+                        <div class="link-content">
+                            <div class="link-title">
+                                <span class="icon">▶</span>
+                                <span>Video Demo</span>
+                            </div>
+                            <div class="link-subtitle">Watch on YouTube</div>
+                        </div>
+                    </a>
+
+                    <!-- Feature Documentation Link -->
+                    <a href="https://drive.google.com/file/d/1IwFBunGb_XfzZIIRvdSy2Cbv_-88l0s2/view?usp=sharing" class="link-card" target="_blank">
+                        <div class="link-content">
+                            <div class="link-title">
+                                <span class="icon">📚</span>
+                                <span>Feature Documentation</span>
+                            </div>
+                            <div class="link-subtitle">Complete feature guide</div>
+                        </div>
+                    </a>
+
+                    <!-- Detailed Technical Paper (Password Protected) -->
+                    <div class="link-card" onclick="showPasswordModal('paper')">
+                        <div class="link-content">
+                            <div class="link-title">
+                                <span class="icon">📄</span>
+                                <span>Detailed Technical Paper</span>
+                            </div>
+                            <div class="link-subtitle">Comprehensive technical analysis 🔒</div>
+                        </div>
+                    </div>
+
+                    <!-- Source Code (Password Protected) -->
+                    <div class="link-card" onclick="showPasswordModal('repo')">
+                        <div class="link-content">
+                            <div class="link-title">
+                                <span class="icon">⚡</span>
+                                <span>Source Code</span>
+                            </div>
+                            <div class="link-subtitle">View source 🔒</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Early Access Tab Content -->
+            <div id="early-access-content" class="tab-content">
+                <div class="access-header">
+                    <h2>Get Early Access</h2>
+                    <p>Choose your preferred way to join</p>
+                </div>
+
+                <div class="links-container">
+                    <!-- Discord Early Access Link -->
+                    <a href="https://discord.gg/zAubf7zfab" class="link-card" target="_blank">
+                        <div class="link-content">
+                            <div class="link-title">
+                                <span class="icon"><img src="Discord-Logo.png" alt="Discord"></span>
+                                <span>Early Access Discord</span>
+                            </div>
+                            <div class="link-subtitle">Join our community server</div>
+                        </div>
+                    </a>
+
+                    <!-- Google Forms Early Access Link -->
+                    <a href="https://forms.gle/ybVjnDtnbRDm8uw69" class="link-card" target="_blank">
+                        <div class="link-content">
+                            <div class="link-title">
+                                <span class="icon"><img src="Google_Forms-Logo.png" alt="Google Forms" class="forms-icon"></span>
+                                <span>Early Access Form</span>
+                            </div>
+                            <div class="link-subtitle">Fill out the application form</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer with LinkedIn - Fixed to page corner -->
+    <div class="footer">
+        <a href="https://www.linkedin.com/in/shlokg/" target="_blank">
+            <span>💼</span>
+            <span>Connect on LinkedIn</span>
+        </a>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="password-modal" class="modal-overlay">
+        <div class="modal">
+            <h3>🔐 Password Required</h3>
+            <p>Please enter the password to access this content</p>
+            <input type="password" id="password-input" placeholder="Enter password">
+            <div class="error-message" id="error-message">Incorrect password. Please try again.</div>
+            <div class="modal-buttons">
+                <button class="modal-button cancel" onclick="closePasswordModal()">Cancel</button>
+                <button class="modal-button submit" onclick="verifyPassword()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Encrypted URLs - each uses a different password
+        // AES-GCM mode provides built-in authentication, so wrong passwords will fail to decrypt
+        const protectedContent = {
+            paper: {
+                encrypted: '9j1Qo8O/h6B5VYrdhouj6513GYxBEifdLk5OUKywltU5U1qhic/WEJ/BeXHfAVeQcl1zYp1Sm7tRH4w0F95cDsa4TxlZ3RJpSYHyaKMM3fj0JRmN6Qc0u/XHV7a+miDlRx1VyY2mDmEVQZu7oX0hTNH9nL+WK61JCiusTQ=='
+            },
+            repo: {
+                encrypted: 'lNSEWgz0nYbOW79LZWVN2Cay7N28xsm6gB5/5CpNVjaY2/McZVKxdkevh89RDt0Dgcjm2HZn+4Krx7I5LXgAlPGW7YZrOBvxiF2nn0ryWbrbkE6diEO+k8Lds38y4xRzxaq9IUxYxiLmcooJ11jXoOD2xviBkqmBidbU+g=='
+            }
+        };
+
+        let currentTarget = null;
+
+        // Tab switching function
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+
+            if (tabName === 'leqture') {
+                tabs[0].classList.add('active');
+                document.getElementById('leqture-content').classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('early-access-content').classList.add('active');
+            }
+        }
+
+        // Show password modal
+        function showPasswordModal(target) {
+            currentTarget = target;
+            document.getElementById('password-modal').classList.add('active');
+            document.getElementById('password-input').value = '';
+            document.getElementById('error-message').classList.remove('show');
+            document.getElementById('password-input').focus();
+        }
+
+        // Close password modal
+        function closePasswordModal() {
+            document.getElementById('password-modal').classList.remove('active');
+            currentTarget = null;
+        }
+
+        // Handle Enter key in password input
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('password-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    verifyPassword();
+                }
+            });
+        });
+
+        // AES decryption function
+        async function decryptAES(encryptedData, password) {
+            try {
+                // Convert password to key using PBKDF2
+                const encoder = new TextEncoder();
+                const passwordBuffer = encoder.encode(password);
+
+                // Import password as key material
+                const keyMaterial = await crypto.subtle.importKey(
+                    'raw',
+                    passwordBuffer,
+                    'PBKDF2',
+                    false,
+                    ['deriveBits', 'deriveKey']
+                );
+
+                // Derive key from password
+                const salt = encoder.encode('LeQtureSalt2024'); // Fixed salt for deterministic decryption
+                const key = await crypto.subtle.deriveKey(
+                    {
+                        name: 'PBKDF2',
+                        salt: salt,
+                        iterations: 100000,
+                        hash: 'SHA-256'
+                    },
+                    keyMaterial,
+                    { name: 'AES-GCM', length: 256 },
+                    false,
+                    ['decrypt']
+                );
+
+                // Decode the base64 encrypted data
+                const encryptedBytes = Uint8Array.from(atob(encryptedData), c => c.charCodeAt(0));
+
+                // Extract IV (first 12 bytes), ciphertext, and auth tag (last 16 bytes)
+                // In AES-GCM, the auth tag is appended to the ciphertext
+                const iv = encryptedBytes.slice(0, 12);
+                const ciphertext = encryptedBytes.slice(12);
+
+                // Decrypt (auth tag is automatically handled by AES-GCM)
+                const decryptedBuffer = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    key,
+                    ciphertext
+                );
+
+                // Convert to string
+                return new TextDecoder().decode(decryptedBuffer);
+            } catch (error) {
+                return null;
+            }
+        }
+
+        // Verify password and decrypt
+        async function verifyPassword() {
+            const password = document.getElementById('password-input').value;
+            const errorMsg = document.getElementById('error-message');
+
+            if (!password) {
+                errorMsg.textContent = 'Please enter a password';
+                errorMsg.classList.add('show');
+                return;
+            }
+
+            if (!currentTarget || !protectedContent[currentTarget]) {
+                return;
+            }
+
+            // Decrypt the URL
+            // AES-GCM will automatically fail if password is wrong (auth tag won't match)
+            const decryptedUrl = await decryptAES(protectedContent[currentTarget].encrypted, password);
+
+            if (decryptedUrl) {
+                // Success! AES-GCM authenticated the decryption, password is correct
+                closePasswordModal();
+                window.open(decryptedUrl, '_blank');
+            } else {
+                // Decryption failed - wrong password
+                errorMsg.textContent = 'Incorrect password. Please try again.';
+                errorMsg.classList.add('show');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('password-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePasswordModal();
+            }
+        });
+    </script>
+</body>
+</html>

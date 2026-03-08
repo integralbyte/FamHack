@@ -1,0 +1,214 @@
+\documentclass{article}
+
+\usepackage[paperwidth=420mm,paperheight=297mm,margin=0mm]{geometry}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{tikz}
+\usetikzlibrary{calc,decorations.text,positioning,arrows.meta,backgrounds}
+\usepackage{xcolor}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+\setmainfont[
+  Path=assets/fonts/,
+  BoldFont=AzeretMono-SemiBold.ttf,
+  ItalicFont=AzeretMono-Light.ttf
+]{AzeretMono-Regular.ttf}
+\newfontfamily\posterbold[Path=assets/fonts/]{AzeretMono-SemiBold.ttf}
+\newfontfamily\posterlight[Path=assets/fonts/]{AzeretMono-Light.ttf}
+\newfontfamily\posterdisplay[Path=assets/fonts/]{CinzelDecorative-Bold.ttf}
+
+\definecolor{posterbg}{HTML}{0D0D0D}
+\definecolor{posterpanel}{HTML}{121212}
+\definecolor{posterpaneldeep}{HTML}{101010}
+\definecolor{postercream}{HTML}{FFE9CE}
+\definecolor{posterred}{HTML}{FC2F20}
+\definecolor{postergold}{HTML}{E7B64F}
+\definecolor{posterline}{RGB}{255,233,206}
+\definecolor{posterredwash}{RGB}{252,47,32}
+
+\newcommand{\TopLeftBracket}[3]{%
+  \draw[#3,line width=0.75mm]
+    ($ (#1,#2) + (0,-18) $) -- (#1,#2) -- ($ (#1,#2) + (18,0) $);%
+}
+
+\newcommand{\BottomRightBracket}[3]{%
+  \draw[#3,line width=0.75mm]
+    ($ (#1,#2) + (-18,0) $) -- (#1,#2) -- ($ (#1,#2) + (0,18) $);%
+}
+
+\newcommand{\TagChip}[4]{%
+  \filldraw[rounded corners=3mm, fill=posterbg, draw=posterline!16, line width=0.25mm]
+    (#1,#2) rectangle ++(#3,13);
+  \node[anchor=center, text=posterred] at ($ (#1,#2) + ({0.5*#3},6) $)
+    {\posterbold\fontsize{7.9}{7.9}\selectfont #4};
+}
+
+\newcommand{\DataBox}[4]{%
+  \filldraw[rounded corners=3mm, fill=posterpanel, draw=posterline!12, line width=0.3mm]
+    (#1,#2) rectangle ++(#3,#4);
+}
+
+\newcommand{\CenteredPanelText}[5]{%
+  \node[anchor=center] at (#1,#2) {%
+    \parbox[c][#4mm][c]{#3mm}{\centering #5}%
+  };
+}
+
+\newcommand{\QRSlot}[3]{%
+  \pgfmathsetmacro{\qrInset}{5}
+  \pgfmathsetmacro{\qrCrossInset}{18}
+  \pgfmathsetmacro{\qrCrossFrame}{#3 - 36}
+  \pgfmathsetmacro{\qrTextX}{0.5 * #3}
+  \pgfmathsetmacro{\qrTextY}{0.5 * #3}
+  \pgfmathsetmacro{\qrImage}{#3 - 10}
+  \filldraw[
+    rounded corners=7mm,
+    fill=posterbg,
+    draw=posterred!70,
+    line width=0.7mm
+  ] (#1,#2) rectangle ++(#3,#3);
+  \IfFileExists{assets/images/qr-code.png}{%
+    \node[anchor=south west, inner sep=0pt] at ($ (#1,#2) + (\qrInset,\qrInset) $)
+      {\includegraphics[width=\qrImage mm]{assets/images/qr-code.png}};
+  }{%
+  \node[align=center, text=postercream] at ($ (#1,#2) + (\qrTextX,{0.5*#3+4}) $)
+    {\posterbold\fontsize{18}{18}\selectfont COMING};
+  \node[align=center, text=postercream] at ($ (#1,#2) + (\qrTextX,{0.5*#3-10}) $)
+    {\posterbold\fontsize{18}{18}\selectfont SOON};
+}%
+}
+
+\begin{document}
+\pagecolor{posterbg}
+
+\begin{tikzpicture}[remember picture,overlay,shift={(current page.south west)},x=1mm,y=1mm]
+  \fill[posterbg] (0,0) rectangle (420,297);
+
+  \foreach \x in {0,10,...,420} {
+    \draw[posterline!3, line width=0.12mm] (\x,0) -- (\x,297);
+  }
+  \foreach \y in {0,10,...,297} {
+    \draw[posterline!3, line width=0.12mm] (0,\y) -- (420,\y);
+  }
+
+  \fill[posterredwash, opacity=0.12] (54,238) circle[radius=68];
+  \fill[posterredwash, opacity=0.10] (332,246) circle[radius=58];
+  \fill[postercream, opacity=0.05] (360,250) circle[radius=46];
+  \fill[postergold, opacity=0.06] (120,74) circle[radius=52];
+
+  \filldraw[fill=posterpaneldeep, draw=posterline!8, line width=0.35mm]
+    (16,16) rectangle (404,281);
+  \TopLeftBracket{24}{273}{postercream!78}
+  \BottomRightBracket{396}{24}{posterred!82}
+
+  \draw[posterline!18, line width=0.25mm] (338,34) -- (389,34);
+
+  \node[anchor=north west, text=posterred!90] at (30,266)
+    {\posterbold\fontsize{7.3}{7.3}\selectfont ACADEMIC FAMILY HACKATHON / UNIVERSITY OF EDINBURGH / 2026};
+  \node[anchor=north east, text=postercream!42] at (390,275)
+    {\fontsize{6.4}{6.4}\selectfont SIGNAL ID 03-28-26 / PUBLIC PROGRAMME / LANDSCAPE A3};
+
+  \node[anchor=north east, text=posterred!8, rotate=0] at (394,268)
+    {\posterdisplay\fontsize{48}{48}\selectfont FAMHACK};
+
+  \draw[posterline!14, dashed, line width=0.3mm] (94,210) circle[radius=36];
+  \draw[posterline!10, line width=0.2mm] (94,210) circle[radius=42];
+  \path[
+    decorate,
+    decoration={
+      text along path,
+      text={|\posterbold\fontsize{4.6}{4.6}\selectfont\color{postercream!34}|FAMILY ORBIT / CONNECTING FIRST YEARS / UNIVERSITY OF EDINBURGH /},
+      text align=center,
+      raise=1.6mm
+    }
+  ] (52,210) arc[start angle=180,end angle=0,radius=42];
+  \path[
+    decorate,
+    decoration={
+      text along path,
+      text={|\posterbold\fontsize{4.6}{4.6}\selectfont\color{postercream!26}|PUBLIC BUILD DAY / MIXED-SKILL TEAMS / STAY CONNECTED /},
+      text align=center,
+      reverse path,
+      raise=1.6mm
+    }
+  ] (136,210) arc[start angle=0,end angle=-180,radius=42];
+
+  \node[anchor=center, inner sep=0pt] at (94,210)
+    {\includegraphics[width=104mm]{assets/images/famhack-transparent.png}};
+
+  \node[anchor=north, text=posterred, align=center, text width=92mm] at (94,158)
+    {\posterbold\fontsize{12.8}{14.8}\selectfont CONNECTING FIRST YEARS\\WITH THEIR ACADEMIC FAMILIES};
+
+  \DataBox{34}{90}{120}{48}
+  \node[anchor=center, text=posterred] at (94,122)
+    {{\resizebox{66mm}{!}{\posterbold NO HACKATHON}}};
+  \node[anchor=center, text=posterred] at (94,113)
+    {{\resizebox{108mm}{!}{\posterbold EXPERIENCE REQUIRED}}};
+  \node[anchor=north, text=postercream!78, align=center, text width=104mm] at (94,105)
+    {\fontsize{9.4}{11.8}\selectfont Join us for a fun day of coding, pizza, games, and non-coding challenges.};
+
+  \draw[posterred!30, line width=0.35mm] (164,248) -- (391,248);
+
+  \DataBox{170}{164}{220}{78}
+  \TopLeftBracket{176}{236}{posterred!75}
+  \BottomRightBracket{381}{170}{postercream!70}
+  \node[anchor=north west, text=posterred] at (182,232)
+    {\posterbold\fontsize{9.8}{9.8}\selectfont EVENT DETAILS};
+  \CenteredPanelText{209}{204}{52}{32}{%
+    \textcolor{posterred}{\posterbold\fontsize{10.6}{10.6}\selectfont DATE}\\[2.2mm]
+    \textcolor{postercream}{\posterbold\fontsize{18.8}{20.8}\selectfont SATURDAY}\\[1.0mm]
+    \textcolor{postercream}{\posterbold\fontsize{15.0}{16.4}\selectfont 28 MARCH 2026}%
+  }
+  \CenteredPanelText{281}{204}{84}{32}{%
+    \textcolor{posterred}{\posterbold\fontsize{10.6}{10.6}\selectfont LOCATION}\\[2.2mm]
+    \textcolor{postercream}{\posterbold\fontsize{16.8}{18.8}\selectfont THE NUCLEUS}\\[1.0mm]
+    \textcolor{postercream!72}{\fontsize{9.6}{11.8}\selectfont University of Edinburgh}%
+  }
+  \CenteredPanelText{352}{204}{50}{32}{%
+    \textcolor{posterred}{\posterbold\fontsize{10.6}{10.6}\selectfont FORMAT}\\[2.2mm]
+    \textcolor{postercream}{\posterbold\fontsize{17.6}{19.6}\selectfont 8 HOURS}\\[1.0mm]
+    \textcolor{postercream!72}{\fontsize{10.0}{12.2}\selectfont IN PERSON}%
+  }
+  \node[anchor=center, text=posterred] at (280,177)
+    {{\resizebox{176mm}{!}{\posterbold 68747470733A2F2F7777772E66616D6861636B2E636F6D2F5232467A644756793D3D}}};
+
+  \DataBox{170}{114}{110}{32}
+  \CenteredPanelText{225}{130}{94}{22}{%
+    \textcolor{posterred}{\posterbold\fontsize{8.8}{8.8}\selectfont WHO SHOULD JOIN}\\[1.8mm]
+    \textcolor{postercream}{\posterbold\fontsize{13.4}{15.0}\selectfont FIRST YEARS +}\\[0.7mm]
+    \textcolor{postercream}{\posterbold\fontsize{13.4}{15.0}\selectfont ACADEMIC PARENTS}%
+  }
+
+  \DataBox{286}{114}{104}{32}
+  \node[anchor=north, text=postergold] at (338,141)
+    {{\resizebox{15mm}{!}{\posterbold CTF}}};
+  \node[anchor=center, text=postercream] at (338,129)
+    {{\resizebox{90mm}{!}{\posterbold WIN £20 + CERTIFICATE}}};
+  \node[anchor=south, text=postercream!68] at (338,118)
+    {\fontsize{7.4}{8.8}\selectfont OPENS 14 MARCH 2026};
+
+  \DataBox{36}{28}{116}{56}
+  \TopLeftBracket{42}{78}{posterred!72}
+  \CenteredPanelText{94}{56}{94}{42}{%
+    \textcolor{posterred}{\posterbold\fontsize{9.2}{9.2}\selectfont WHY COME}\\[2.6mm]
+    \textcolor{postercream}{\posterbold\fontsize{13.8}{15.8}\selectfont A REAL TEAM DAY}\\[2.2mm]
+    \textcolor{postercream!74}{\fontsize{8.6}{11.2}\selectfont Meet the people you will keep around after first year, work together properly for a day, and leave with something built by the whole family.}\\[2.6mm]
+    \textcolor{postercream!46}{\fontsize{7.3}{8.8}\selectfont LESS ORIENTATION, MORE SHARED MEMORY}%
+  }
+
+  \node[anchor=south, text=posterred] at (210,104)
+    {\posterbold\fontsize{9}{9}\selectfont SCAN TO PARTICIPATE};
+  \QRSlot{173}{28}{74}
+
+  \DataBox{266}{28}{124}{56}
+  \CenteredPanelText{328}{56}{98}{42}{%
+    \textcolor{posterred}{\posterbold\fontsize{10.2}{10.2}\selectfont HOW TO JOIN}\\[2.8mm]
+    \textcolor{postercream}{\posterbold\fontsize{13.0}{15.2}\selectfont 01\hspace{2mm}PARENT CREATES THE FAMILY\\02\hspace{2mm}OTHERS JOIN WITH THE CODE\\03\hspace{2mm}EVERYONE BUILDS TOGETHER}\\[2.8mm]
+    \textcolor{postercream!62}{\fontsize{8.8}{11.0}\selectfont One family. One team. One shared build day.}%
+  }
+\end{tikzpicture}
+
+\end{document}

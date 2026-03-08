@@ -124,6 +124,7 @@
                       background: linear-gradient(to top, #fc2f20 50%, #ffe9ce 50%);
                       background-size: 100% 200%;
                       background-position: top;
+                      background-clip: text;
                       -webkit-background-clip: text;
                       -webkit-text-fill-color: transparent;
                       transition: background-position 0.6s cubic-bezier(0.65, 0, 0.07, 1);
@@ -170,8 +171,7 @@
     </div>
     <div class="nav-upper-padding"></div>
     <div class="nav-wrapper-grid">
-      <a id="w-node-_9b345383-83ea-1792-45a7-503093a441c1-93a441be" href="/"
-        class="nav-tab-inner-left w-inline-block">
+      <a id="w-node-_9b345383-83ea-1792-45a7-503093a441c1-93a441be" href="/" class="nav-tab-inner-left w-inline-block">
         <div class="nav-logo">
           <span class="nav-logo-text">H</span>
         </div>
@@ -256,80 +256,22 @@
                 </div>
               </div>
 
-              <h1 id="register-heading" class="register-heading">What are you?</h1>
-              <p id="register-subheading" class="register-subheading">Choose how you want to enter FamHack.</p>
+              <h1 id="register-heading" class="register-heading">Register</h1>
+              <p id="register-subheading" class="register-subheading">Registration opens 14 March.</p>
               <p id="register-page-message" class="success-message page-message"></p>
 
-              <div class="register-step active" data-step="role">
-                <div class="register-form">
-                  <div class="role-grid">
-                    <button id="choose-parent-btn" type="button" class="role-card">
-                      <p class="role-card-eyebrow">Parent</p>
-                      <h2 class="role-card-heading">Create a family</h2>
-                      <p class="role-card-copy">Start the family, get the code, and approve join requests.</p>
-                    </button>
-
-                    <button id="choose-student-btn" type="button" class="role-card">
-                      <p class="role-card-eyebrow">Parent / Student</p>
-                      <h2 class="role-card-heading">Join a family</h2>
-                      <p class="role-card-copy">Continue if someone in your family already has a code or invite link.</p>
-                    </button>
-                  </div>
-
-                  <button id="choose-signin-btn" type="button" class="button-link role-signin-btn w-inline-block">
-                    <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Sign In</p>
-                      <div class="button-icon">
-                        <div class="button-icon-svg w-embed">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                            <path
-                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                              fill="currentColor" stroke-width="0.155153" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              <div class="register-step" data-step="child">
-                <div class="register-form">
+              <!-- Step: Pre-registration (email interest capture, before 14 Mar) -->
+              <div class="register-step active" data-step="pre-reg">
+                <div class="register-form" style="max-width: 500px; margin-inline: auto;">
                   <div class="form-group">
-                    <label class="form-label" for="role-family-code-input">Family Code</label>
-                    <input type="text" id="role-family-code-input" class="form-input uppercase-input" placeholder="ABCD23"
-                      autocapitalize="characters" autocomplete="off" />
-                  </div>
-                  <p class="error-message" id="role-error"></p>
-                  <button id="continue-child-btn" type="button" class="button-link w-inline-block" style="width: 100%;">
-                    <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Continue</p>
-                      <div class="button-icon">
-                        <div class="button-icon-svg w-embed">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                            <path
-                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                              fill="currentColor" stroke-width="0.155153" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                  <button id="back-to-role-btn" type="button" class="resend-link">Back</button>
-                </div>
-              </div>
-
-              <div class="register-step" data-step="email">
-                <div class="register-form">
-                  <div class="form-group">
-                    <label id="email-label" class="form-label" for="email-input">Your Email Address</label>
-                    <input type="email" id="email-input" class="form-input" placeholder="s1234567@ed.ac.uk"
+                    <label class="form-label" for="pre-reg-email-input">Your University Email</label>
+                    <input type="email" id="pre-reg-email-input" class="form-input" placeholder="s1234567@ed.ac.uk"
                       autocomplete="email" />
-                    <p class="error-message" id="email-error"></p>
+                    <p class="error-message" id="pre-reg-email-error"></p>
                   </div>
-                  <button id="send-otp-btn" class="button-link w-inline-block" style="width: 100%;">
+                  <button id="pre-reg-submit-btn" class="button-link w-inline-block" style="width: 100%;">
                     <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Send OTP</p>
+                      <p class="button-label">Register</p>
                       <div class="button-icon">
                         <div class="button-icon-svg w-embed">
                           <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -341,10 +283,10 @@
                       </div>
                     </div>
                   </button>
-                  <button id="back-from-parent-btn" type="button" class="resend-link">Back</button>
                 </div>
               </div>
 
+              <!-- Step: OTP verification (shared for pre-reg and reg-open phases) -->
               <div class="register-step" data-step="otp">
                 <div class="register-form">
                   <p class="form-label" style="text-align: center; margin-bottom: 20px;">Enter the 6-digit code sent to
@@ -377,6 +319,79 @@
                 </div>
               </div>
 
+              <!-- Step: Pre-reg success (shown after verifying email in pre-reg phase) -->
+              <div class="register-step" data-step="pre-reg-success">
+                <div class="register-form"
+                  style="max-width: 500px; margin-inline: auto; text-align: center; gap: 28px;">
+                  <div class="reg-success-icon" aria-hidden="true">✦</div>
+                  <div>
+                    <h2 class="reg-success-heading">See you on 14 March.</h2>
+                    <p class="reg-success-copy">Connect with your academic family before then. If you can't reach them,
+                      we'll sort you a team.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step: Role selection (reg-open phase, 14 Mar+) -->
+              <div class="register-step" data-step="role">
+                <div class="register-form">
+                  <div class="role-grid">
+                    <button id="choose-parent-btn" type="button" class="role-card">
+                      <p class="role-card-eyebrow">Academic Parents</p>
+                      <h2 class="role-card-heading">Parent</h2>
+                      <p class="role-card-copy">You are an academic parent taking part in FamHack.</p>
+                    </button>
+
+                    <button id="choose-student-btn" type="button" class="role-card">
+                      <p class="role-card-eyebrow">First Year Student</p>
+                      <h2 class="role-card-heading">Child</h2>
+                      <p class="role-card-copy">You are a first-year student joining your academic family.</p>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step: Email input (reg-open phase, after role selection) -->
+              <div class="register-step" data-step="email">
+                <div class="register-form">
+                  <div class="form-group">
+                    <label id="email-label" class="form-label" for="email-input">Your Email Address</label>
+                    <input type="email" id="email-input" class="form-input" placeholder="s1234567@ed.ac.uk"
+                      autocomplete="email" />
+                    <p class="error-message" id="email-error"></p>
+                  </div>
+                  <button id="send-otp-btn" class="button-link w-inline-block" style="width: 100%;">
+                    <div class="button" style="width: 100%; justify-content: center;">
+                      <p class="button-label">Send OTP</p>
+                      <div class="button-icon">
+                        <div class="button-icon-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                            <path
+                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                              fill="currentColor" stroke-width="0.155153" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                  <button id="back-from-parent-btn" type="button" class="resend-link">Back</button>
+                </div>
+              </div>
+
+              <!-- Step: Registered success (shown after OTP verified in reg-open phase) -->
+              <div class="register-step" data-step="registered-success">
+                <div class="register-form"
+                  style="max-width: 500px; margin-inline: auto; text-align: center; gap: 28px;">
+                  <div class="reg-success-icon" aria-hidden="true">✦</div>
+                  <div>
+                    <h2 class="reg-success-heading">You're registered!</h2>
+                    <p class="reg-success-copy">See you 14 March. Connect with your academic family — if you can't reach
+                      them, we'll sort you a team.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step: Create team (post reg-close, parent flow) -->
               <div class="register-step" data-step="create-team">
                 <div class="register-form">
                   <div class="form-group">
@@ -401,7 +416,8 @@
                     <input type="text" id="team-name-input" class="form-input" placeholder="House Lovelace"
                       autocomplete="organization" />
                   </div>
-                  <p class="register-subheading helper-copy">Other parents or students will use the join code from the dashboard to
+                  <p class="register-subheading helper-copy">Other parents or students will use the join code from the
+                    dashboard to
                     request access.</p>
                   <p class="error-message" id="team-error"></p>
                   <button id="create-team-btn" class="button-link w-inline-block" style="width: 100%;">
