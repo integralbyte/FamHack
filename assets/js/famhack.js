@@ -636,6 +636,7 @@ const FamHack = {
   handleChooseParent() {
     this.state.registerIntent = 'parent';
     this.showFieldError('role-error', '');
+    this.showPageMessage('register-page-message', '');
     this.setRegisterEmailMode('parent');
     this.setRegisterIntro(
       'Create your academic family',
@@ -656,6 +657,7 @@ const FamHack = {
   handleChooseSignIn() {
     this.state.registerIntent = 'signin';
     this.showFieldError('role-error', '');
+    this.showPageMessage('register-page-message', '');
     this.setRegisterEmailMode('signin');
     this.setRegisterIntro(
       'Sign in to FamHack',
@@ -675,6 +677,7 @@ const FamHack = {
   handleChooseStudent() {
     this.state.registerIntent = 'student';
     this.showFieldError('role-error', '');
+    this.showPageMessage('register-page-message', '');
     this.setRegisterIntro(
       'Join an existing family',
       'Enter the family code from your academic parent, or open the invite link they sent you.'
