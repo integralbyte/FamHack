@@ -247,8 +247,7 @@ const FamHack = {
     }
 
     this.state.registration = registration || null;
-    this.setText('registered-heading', REGISTRATION_CONFIRMATION_TITLE);
-    this.setText('registered-copy', REGISTRATION_CONFIRMATION_COPY);
+    this.setRegisterIntro(REGISTRATION_CONFIRMATION_TITLE, REGISTRATION_CONFIRMATION_COPY);
     this.setText('registered-role', registration?.roleLabel ? `Registered as ${registration.roleLabel}.` : '');
   },
 
