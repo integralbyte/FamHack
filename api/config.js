@@ -4,7 +4,7 @@ import { requireUser } from './_lib/auth.js';
 import { assertServerEnv, getPublicConfig } from './_lib/env.js';
 import { allowMethods, readJsonBody, sendError, statusFromError } from './_lib/http.js';
 import { getServerLaunchState, normalizePageSlug } from './_lib/launch.js';
-import { assertAllowedEmail, getMembershipByUserId, getProfileByUserId, getRegisteredRoleMessage, serializeRegistration, upsertRegistrationProfile } from './_lib/teams.js';
+import { assertAllowedEmail, getMembershipByUserId, getRegisteredRoleMessage, serializeRegistration, upsertRegistration } from './_lib/teams.js';
 
 const pageFiles = new Map([
   ['about', 'about.html'],
@@ -152,15 +152,12 @@ async function handleRegistrationStatus(req, res) {
   const user = await requireUser(req);
   assertAllowedEmail(user.email);
 
-  const [profile, membership] = await Promise.all([
-    getProfileByUserId(user.id),
-    getMembershipByUserId(user.id),
-  ]);
+  const membership = await getMembershipByUserId(user.id);
 
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(200).json({
     launch: getServerLaunchState(),
-    registration: serializeRegistration(profile),
+    registration: serializeRegistration(user),
     membership: membership
       ? {
           id: membership.id,
@@ -184,8 +181,7 @@ async function handleRegistrationComplete(req, res) {
 
   const body = readJsonBody(req);
   const requestedRole = String(body.role || '').trim().toLowerCase();
-  const existingProfile = await getProfileByUserId(user.id);
-  const existingRegistration = serializeRegistration(existingProfile);
+  const existingRegistration = serializeRegistration(user);
 
   if (existingRegistration?.role) {
     if (existingRegistration.role !== requestedRole) {
@@ -204,9 +200,9 @@ async function handleRegistrationComplete(req, res) {
     return;
   }
 
-  const profile = await upsertRegistrationProfile(user, requestedRole);
+  const registration = await upsertRegistration(user, requestedRole);
   res.status(200).json({
-    registration: serializeRegistration(profile),
+    registration,
   });
 }
 

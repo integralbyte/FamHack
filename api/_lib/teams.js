@@ -100,21 +100,30 @@ export function getRegisteredRoleMessage(role) {
   return `You already have an account registered as a ${role === 'parent' ? 'Parent' : 'Child'}.`;
 }
 
-export function serializeRegistration(profile) {
-  if (!profile?.registered_role) {
+export function serializeRegistration(source) {
+  const registeredRole = sanitizeJoinRole(
+    source?.registered_role
+      || source?.user_metadata?.registered_role
+      || source?.app_metadata?.registered_role
+  );
+  const registeredAt = source?.registration_completed_at
+    || source?.user_metadata?.registration_completed_at
+    || source?.app_metadata?.registration_completed_at
+    || null;
+
+  if (!registeredRole) {
     return null;
   }
 
   return {
-    role: profile.registered_role,
-    roleLabel: formatMemberRoleLabel(profile.registered_role),
-    registeredAt: profile.registration_completed_at,
+    role: registeredRole,
+    roleLabel: formatMemberRoleLabel(registeredRole),
+    registeredAt,
   };
 }
 
-export async function assertRegisteredRole(userId, expectedRole) {
-  const profile = await getProfileByUserId(userId);
-  const registration = serializeRegistration(profile);
+export async function assertRegisteredRole(user, expectedRole) {
+  const registration = serializeRegistration(user);
 
   if (!registration?.role) {
     throw new Error('Registration has closed for this account.');
@@ -135,7 +144,7 @@ export async function getProfileByUserId(userId) {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, full_name, study_year, registered_role, registration_completed_at')
+    .select('id, email, full_name, study_year')
     .eq('id', userId)
     .maybeSingle();
 
@@ -146,29 +155,30 @@ export async function getProfileByUserId(userId) {
   return data;
 }
 
-export async function upsertRegistrationProfile(user, role) {
+export async function upsertRegistration(user, role) {
   const normalizedRole = sanitizeJoinRole(role);
   if (!normalizedRole) {
     throw new Error('Choose whether you are registering as a Parent or Child');
   }
 
   const supabase = getServiceClient();
-  const payload = {
-    id: user.id,
-    email: normalizeEmail(user.email),
-    registered_role: normalizedRole,
-    registration_completed_at: new Date().toISOString(),
-  };
-
-  const { error } = await supabase.from('profiles').upsert(payload, {
-    onConflict: 'id',
+  const existingMetadata = user?.user_metadata && typeof user.user_metadata === 'object'
+    ? user.user_metadata
+    : {};
+  const registrationCompletedAt = existingMetadata.registration_completed_at || new Date().toISOString();
+  const { data, error } = await supabase.auth.admin.updateUserById(user.id, {
+    user_metadata: {
+      ...existingMetadata,
+      registered_role: normalizedRole,
+      registration_completed_at: registrationCompletedAt,
+    },
   });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return getProfileByUserId(user.id);
+  return serializeRegistration(data.user);
 }
 
 export async function getMembershipByUserId(userId) {

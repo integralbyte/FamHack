@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     assertNormalParticipationOpen();
     const user = await requireUser(req);
     assertAllowedEmail(user.email);
-    await assertRegisteredRole(user.id, 'child');
+    await assertRegisteredRole(user, 'child');
 
     const body = readJsonBody(req);
     const fullName = sanitizeFullName(body.fullName);
