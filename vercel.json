@@ -11,6 +11,10 @@
       "destination": "/api/config?mode=registration-complete"
     },
     {
+      "source": "/R2FzdGVy==",
+      "destination": "/api/config?mode=page&slug=easter"
+    },
+    {
       "source": "/about",
       "destination": "/api/config?mode=page&slug=about"
     },

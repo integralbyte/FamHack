@@ -260,3 +260,93 @@ alter table public.ctf_user_solves enable row level security;
 revoke all on public.ctf_member_solves from anon, authenticated;
 revoke all on public.ctf_team_checkpoints from anon, authenticated;
 revoke all on public.ctf_user_solves from anon, authenticated;
+
+create table if not exists public.secret_keyring_claims (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  source text not null default 'R2FzdGVy==',
+  agreed_to_terms boolean not null default true,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
+create unique index if not exists secret_keyring_claims_email_idx
+  on public.secret_keyring_claims (lower(email));
+
+create index if not exists secret_keyring_claims_created_at_idx
+  on public.secret_keyring_claims (created_at asc);
+
+create or replace function public.claim_secret_keyring(
+  p_email text,
+  p_source text default 'R2FzdGVy=='
+)
+returns table (
+  claim_id uuid,
+  email text,
+  source text,
+  total integer,
+  claimed integer,
+  remaining integer
+)
+language plpgsql
+security definer
+as $$
+declare
+  normalized_email text := lower(trim(coalesce(p_email, '')));
+  normalized_source text := trim(coalesce(p_source, ''));
+  inventory_total integer := 10;
+  current_claimed integer := 0;
+  inserted_claim public.secret_keyring_claims%rowtype;
+begin
+  if normalized_email = '' then
+    raise exception 'secret_keyring_email_required';
+  end if;
+
+  if normalized_email !~ '^[a-z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+$' then
+    raise exception 'secret_keyring_email_invalid';
+  end if;
+
+  if normalized_source = '' then
+    normalized_source := 'R2FzdGVy==';
+  end if;
+
+  perform pg_advisory_xact_lock(20260310);
+
+  if exists (
+    select 1
+    from public.secret_keyring_claims
+    where lower(public.secret_keyring_claims.email) = normalized_email
+  ) then
+    raise exception 'secret_keyring_already_claimed';
+  end if;
+
+  select count(*)
+    into current_claimed
+  from public.secret_keyring_claims;
+
+  if current_claimed >= inventory_total then
+    raise exception 'secret_keyring_sold_out';
+  end if;
+
+  insert into public.secret_keyring_claims (email, source, agreed_to_terms)
+  values (normalized_email, normalized_source, true)
+  returning *
+    into inserted_claim;
+
+  current_claimed := current_claimed + 1;
+
+  return query
+  select
+    inserted_claim.id,
+    inserted_claim.email,
+    inserted_claim.source,
+    inventory_total,
+    current_claimed,
+    greatest(inventory_total - current_claimed, 0);
+end;
+$$;
+
+alter table public.secret_keyring_claims enable row level security;
+
+revoke all on public.secret_keyring_claims from anon, authenticated;
+revoke all on function public.claim_secret_keyring(text, text) from public, anon, authenticated;
+grant execute on function public.claim_secret_keyring(text, text) to service_role;

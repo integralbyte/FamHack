@@ -3,16 +3,26 @@ import { readFile } from 'node:fs/promises';
 import { requireUser } from './_lib/auth.js';
 import { assertServerEnv, getPublicConfig } from './_lib/env.js';
 import { allowMethods, readJsonBody, sendError, statusFromError } from './_lib/http.js';
+import { claimSecretKeyring, getSecretKeyringStatus } from './_lib/keyring.js';
 import { getServerLaunchState, normalizePageSlug } from './_lib/launch.js';
 import { assertAllowedEmail, getMembershipByUserId, getRegisteredRoleMessage, serializeRegistration, upsertRegistration } from './_lib/teams.js';
 
-const pageFiles = new Map([
+const publicPageFiles = new Map([
+  ['easter', 'secret-keyring.html'],
+]);
+
+const protectedPageFiles = new Map([
   ['about', 'about.html'],
   ['tracks', 'tracks.html'],
   ['register', 'register.html'],
   ['join', 'join.html'],
   ['dashboard', 'dashboard.html'],
   ['ctf', 'ctf.html'],
+]);
+
+const pageFiles = new Map([
+  ...publicPageFiles,
+  ...protectedPageFiles,
 ]);
 
 function renderComingSoonPage(slug) {
@@ -115,6 +125,11 @@ async function loadLaunchPage(fileName) {
 }
 
 function resolvePageFile(slug, launch) {
+  const publicPageFile = publicPageFiles.get(slug);
+  if (publicPageFile) {
+    return publicPageFile;
+  }
+
   if (slug === 'register') {
     return launch.isRegistrationOpen ? 'register-prereg.html' : 'register.html';
   }
@@ -123,7 +138,7 @@ function resolvePageFile(slug, launch) {
     return null;
   }
 
-  return pageFiles.get(slug) || null;
+  return protectedPageFiles.get(slug) || null;
 }
 
 async function handlePageRequest(req, res) {
@@ -206,6 +221,31 @@ async function handleRegistrationComplete(req, res) {
   });
 }
 
+async function handleSecretKeyringStatus(_req, res) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.status(200).json({
+    inventory: await getSecretKeyringStatus(),
+  });
+}
+
+async function handleSecretKeyringClaim(req, res) {
+  const body = readJsonBody(req);
+  const claim = await claimSecretKeyring(body.email, {
+    acceptedTerms: body.acceptedTerms === true || body.acceptedTerms === 'true',
+    source: body.source,
+  });
+
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.status(200).json({
+    claim: {
+      id: claim.id,
+      email: claim.email,
+      source: claim.source,
+    },
+    inventory: claim.inventory,
+  });
+}
+
 export default async function handler(req, res) {
   if (!allowMethods(req, res, ['GET', 'POST'])) {
     return;
@@ -237,6 +277,26 @@ export default async function handler(req, res) {
         return;
       }
       await handleRegistrationComplete(req, res);
+      return;
+    }
+
+    if (mode === 'secret-keyring-status') {
+      if (req.method !== 'GET') {
+        res.setHeader('Allow', 'GET');
+        res.status(405).json({ error: `Method ${req.method} not allowed` });
+        return;
+      }
+      await handleSecretKeyringStatus(req, res);
+      return;
+    }
+
+    if (mode === 'secret-keyring-claim') {
+      if (req.method !== 'POST') {
+        res.setHeader('Allow', 'POST');
+        res.status(405).json({ error: `Method ${req.method} not allowed` });
+        return;
+      }
+      await handleSecretKeyringClaim(req, res);
       return;
     }
 

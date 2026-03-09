@@ -51,12 +51,22 @@ export function statusFromError(error) {
     || message === 'Registration has closed for this account.'
     || message === 'Only accounts registered as a Parent can create a Family.'
     || message === 'Only accounts registered as a Child can join a Family.'
+    || message === 'Enter an email address to claim a key ring.'
+    || message === 'Enter a valid email address.'
+    || message === 'You must agree to attend and participate in FAMHack to claim a key ring.'
   ) {
     return (
       message === 'Normal participation opens on 14 March.'
       || message === 'Registration has closed for this account.'
       || message.startsWith('Only accounts registered as a ')
     ) ? 403 : 400;
+  }
+
+  if (
+    message === 'That email has already claimed a key ring.'
+    || message === 'All FAMHack key rings have already been claimed.'
+  ) {
+    return 409;
   }
 
   return 500;
