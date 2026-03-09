@@ -1,8 +1,8 @@
 export const EVENT_TIME_ZONE = 'Europe/London';
 export const REGISTRATION_CUTOFF_AT = '2026-03-13T23:59:59.999Z';
 export const NORMAL_PARTICIPATION_UNLOCK_AT = '2026-03-14T00:00:00.000Z';
-export const REGISTRATION_CONFIRMATION_TITLE = 'See you on 14 March';
-export const REGISTRATION_CONFIRMATION_COPY = 'Next step: team up with your academic family. If you are unable to do that, we may assign you a team.';
+export const REGISTRATION_CONFIRMATION_TITLE = 'Registration saved';
+export const REGISTRATION_CONFIRMATION_COPY = 'Come back on 14 March to team up with your academic family. If you are unable to do that, we may assign you a team.';
 
 const registrationCutoffTime = Date.parse(REGISTRATION_CUTOFF_AT);
 const normalParticipationUnlockTime = Date.parse(NORMAL_PARTICIPATION_UNLOCK_AT);
