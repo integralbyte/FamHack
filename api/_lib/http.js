@@ -54,6 +54,7 @@ export function statusFromError(error) {
     || message === 'Enter an email address to claim a key ring.'
     || message === 'Enter a valid email address.'
     || message === 'You must agree to attend and participate in FAMHack to claim a key ring.'
+    || message === 'You must agree to attend and participate in FamHack to claim a key ring.'
   ) {
     return (
       message === 'Normal participation opens on 14 March.'
@@ -65,6 +66,7 @@ export function statusFromError(error) {
   if (
     message === 'That email has already claimed a key ring.'
     || message === 'All FAMHack key rings have already been claimed.'
+    || message === 'All FamHack key rings have already been claimed.'
   ) {
     return 409;
   }

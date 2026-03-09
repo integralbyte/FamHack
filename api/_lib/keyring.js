@@ -1,5 +1,5 @@
 import { getServiceClient } from './supabase.js';
-import { normalizeEmail } from './teams.js';
+import { assertAllowedEmail, normalizeEmail } from './teams.js';
 
 export const SECRET_KEYRING_TOTAL = 10;
 
@@ -48,7 +48,7 @@ function mapClaimErrorMessage(message) {
   }
 
   if (normalizedMessage === 'secret_keyring_sold_out') {
-    return 'All FAMHack key rings have already been claimed.';
+    return 'All FamHack key rings have already been claimed.';
   }
 
   return normalizedMessage;
@@ -77,8 +77,10 @@ export async function claimSecretKeyring(email, { acceptedTerms = false, source 
     throw new Error('Enter a valid email address.');
   }
 
+  assertAllowedEmail(normalizedEmail);
+
   if (!acceptedTerms) {
-    throw new Error('You must agree to attend and participate in FAMHack to claim a key ring.');
+    throw new Error('You must agree to attend and participate in FamHack to claim a key ring.');
   }
 
   const supabase = getServiceClient();
