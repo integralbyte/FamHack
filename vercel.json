@@ -3,56 +3,64 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/registration/status",
+      "destination": "/api/config?mode=registration-status"
+    },
+    {
+      "source": "/api/registration/complete",
+      "destination": "/api/config?mode=registration-complete"
+    },
+    {
       "source": "/about",
-      "destination": "/api/page?slug=about"
+      "destination": "/api/config?mode=page&slug=about"
     },
     {
       "source": "/about.html",
-      "destination": "/api/page?slug=about"
+      "destination": "/api/config?mode=page&slug=about"
     },
     {
       "source": "/tracks",
-      "destination": "/api/page?slug=tracks"
+      "destination": "/api/config?mode=page&slug=tracks"
     },
     {
       "source": "/tracks.html",
-      "destination": "/api/page?slug=tracks"
+      "destination": "/api/config?mode=page&slug=tracks"
     },
     {
       "source": "/register",
-      "destination": "/api/page?slug=register"
+      "destination": "/api/config?mode=page&slug=register"
     },
     {
       "source": "/register.html",
-      "destination": "/api/page?slug=register"
+      "destination": "/api/config?mode=page&slug=register"
     },
     {
       "source": "/join",
-      "destination": "/api/page?slug=join"
+      "destination": "/api/config?mode=page&slug=join"
     },
     {
       "source": "/join.html",
-      "destination": "/api/page?slug=join"
+      "destination": "/api/config?mode=page&slug=join"
     },
     {
       "source": "/dashboard",
-      "destination": "/api/page?slug=dashboard"
+      "destination": "/api/config?mode=page&slug=dashboard"
     },
     {
       "source": "/dashboard.html",
-      "destination": "/api/page?slug=dashboard"
+      "destination": "/api/config?mode=page&slug=dashboard"
     },
     {
       "source": "/ctf",
-      "destination": "/api/page?slug=ctf"
+      "destination": "/api/config?mode=page&slug=ctf"
     },
     {
       "source": "/ctf.html",
-      "destination": "/api/page?slug=ctf"
+      "destination": "/api/config?mode=page&slug=ctf"
     }
   ],
   "functions": {
-    "api/page.js": {
+    "api/config.js": {
       "includeFiles": "api/_lib/launch-pages/**"
     }
   }
