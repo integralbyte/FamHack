@@ -15,6 +15,10 @@
       "destination": "/api/config?mode=page&slug=easter"
     },
     {
+      "source": "/:undertale([Gg][Aa][Ss][Tt][Ee][Rr]|[Tt][Oo][Rr][Ii][Ee][Ll]|[Aa][Ll][Pp][Hh][Yy][Ss]|[Aa][Ss][Gg][Oo][Rr][Ee]|[Ff][Rr][Ii][Ss][Kk]|[Cc][Hh][Aa][Rr][Aa]|[Ss][Aa][Nn][Ss]|[Pp][Aa][Pp][Yy][Rr][Uu][Ss]|[Uu][Nn][Dd][Yy][Nn][Ee]|[Ff][Ll][Oo][Ww][Ee][Yy]|[Mm][Ee][Tt][Tt][Aa][Tt][Oo][Nn]|[Aa][Ss][Rr][Ii][Ee][Ll]|[Nn][Aa][Pp][Ss][Tt][Aa][Bb][Ll][Oo][Oo][Kk])",
+      "destination": "/api/config?mode=page&slug=gaster-secret"
+    },
+    {
       "source": "/about",
       "destination": "/api/config?mode=page&slug=about"
     },

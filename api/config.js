@@ -9,6 +9,7 @@ import { assertAllowedEmail, getMembershipByUserId, getRegisteredRoleMessage, se
 
 const publicPageFiles = new Map([
   ['easter', 'secret-keyring.html'],
+  ['gaster-secret', 'gaster-secret.html'],
 ]);
 
 const protectedPageFiles = new Map([
