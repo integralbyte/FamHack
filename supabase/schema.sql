@@ -293,7 +293,7 @@ as $$
 declare
   normalized_email text := lower(trim(coalesce(p_email, '')));
   normalized_source text := trim(coalesce(p_source, ''));
-  inventory_total integer := 10;
+  inventory_total integer := 20;
   current_claimed integer := 0;
   inserted_claim public.secret_keyring_claims%rowtype;
 begin

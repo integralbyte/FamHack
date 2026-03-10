@@ -1,7 +1,7 @@
 import { getServiceClient } from './supabase.js';
 import { assertAllowedEmail, normalizeEmail } from './teams.js';
 
-export const SECRET_KEYRING_TOTAL = 10;
+export const SECRET_KEYRING_TOTAL = 20;
 
 const SECRET_PAGE_SOURCE = 'R2FzdGVy==';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
