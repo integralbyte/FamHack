@@ -1,0 +1,138 @@
+\usepackage[a4paper,margin=18mm,top=20mm,bottom=20mm]{geometry}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{tikz}
+\usetikzlibrary{calc,positioning,backgrounds}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{array}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.72em}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\baselinestretch}{1.05}
+
+\setmainfont[
+  Path=../poster/assets/fonts/,
+  BoldFont=AzeretMono-SemiBold.ttf,
+  ItalicFont=AzeretMono-Light.ttf
+]{AzeretMono-Regular.ttf}
+\newfontfamily\fhbold[Path=../poster/assets/fonts/]{AzeretMono-SemiBold.ttf}
+\newfontfamily\fhlight[Path=../poster/assets/fonts/]{AzeretMono-Light.ttf}
+\newfontfamily\fhdisplay[Path=../poster/assets/fonts/]{CinzelDecorative-Bold.ttf}
+
+\definecolor{fhbg}{HTML}{0D0D0D}
+\definecolor{fhpanel}{HTML}{121212}
+\definecolor{fhpaper}{HTML}{FFF7EE}
+\definecolor{fhcream}{HTML}{FFE9CE}
+\definecolor{fhred}{HTML}{FC2F20}
+\definecolor{fhgold}{HTML}{E7B64F}
+\definecolor{fhink}{HTML}{1A1714}
+\definecolor{fhmuted}{HTML}{645B54}
+\definecolor{fhline}{HTML}{D9C9B3}
+
+\newcommand{\FHSection}[1]{%
+  \vspace{1.1em}%
+  {\fhbold\Large\textcolor{fhred}{#1}\par}%
+  \vspace{0.25em}%
+  {\color{fhgold}\rule{\linewidth}{0.7pt}}\par
+  \vspace{0.55em}%
+}
+
+\newcommand{\FHSubsection}[1]{%
+  \vspace{0.55em}%
+  {\fhbold\large\textcolor{fhink}{#1}\par}%
+  \vspace{0.2em}%
+}
+
+\newcommand{\FHCallout}[2]{%
+  \begin{tikzpicture}
+    \node[
+      draw=fhline,
+      fill=fhcream!52,
+      rounded corners=4mm,
+      line width=0.35mm,
+      inner sep=5mm,
+      text width=\dimexpr\linewidth-16mm\relax,
+      align=left
+    ] {%
+      {\fhbold\textcolor{fhred}{#1}}\par
+      \vspace{0.45em}
+      \textcolor{fhink}{#2}%
+    };
+  \end{tikzpicture}
+}
+
+\newcommand{\FHMetaTable}[1]{%
+  \renewcommand{\arraystretch}{1.32}%
+  \begin{tabular}{|>{\fhbold\raggedright\arraybackslash}p{0.27\linewidth}|p{0.64\linewidth}|}
+    \hline
+    #1
+  \end{tabular}
+}
+
+\newcommand{\FHPlaceholder}[1]{%
+  \textcolor{fhred}{{\fhbold[\,#1\,]}}%
+}
+
+\newcommand{\FHCover}[4]{%
+  \hypersetup{pageanchor=false}%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \pagecolor{fhbg}
+    \color{fhcream}
+    \begin{tikzpicture}[remember picture,overlay,shift={(current page.south west)},x=1mm,y=1mm]
+      \fill[fhbg] (0,0) rectangle (210,297);
+
+      \foreach \x in {0,10,...,210} {
+        \draw[fhcream!4, line width=0.12mm] (\x,0) -- (\x,297);
+      }
+      \foreach \y in {0,10,...,297} {
+        \draw[fhcream!4, line width=0.12mm] (0,\y) -- (210,\y);
+      }
+
+      \fill[fhred, opacity=0.14] (36,250) circle[radius=44];
+      \fill[fhred, opacity=0.09] (168,234) circle[radius=38];
+      \fill[fhgold, opacity=0.11] (164,78) circle[radius=28];
+      \fill[fhcream, opacity=0.05] (56,92) circle[radius=24];
+
+      \filldraw[fill=fhpanel, draw=fhcream!12, line width=0.35mm]
+        (13,13) rectangle (197,284);
+
+      \draw[fhcream!70, line width=0.85mm] (20,266) -- (20,276) -- (30,276);
+      \draw[fhred!78, line width=0.85mm] (190,31) -- (190,21) -- (180,21);
+
+      \node[anchor=north west, text=fhred!88] at (24,268)
+        {\fhbold\fontsize{6.8}{6.8}\selectfont FAMHACK / UNIVERSITY OF EDINBURGH / 2026};
+
+      \node[anchor=north east, text=fhcream!42] at (192,268)
+        {\fontsize{6.1}{6.1}\selectfont #3};
+
+      \draw[fhcream!12, dashed, line width=0.3mm] (105,208) circle[radius=39];
+      \draw[fhcream!18, line width=0.22mm] (105,208) circle[radius=46];
+
+      \node[anchor=center, inner sep=0pt] at (105,208)
+        {\includegraphics[width=98mm]{../poster/assets/images/famhack-transparent.png}};
+
+      \node[anchor=north, text=fhred, align=center, text width=148mm] at (105,150)
+        {\fhbold\fontsize{17}{19}\selectfont #1};
+
+      \node[anchor=north, text=fhcream!78, align=center, text width=138mm] at (105,129)
+        {\fontsize{10.4}{14.2}\selectfont #2};
+
+      \filldraw[rounded corners=5mm, fill=fhbg, draw=fhcream!15, line width=0.35mm]
+        (29,48) rectangle (181,88);
+      \node[anchor=north west, text=fhred] at (37,81)
+        {\fhbold\fontsize{8.4}{8.4}\selectfont VERSION NOTE};
+      \node[anchor=north west, text=fhcream!82, align=left, text width=128mm] at (37,72)
+        {\fontsize{8.5}{11.6}\selectfont #4};
+    \end{tikzpicture}
+    \null
+  \end{titlepage}
+  \clearpage
+  \pagenumbering{arabic}
+  \hypersetup{pageanchor=true}%
+  \pagecolor{fhpaper}
+  \color{fhink}
+}

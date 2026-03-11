@@ -1,0 +1,140 @@
+\documentclass[11pt]{article}
+\input{famhack-legal-shared.tex}
+
+\begin{document}
+
+\FHCover
+  {Privacy Policy}
+  {Registration, team management, and CTF data handling for the FamHack website and event experience.}
+  {FH-PRIVACY-POLICY / A4 PORTRAIT / VERSION 2026-03-10}
+  {Effective date: 10 March 2026.\newline
+  This policy applies to the FamHack website, registration flow, dashboard, and CTF experience for the 2026 event.}
+
+{\fhbold\fontsize{18}{18}\selectfont FamHack Privacy Policy\par}
+\vspace{0.3em}
+Version dated 10 March 2026. This policy is written for the FamHack registration site, team-management flow, and CTF features currently implemented in this repository.
+
+\FHCallout{Key Details}{
+FamHack is operated by the FamHack Organising Team, University of Edinburgh. Privacy questions, access requests, deletion requests, and security concerns should be sent to famhack2026@gmail.com.%
+}
+
+\vspace{0.6em}
+\FHMetaTable{
+Document owner & FamHack Organising Team, University of Edinburgh \\ \hline
+Primary contact & famhack2026@gmail.com \\ \hline
+Applies to & FamHack registration, account verification, family/team management, dashboard use, and the FamHack CTF experience \\ \hline
+Current technical stack & Static site pages, Vercel serverless functions, Supabase Auth, Supabase Postgres, and email OTP delivery configured through Supabase Auth \\ \hline
+}
+
+\FHSection{1. Who This Policy Covers}
+This policy applies to people who visit the FamHack website, register interest in the event, sign in using their university email address, create or join an academic family team, use the dashboard, or participate in the FamHack CTF.
+
+It is intended to describe the data practices visible in the current repository. If the live event introduces new forms, sponsors, analytics tools, photo capture, Discord servers, or mailing-list tools, the organisers should update this policy before collecting that extra data.
+
+\FHSection{2. Who Is Responsible For Your Data}
+The organising body responsible for this event is the FamHack Organising Team, University of Edinburgh.
+
+Privacy questions, deletion requests, and data access requests should be sent to famhack2026@gmail.com.
+
+\FHSection{3. Information We Collect}
+\FHSubsection{3.1 Information you provide directly}
+The current FamHack flow collects or can collect the following data directly from participants:
+\begin{itemize}
+  \item your university email address, limited by default to the `@ed.ac.uk` domain;
+  \item whether you register as a parent or a child;
+  \item your full name, where the relevant dashboard or team flow asks for it;
+  \item your study year, where supplied;
+  \item any team name created by a parent; and
+  \item any answers, submissions, or interactions required to take part in the CTF.
+\end{itemize}
+
+\FHSubsection{3.2 Information created by using the service}
+When you use the service, the system also creates event administration records such as:
+\begin{itemize}
+  \item authentication and verification state linked to your sign-in;
+  \item timestamps for registration, profile updates, team creation, join requests, approvals, declines, transfers, and leaving a team;
+  \item your membership role and status within a team;
+  \item generated join codes for team access; and
+  \item per-user CTF progress, solve times, and leaderboard records.
+\end{itemize}
+
+\FHSubsection{3.3 Technical and provider-side data}
+The repository uses Supabase, Vercel, and an SMTP provider configured through Supabase Auth. Those providers may process standard technical data such as IP address, device metadata, request logs, and delivery logs in order to provide sign-in, hosting, security, and email delivery. The exact scope depends on the live deployment configuration and provider settings.
+
+\FHSection{4. Why We Use This Information}
+FamHack uses personal data to:
+\begin{itemize}
+  \item verify that participants are eligible to use the event flow;
+  \item send and verify one-time login codes;
+  \item record registration interest;
+  \item let parents create families and let other participants join them safely;
+  \item administer approvals, transfers, and team limits;
+  \item run the CTF and produce progress or leaderboard information;
+  \item detect misuse, abuse, cheating, or attacks against the service; and
+  \item resolve operational issues, disputes, or participant support requests.
+\end{itemize}
+
+FamHack should not use this data for unrelated marketing unless the organisers add a separate opt-in and describe it clearly in this policy.
+
+\FHSection{5. Legal Basis}
+To the extent UK GDPR or similar data protection law applies, the likely legal bases for this processing are:
+\begin{itemize}
+  \item legitimate interests in operating a university-focused community event securely and fairly;
+  \item steps taken at the participant's request before entering into an event arrangement, such as registering or joining a team;
+  \item performance of the event administration participants reasonably expect when they sign up; and
+  \item consent where the organisers choose to introduce optional fields or optional communications later.
+\end{itemize}
+
+This version has been prepared for review by the FamHack Event Lead / University of Edinburgh Staff Supervisor.
+
+\FHSection{6. Who We Share Data With}
+Based on the current codebase, participant data may be shared with:
+\begin{itemize}
+  \item authorised FamHack organisers who need access to run the event;
+  \item Supabase, for authentication and database hosting;
+  \item Vercel, for hosting and serverless execution;
+  \item the SMTP or mail-delivery service configured through Supabase Auth, such as Resend if that setup is used; and
+  \item competent authorities or advisers where disclosure is required by law or reasonably necessary to protect people or systems.
+\end{itemize}
+
+The repository does not indicate any sale of participant data. It also does not indicate third-party advertising trackers in the registration flow.
+
+\FHSection{7. Retention}
+The current repository does not implement an automatic deletion workflow for registration, profile, team, or CTF records. That means the live service may keep data until an organiser deletes it manually or the deployment is otherwise changed.
+
+\FHCallout{Retention Schedule}{
+Registration data is retained until 30 days after the event; team and CTF records are retained for up to 90 days for scoring verification and post-event reporting; infrastructure logs are retained according to provider defaults, typically around 30 days.%
+}
+
+\FHSection{8. Security}
+The current implementation includes server-side validation, role checks, row-level security on core database tables, and restricted event flows. These measures reduce risk but do not guarantee absolute security.
+
+Participants should still use their own device security, avoid sharing login codes, and report suspicious activity promptly to famhack2026@gmail.com.
+
+\FHSection{9. International Transfers}
+FamHack is hosted on Vercel in the EU region with Supabase database hosting in the EU region. Provider-side processing is governed by the relevant provider terms and data processing agreements.
+
+\FHSection{10. Your Rights}
+If applicable law gives you data protection rights, you may have the right to request access to your data, correction of inaccurate data, deletion, restriction, objection, or portability, subject to legal limits and the nature of the event.
+
+You may also have the right to complain to the Information Commissioner's Office in the UK if you believe your data has been handled unlawfully.
+
+Requests should be sent to famhack2026@gmail.com.
+
+\FHSection{11. Third-Party Links And Additional Services}
+FamHack currently links to an official Discord server and official Instagram profile. If participants choose to use those services, their activity there is also subject to the privacy notices and terms of those third-party platforms.
+
+\FHSection{12. Changes To This Policy}
+FamHack may update this policy when the event setup, providers, or data uses change. The organisers should publish the revised effective date and, where changes are material, provide a visible notice in the registration flow or on the website.
+
+\FHSection{13. Contact}
+Privacy questions, access requests, and deletion requests should be sent to:
+
+\FHMetaTable{
+Contact name & FamHack Privacy Lead \\ \hline
+Email & famhack2026@gmail.com \\ \hline
+Organisation & FamHack Organising Team, University of Edinburgh \\ \hline
+Postal address & School of Informatics, University of Edinburgh, 10 Crichton Street, Edinburgh, EH8 9AB, United Kingdom \\ \hline
+}
+
+\end{document}

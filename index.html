@@ -67,6 +67,40 @@
       <div class="page-transition-inner"></div>
       <div class="page-transition-inner"></div>
     </div>
+    <div class="home-entry-gate" aria-hidden="true">
+      <div class="home-entry-gate-panel">
+        <p class="home-entry-gate-kicker">Gate locked</p>
+        <h1 class="home-entry-gate-wordmark">FAMSYNC</h1>
+        <div class="home-entry-gate-stage">
+          <div class="home-entry-lock-stage" aria-hidden="true">
+            <div class="home-entry-lock">
+              <svg viewBox="0 0 64 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="home-entry-lock-shackle" d="M20 30V20C20 13.3726 25.3726 8 32 8C38.6274 8 44 13.3726 44 20V30" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
+                <rect class="home-entry-lock-body" x="14" y="28" width="36" height="34" rx="8" fill="currentColor"/>
+                <circle class="home-entry-lock-core" cx="32" cy="44" r="5.5" fill="#050505"/>
+                <path class="home-entry-lock-core" d="M32 49V55" stroke="#050505" stroke-width="4.2" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="home-entry-key-track" aria-hidden="true"></div>
+          <div class="home-entry-key" aria-hidden="true">
+            <svg viewBox="0 0 116 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="24" cy="22" r="14.5" stroke="currentColor" stroke-width="5"/>
+              <path d="M38 22H106" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+              <path d="M80 22V31" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+              <path d="M92 22V28" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+              <path d="M54 22V28" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        <p class="home-entry-gate-status">Drag the key into the lock</p>
+      </div>
+      <div class="home-entry-controls">
+        <button class="home-entry-accessibility" type="button" aria-label="Unlock with assisted drag animation">
+          Accessibility unlock
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Navigation -->
@@ -759,9 +793,8 @@
               </div>
               <div class="footer-col">
                 <h6>Community</h6>
-                <a href="#">Discord</a>
-                <a href="#">Instagram</a>
-                <a href="#">Twitter</a>
+                <a href="https://discord.gg/rZpUhsm7NN" target="_blank" rel="noreferrer">Discord</a>
+                <a href="https://www.instagram.com/famhack.official/" target="_blank" rel="noreferrer">Instagram</a>
               </div>
               <div class="footer-col">
                 <h6>Legal</h6>
@@ -831,12 +864,90 @@
   <!-- Page Transitions -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
+      const transitionOuter = document.querySelector(".page-transition-outer");
       const transitionEl = document.querySelector(".page-transition-wrapper");
+      const homeEntryGate = document.querySelector(".home-entry-gate");
+      const homeEntryPanel = homeEntryGate?.querySelector(".home-entry-gate-panel");
+      const homeEntryStage = homeEntryGate?.querySelector(".home-entry-gate-stage");
+      const homeEntryWordmark = homeEntryGate?.querySelector(".home-entry-gate-wordmark");
+      const homeEntryStatus = homeEntryGate?.querySelector(".home-entry-gate-status");
+      const homeEntryKicker = homeEntryGate?.querySelector(".home-entry-gate-kicker");
+      const homeEntryLock = homeEntryGate?.querySelector(".home-entry-lock");
+      const homeEntryLockStage = homeEntryGate?.querySelector(".home-entry-lock-stage");
+      const homeEntryShackle = homeEntryGate?.querySelector(".home-entry-lock-shackle");
+      const homeEntryKey = homeEntryGate?.querySelector(".home-entry-key");
+      const homeEntryAccessibility = homeEntryGate?.querySelector(".home-entry-accessibility");
       let transitionTimeline;
+      let homeEntryDraggable = null;
+      let homeEntryRecordedPathData = null;
+      let homeEntryRecordedPathPromise = null;
       const isInIframe = window.self !== window.top;
+      const isHomePage = window.location.pathname === "/" || window.location.pathname.endsWith("/index.html");
+      const hasGSAPDraggable = typeof window.Draggable !== "undefined";
+      const homeEntryStorageKey = "famhack-home-entry-unlocked";
+      const homeEntryBlockedKeys = new Set([" ", "Spacebar", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"]);
+      function isHomeEntryScrollLocked() {
+        return Boolean(transitionOuter?.classList.contains("is-home-entry-active"));
+      }
+      function setHomeEntryScrollLock(isLocked) {
+        document.documentElement.classList.toggle("home-entry-scroll-locked", Boolean(isLocked));
+        document.body.classList.toggle("home-entry-scroll-locked", Boolean(isLocked));
+        gsap.set(document.documentElement, { overflow: isLocked ? "hidden" : "" });
+        gsap.set(document.body, { overflow: isLocked ? "hidden" : "" });
+        if (isLocked) {
+          const smoother = window.ScrollSmoother?.get?.();
+          if (smoother) {
+            smoother.scrollTo(0, false);
+            if (typeof smoother.paused === "function") {
+              smoother.paused(true);
+            }
+          } else {
+            window.scrollTo(0, 0);
+          }
+        } else {
+          const smoother = window.ScrollSmoother?.get?.();
+          if (smoother && typeof smoother.paused === "function") {
+            smoother.paused(false);
+          }
+        }
+      }
+      function preventHomeEntryScroll(event) {
+        if (!isHomeEntryScrollLocked()) {
+          return;
+        }
+        if (event.type === "keydown" && !homeEntryBlockedKeys.has(event.key)) {
+          return;
+        }
+        event.preventDefault();
+      }
+      window.addEventListener("wheel", preventHomeEntryScroll, { passive: false });
+      window.addEventListener("touchmove", preventHomeEntryScroll, { passive: false });
+      window.addEventListener("keydown", preventHomeEntryScroll);
+      function setHomeEntryInteractionState(isActive) {
+        if (!transitionOuter) return;
+        transitionOuter.classList.toggle("is-home-entry-active", Boolean(isActive));
+        setHomeEntryScrollLock(Boolean(isActive));
+      }
       if (isInIframe && transitionEl) {
         gsap.set(transitionEl, { display: "none" });
+        if (homeEntryGate) {
+          gsap.set(homeEntryGate, { display: "none" });
+        }
+        if (transitionOuter) {
+          gsap.set(transitionOuter, { display: "none" });
+        }
         return;
+      }
+      function showTransitionShell() {
+        if (transitionOuter) {
+          gsap.set(transitionOuter, { display: "flex", autoAlpha: 1 });
+        }
+      }
+      function hideTransitionShell() {
+        setHomeEntryInteractionState(false);
+        if (transitionOuter) {
+          gsap.set(transitionOuter, { display: "none", autoAlpha: 0 });
+        }
       }
       function createTransitionTimeline() {
         if (!transitionEl) return;
@@ -851,26 +962,475 @@
         transitionTimeline.to(transitionEl, { rowGap: "400vh", duration: 0.6, ease: "power2.inOut" });
       }
       function animateIn() {
+        showTransitionShell();
+        setHomeEntryInteractionState(false);
+        if (homeEntryGate) {
+          gsap.set(homeEntryGate, { display: "none", autoAlpha: 0 });
+        }
         if (transitionEl) {
           gsap.set(transitionEl, { display: "flex", rowGap: "0vh", willChange: "rowGap" });
           createTransitionTimeline();
           requestAnimationFrame(() => transitionTimeline.play());
-          setTimeout(() => gsap.set(transitionEl, { display: "none" }), 1000);
+          setTimeout(() => {
+            gsap.set(transitionEl, { display: "none" });
+            hideTransitionShell();
+          }, 1000);
+          return;
         }
+        hideTransitionShell();
+      }
+      function hasHomeEntryBeenUnlocked() {
+        try {
+          return window.localStorage.getItem(homeEntryStorageKey) === "1";
+        } catch (error) {
+          return false;
+        }
+      }
+      function setHomeEntryUnlocked() {
+        try {
+          window.localStorage.setItem(homeEntryStorageKey, "1");
+        } catch (error) {
+          // no-op if storage is unavailable
+        }
+      }
+      function setHomeEntryAccessibilityState(isDisabled) {
+        if (!homeEntryAccessibility) return;
+        homeEntryAccessibility.disabled = Boolean(isDisabled);
+      }
+      function loadHomeEntryRecordedPath() {
+        if (homeEntryRecordedPathData) {
+          return Promise.resolve(homeEntryRecordedPathData);
+        }
+        if (homeEntryRecordedPathPromise) {
+          return homeEntryRecordedPathPromise;
+        }
+        homeEntryRecordedPathPromise = fetch("keypath.json", { cache: "no-store" })
+          .then((response) => response.ok ? response.json() : null)
+          .then((data) => {
+            if (!data || !Array.isArray(data.points) || data.points.length < 2) {
+              homeEntryRecordedPathData = null;
+              return null;
+            }
+            homeEntryRecordedPathData = data;
+            return data;
+          })
+          .catch(() => {
+            homeEntryRecordedPathData = null;
+            return null;
+          });
+        return homeEntryRecordedPathPromise;
+      }
+      function getHomeEntryPointDistance(pointA, pointB) {
+        const deltaX = pointB.x - pointA.x;
+        const deltaY = pointB.y - pointA.y;
+        return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      }
+      function catmullRomValue(point0, point1, point2, point3, progress) {
+        const t2 = progress * progress;
+        const t3 = t2 * progress;
+        return 0.5 * (
+          (2 * point1) +
+          (-point0 + point2) * progress +
+          (2 * point0 - 5 * point1 + 4 * point2 - point3) * t2 +
+          (-point0 + 3 * point1 - 3 * point2 + point3) * t3
+        );
+      }
+      function getSmoothedAutomatedUnlockPath(currentX, currentY, currentRotation, targetX, targetY) {
+        const recording = homeEntryRecordedPathData;
+        if (!recording || !Array.isArray(recording.points) || recording.points.length < 2) {
+          return null;
+        }
+        const stageScaleX = recording.stage?.width && homeEntryStage ? homeEntryStage.offsetWidth / recording.stage.width : 1;
+        const stageScaleY = recording.stage?.height && homeEntryStage ? homeEntryStage.offsetHeight / recording.stage.height : 1;
+        const scaledPoints = recording.points.map((point) => ({
+          t: Number(point.t) || 0,
+          x: currentX + (Number(point.x) || 0) * stageScaleX,
+          y: currentY + (Number(point.y) || 0) * stageScaleY,
+          r: currentRotation + (Number(point.r) || 0),
+        }));
+        const filteredPoints = [scaledPoints[0]];
+        for (let i = 1; i < scaledPoints.length; i += 1) {
+          const point = scaledPoints[i];
+          if (i === scaledPoints.length - 1 || getHomeEntryPointDistance(filteredPoints[filteredPoints.length - 1], point) >= 3) {
+            filteredPoints.push(point);
+          }
+        }
+        const lastRecordedPoint = filteredPoints[filteredPoints.length - 1];
+        let trimmedPointCount = filteredPoints.length;
+        for (let i = filteredPoints.length - 2; i > 2; i -= 1) {
+          const isLateSegment = filteredPoints[i].t >= lastRecordedPoint.t * 0.68;
+          const remainingDistance = getHomeEntryPointDistance(filteredPoints[i], lastRecordedPoint);
+          if (isLateSegment && remainingDistance > 12) {
+            trimmedPointCount = i + 1;
+            break;
+          }
+        }
+        const trimmedPoints = filteredPoints.slice(0, trimmedPointCount);
+        const smoothedPoints = trimmedPoints.map((point, index, collection) => {
+          if (index === 0 || index === collection.length - 1) {
+            return { ...point, r: currentRotation };
+          }
+          const previous = collection[index - 1];
+          const next = collection[index + 1];
+          return {
+            t: point.t,
+            x: (previous.x + point.x * 2 + next.x) / 4,
+            y: (previous.y + point.y * 2 + next.y) / 4,
+            r: currentRotation,
+          };
+        });
+        const lastPoint = smoothedPoints[smoothedPoints.length - 1];
+        smoothedPoints.push({
+          t: lastPoint.t + 90,
+          x: targetX,
+          y: targetY,
+          r: currentRotation,
+        });
+        let cumulativeDistance = 0;
+        const points = smoothedPoints.map((point, index, collection) => {
+          if (index > 0) {
+            cumulativeDistance += getHomeEntryPointDistance(collection[index - 1], point);
+          }
+          return {
+            ...point,
+            d: cumulativeDistance,
+          };
+        });
+        const totalDurationMs = points[points.length - 1].t - points[0].t;
+        return {
+          duration: Math.min(Math.max(totalDurationMs * 0.68 / 1000, 0.72), 1.05),
+          points,
+        };
+      }
+      function sampleSmoothedAutomatedUnlockPath(path, progress) {
+        if (!path?.points?.length) {
+          return null;
+        }
+        if (progress <= 0) {
+          return path.points[0];
+        }
+        const lastPoint = path.points[path.points.length - 1];
+        if (progress >= 1 || !lastPoint.d) {
+          return lastPoint;
+        }
+        const targetDistance = lastPoint.d * progress;
+        let segmentIndex = 0;
+        while (segmentIndex < path.points.length - 2 && path.points[segmentIndex + 1].d < targetDistance) {
+          segmentIndex += 1;
+        }
+        const point0 = path.points[Math.max(0, segmentIndex - 1)];
+        const point1 = path.points[segmentIndex];
+        const point2 = path.points[Math.min(path.points.length - 1, segmentIndex + 1)];
+        const point3 = path.points[Math.min(path.points.length - 1, segmentIndex + 2)];
+        const segmentDistance = Math.max(point2.d - point1.d, 0.001);
+        const localProgress = (targetDistance - point1.d) / segmentDistance;
+        return {
+          x: catmullRomValue(point0.x, point1.x, point2.x, point3.x, localProgress),
+          y: catmullRomValue(point0.y, point1.y, point2.y, point3.y, localProgress),
+          r: catmullRomValue(point0.r, point1.r, point2.r, point3.r, localProgress),
+        };
+      }
+      function resetHomeEntryKey() {
+        if (!homeEntryKey) return;
+        gsap.to(homeEntryKey, { x: 0, y: 0, scale: 1, rotation: 0, duration: 0.34, ease: "power2.out" });
+      }
+      function getElementCentre(element) {
+        const rect = element.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+        };
+      }
+      function keyTouchesLock() {
+        if (!homeEntryKey || !homeEntryLockStage) {
+          return false;
+        }
+        const keyCentre = getElementCentre(homeEntryKey);
+        const lockCentre = getElementCentre(homeEntryLockStage);
+        const deltaX = keyCentre.x - lockCentre.x;
+        const deltaY = keyCentre.y - lockCentre.y;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const threshold = Math.min(homeEntryLockStage.offsetWidth, homeEntryLockStage.offsetHeight) * 0.42;
+        return distance <= threshold;
+      }
+      function completeHomeEntryUnlock(onComplete, options = {}) {
+        if (!homeEntryGate || !homeEntryKey || !homeEntryLockStage || !homeEntryShackle || !homeEntryStatus) {
+          if (typeof onComplete === "function") onComplete();
+          return;
+        }
+        const { automated = false } = options;
+
+        if (homeEntryDraggable) {
+          homeEntryDraggable.disable();
+        }
+
+        homeEntryGate.dataset.entryState = "unlocking";
+        setHomeEntryAccessibilityState(true);
+
+        const keyCentre = getElementCentre(homeEntryKey);
+        const lockCentre = getElementCentre(homeEntryLockStage);
+        const deltaX = lockCentre.x - keyCentre.x;
+        const deltaY = lockCentre.y - keyCentre.y;
+        const currentX = Number(gsap.getProperty(homeEntryKey, "x")) || 0;
+        const currentY = Number(gsap.getProperty(homeEntryKey, "y")) || 0;
+        const currentRotation = Number(gsap.getProperty(homeEntryKey, "rotation")) || 0;
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const targetX = currentX + deltaX;
+        const targetY = currentY + deltaY;
+        const automatedPath = automated ? getSmoothedAutomatedUnlockPath(currentX, currentY, currentRotation, targetX, targetY) : null;
+        const dragLift = Math.max(22, Math.min(54, Math.abs(deltaX) * 0.18));
+        const firstX = currentX + deltaX * 0.16;
+        const secondX = currentX + deltaX * 0.55;
+        const thirdX = currentX + deltaX * 0.86;
+        const firstY = currentY - dragLift;
+        const secondY = currentY + deltaY - dragLift * 0.48;
+        const thirdY = currentY + deltaY - dragLift * 0.14;
+
+        homeEntryStatus.textContent = "Unlocking";
+
+        const unlockTimeline = gsap.timeline({
+          onComplete: () => {
+            setHomeEntryUnlocked();
+            if (homeEntryDraggable) {
+              homeEntryDraggable.kill();
+              homeEntryDraggable = null;
+            }
+            setHomeEntryInteractionState(false);
+            gsap.set(homeEntryGate, { display: "none", autoAlpha: 0 });
+            if (typeof onComplete === "function") onComplete();
+          },
+        });
+
+        if (automated) {
+          if (automatedPath) {
+            const automatedProgress = { value: 0 };
+            unlockTimeline
+              .to(homeEntryKey, {
+              scale: 1.04,
+              duration: prefersReducedMotion ? 0.06 : 0.1,
+              ease: "power2.out",
+              })
+              .to(automatedProgress, {
+                value: 1,
+                duration: prefersReducedMotion ? 0.18 : automatedPath.duration,
+                ease: prefersReducedMotion ? "none" : "power2.inOut",
+                onUpdate: () => {
+                  const point = sampleSmoothedAutomatedUnlockPath(automatedPath, automatedProgress.value);
+                  if (!point) return;
+                  gsap.set(homeEntryKey, {
+                    x: point.x,
+                    y: point.y,
+                    rotation: point.r,
+                  });
+                },
+              });
+            unlockTimeline.to(homeEntryKey, {
+              x: targetX,
+              y: targetY,
+              rotation: currentRotation,
+              duration: prefersReducedMotion ? 0.04 : 0.08,
+              ease: "power2.out",
+            });
+          } else {
+            unlockTimeline
+              .to(homeEntryKey, {
+                scale: 1.08,
+                rotation: currentRotation - 11,
+                duration: prefersReducedMotion ? 0.08 : 0.14,
+                ease: "power2.out",
+              })
+              .to(homeEntryKey, {
+                x: firstX,
+                y: firstY,
+                duration: prefersReducedMotion ? 0.1 : 0.18,
+                ease: "power1.out",
+              }, ">-0.02")
+              .to(homeEntryKey, {
+                x: secondX,
+                y: secondY,
+                rotation: currentRotation - 18,
+                duration: prefersReducedMotion ? 0.1 : 0.2,
+                ease: "sine.inOut",
+              })
+              .to(homeEntryKey, {
+                x: thirdX,
+                y: thirdY,
+                rotation: currentRotation - 12,
+                duration: prefersReducedMotion ? 0.08 : 0.16,
+                ease: "sine.inOut",
+              })
+              .to(homeEntryKey, {
+                x: targetX,
+                y: targetY,
+                rotation: currentRotation - 8,
+                duration: prefersReducedMotion ? 0.08 : 0.14,
+                ease: "power2.inOut",
+              });
+          }
+        } else {
+          unlockTimeline.to(homeEntryKey, {
+            x: targetX,
+            y: targetY,
+            scale: 1.02,
+            rotation: currentRotation - 4,
+            duration: prefersReducedMotion ? 0.06 : 0.12,
+            ease: "power2.inOut",
+          });
+        }
+
+        unlockTimeline
+          .to(homeEntryShackle, { y: -6, duration: prefersReducedMotion ? 0.08 : 0.14, ease: "power1.inOut" })
+          .to(homeEntryShackle, { rotation: -28, x: 6, y: -10, duration: prefersReducedMotion ? 0.12 : 0.2, ease: "power2.inOut" })
+          .call(() => { homeEntryStatus.textContent = "Unlocked"; })
+          .to(homeEntryStatus, { color: "#69dc8f", duration: 0.14, ease: "none" }, "<")
+          .to(homeEntryKey, { autoAlpha: 0, scale: 0.9, duration: prefersReducedMotion ? 0.08 : 0.16, ease: "power2.in" }, "<")
+          .to({}, { duration: prefersReducedMotion ? 0.14 : 0.62 })
+          .to(homeEntryPanel, { autoAlpha: 0, scale: 0.985, y: -10, duration: prefersReducedMotion ? 0.16 : 0.48, ease: "power2.in" }, prefersReducedMotion ? "<" : "<+0.12");
+      }
+      function armHomeEntryAccessibility(onComplete) {
+        if (!homeEntryAccessibility) return;
+        setHomeEntryAccessibilityState(false);
+        homeEntryAccessibility.onclick = async () => {
+          if (!homeEntryGate || homeEntryGate.dataset.entryState === "unlocking") {
+            return;
+          }
+          await loadHomeEntryRecordedPath();
+          completeHomeEntryUnlock(onComplete, { automated: true });
+        };
+      }
+      function armHomeEntryGate(onComplete) {
+        if (!homeEntryKey || !homeEntryStage || !hasGSAPDraggable) {
+          armHomeEntryAccessibility(onComplete);
+          return;
+        }
+
+        if (homeEntryDraggable) {
+          homeEntryDraggable.kill();
+        }
+
+        homeEntryStatus.textContent = "Drag the key into the lock";
+        armHomeEntryAccessibility(onComplete);
+
+        homeEntryDraggable = window.Draggable.create(homeEntryKey, {
+          type: "x,y",
+          bounds: homeEntryStage,
+          inertia: false,
+          edgeResistance: 0.88,
+          onPress: function () {
+            gsap.to(homeEntryKey, { scale: 1.05, duration: 0.16, ease: "power2.out" });
+          },
+          onRelease: function () {
+            if (homeEntryKey && homeEntryGate?.dataset.entryState !== "unlocking") {
+              gsap.to(homeEntryKey, { scale: 1, duration: 0.16, ease: "power2.out" });
+            }
+          },
+          onDragEnd: function () {
+            if (!homeEntryGate || homeEntryGate.dataset.entryState === "unlocking") {
+              return;
+            }
+
+            const unlocked = keyTouchesLock();
+            if (unlocked) {
+              homeEntryGate.dataset.entryState = "unlocking";
+              completeHomeEntryUnlock(onComplete);
+              return;
+            }
+
+            resetHomeEntryKey();
+          },
+        })[0];
+      }
+      function revealHomeEntryGate(onComplete) {
+        if (!homeEntryGate || !homeEntryPanel || !homeEntryLock || !homeEntryShackle || !homeEntryStatus || !homeEntryWordmark || !homeEntryKey) {
+          if (typeof onComplete === "function") onComplete();
+          return;
+        }
+
+        homeEntryGate.dataset.entryState = "armed";
+        homeEntryStatus.textContent = "Drag the key into the lock";
+        homeEntryStatus.style.color = "";
+        setHomeEntryAccessibilityState(false);
+
+        showTransitionShell();
+        setHomeEntryInteractionState(true);
+        if (transitionEl) {
+          gsap.set(transitionEl, { display: "none", rowGap: "0vh" });
+        }
+        gsap.set(homeEntryGate, { display: "grid", autoAlpha: 1 });
+        gsap.set(homeEntryPanel, { autoAlpha: 0, scale: 0.98, y: 8 });
+        gsap.set(homeEntryLock, { autoAlpha: 0, scale: 0.92, y: 8, transformOrigin: "50% 50%" });
+        gsap.set(homeEntryKey, { autoAlpha: 0, scale: 0.9, rotation: 0, x: 0, y: 0, transformOrigin: "50% 50%" });
+        gsap.set(homeEntryWordmark, { autoAlpha: 0, y: 10 });
+        gsap.set(homeEntryKicker, { autoAlpha: 0, y: 8 });
+        gsap.set(homeEntryStatus, { autoAlpha: 0, y: 8 });
+        gsap.set(homeEntryShackle, { rotation: 0, x: 0, y: 0, transformOrigin: "32px 30px" });
+
+        gsap.timeline({
+          onComplete: () => {
+            armHomeEntryGate(onComplete);
+          },
+        })
+          .to(homeEntryPanel, { autoAlpha: 1, scale: 1, y: 0, duration: 0.22, ease: "power2.out" })
+          .to(homeEntryKicker, { autoAlpha: 1, y: 0, duration: 0.2, ease: "power2.out" }, "<+0.03")
+          .to(homeEntryWordmark, { autoAlpha: 1, y: 0, duration: 0.22, ease: "power2.out" }, "<+0.02")
+          .to(homeEntryLock, { autoAlpha: 1, scale: 1, y: 0, duration: 0.24, ease: "power2.out" }, "<")
+          .to(homeEntryKey, { autoAlpha: 1, scale: 1, duration: 0.22, ease: "power2.out" }, "<+0.04")
+          .to(homeEntryStatus, { autoAlpha: 1, y: 0, duration: 0.18, ease: "power2.out" }, "<+0.03");
+      }
+      function runHomeEntryPrelude(onComplete) {
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (!transitionEl || prefersReducedMotion) {
+          revealHomeEntryGate(onComplete);
+          return;
+        }
+
+        showTransitionShell();
+        if (homeEntryGate) {
+          gsap.set(homeEntryGate, { display: "none", autoAlpha: 0 });
+        }
+
+        gsap.set(transitionEl, { display: "flex", rowGap: "0vh", willChange: "rowGap" });
+
+        gsap.timeline({
+          onComplete: () => {
+            revealHomeEntryGate(onComplete);
+          },
+        })
+          .to(transitionEl, { rowGap: "92vh", duration: 0.3, ease: "power2.inOut" })
+          .to(transitionEl, { rowGap: "0vh", duration: 0.28, ease: "power2.inOut" });
+      }
+      function animateHomeEntryGate(onComplete) {
+        if (!isHomePage || !homeEntryGate || !homeEntryPanel || !homeEntryLock || !homeEntryShackle || !homeEntryStatus || !homeEntryWordmark || !homeEntryKey) {
+          if (typeof onComplete === "function") onComplete();
+          return;
+        }
+
+        if (hasHomeEntryBeenUnlocked()) {
+          setHomeEntryInteractionState(false);
+          gsap.set(homeEntryGate, { display: "none", autoAlpha: 0 });
+          if (typeof onComplete === "function") onComplete();
+          return;
+        }
+        runHomeEntryPrelude(onComplete);
       }
       window.addEventListener("pageshow", function (event) {
         if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
-          animateIn();
+          animateHomeEntryGate(animateIn);
         } else {
-          animateIn();
+          animateHomeEntryGate(animateIn);
         }
       });
+      loadHomeEntryRecordedPath();
       const links = document.querySelectorAll("a[href]:not([target='_blank']):not([href^='#'])");
       links.forEach((link) => {
         link.addEventListener("click", function (e) {
           e.preventDefault();
           const url = this.href;
           if (transitionEl) {
+            showTransitionShell();
+            if (homeEntryGate) {
+              gsap.set(homeEntryGate, { display: "none", autoAlpha: 0 });
+            }
             gsap.set(transitionEl, { display: "flex", rowGap: "400vh" });
             if (!transitionTimeline) createTransitionTimeline();
             transitionTimeline.reverse();
@@ -890,13 +1450,18 @@
       const smoothWrapper = document.querySelector(".smooth-wrapper");
       const smoothContent = document.querySelector(".smooth-content");
       if (smoothWrapper && smoothContent) {
-        ScrollSmoother.create({
+        const smoother = ScrollSmoother.create({
           wrapper: ".smooth-wrapper",
           content: ".smooth-content",
           smooth: 1.2,
           smoothTouch: true,
           effects: true,
         });
+        if (document.querySelector(".page-transition-outer")?.classList.contains("is-home-entry-active")
+          && typeof smoother?.paused === "function") {
+          smoother.paused(true);
+          smoother.scrollTo(0, false);
+        }
       }
     });
   </script>
