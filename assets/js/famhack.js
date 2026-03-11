@@ -37,6 +37,8 @@ const FamHack = {
     ctfKonamiRetry: false,
     ctfKonamiSolved: false,
     ctfAdvanceTimer: null,
+    homeClockFrame: null,
+    homeClockTimer: null,
   },
 
   async init() {
@@ -47,6 +49,10 @@ const FamHack = {
 
     if (!this.state.page) {
       return;
+    }
+
+    if (this.state.page === 'home') {
+      this.initHomePageBase();
     }
 
     try {
@@ -88,6 +94,13 @@ const FamHack = {
         await this.initDashboardPage();
       }
     } catch (error) {
+      const isLocalHomeConfigFailure = this.state.page === 'home'
+        && (error?.code === 'CONFIG_UNAVAILABLE' || error?.code === 'CONFIG_INVALID');
+
+      if (isLocalHomeConfigFailure) {
+        return;
+      }
+
       console.error(error);
       this.showFatalError(error.message || 'Unable to load the registration flow right now.');
     }
@@ -105,10 +118,32 @@ const FamHack = {
 
   async fetchConfig() {
     const response = await fetch('/api/config');
-    const payload = await response.json();
+    const payloadText = await response.text();
+    const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+    let payload = null;
+
+    if (payloadText) {
+      try {
+        payload = JSON.parse(payloadText);
+      } catch (error) {
+        if (contentType.includes('application/json')) {
+          const parseError = new Error('The app configuration response was not valid JSON.');
+          parseError.code = 'CONFIG_INVALID';
+          throw parseError;
+        }
+      }
+    }
 
     if (!response.ok) {
-      throw new Error(payload.error || 'Unable to load app configuration');
+      const configError = new Error(payload?.error || 'Unable to load app configuration');
+      configError.code = 'CONFIG_UNAVAILABLE';
+      throw configError;
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      const configError = new Error('The app configuration response was not valid JSON.');
+      configError.code = 'CONFIG_INVALID';
+      throw configError;
     }
 
     return payload;
@@ -386,8 +421,22 @@ const FamHack = {
     this.checkOTPComplete();
   },
 
-  async initHomePage() {
+  initHomePageBase() {
     this.initHomeLogoMotion();
+    this.initHomeHashNavigation();
+    this.initHomeFaq();
+    this.initHomeProgrammeRail();
+    this.initHomeScheduleClock();
+    this.initHomeSignalAnomaly();
+    this.initHomeZoneMotion();
+
+    const participateLink = document.getElementById('participate-link');
+    if (participateLink) {
+      participateLink.href = '/register';
+    }
+  },
+
+  async initHomePage() {
 
     const participateLink = document.getElementById('participate-link');
     if (!participateLink) {
@@ -427,6 +476,490 @@ const FamHack = {
     if (labelNode) {
       labelNode.textContent = label;
     }
+  },
+
+  initHomeHashNavigation() {
+    const hashLinks = document.querySelectorAll('a[href^="#"]');
+    if (!hashLinks.length) {
+      return;
+    }
+
+    hashLinks.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        const hash = link.getAttribute('href');
+        if (!hash || hash === '#') {
+          return;
+        }
+
+        const target = hash === '#top' ? document.documentElement : document.querySelector(hash);
+        if (!target) {
+          return;
+        }
+
+        event.preventDefault();
+
+        const delay = document.body.classList.contains('menu-open') ? 360 : 0;
+        window.setTimeout(() => {
+          this.scrollHomeToHash(hash);
+        }, delay);
+      });
+    });
+
+    if (window.location.hash) {
+      window.requestAnimationFrame(() => {
+        this.scrollHomeToHash(window.location.hash, {
+          behavior: 'auto',
+          updateHistory: false,
+        });
+      });
+    }
+  },
+
+  scrollHomeToHash(hash, options = {}) {
+    const target = hash === '#top' ? document.documentElement : document.querySelector(hash);
+    if (!target) {
+      return;
+    }
+
+    if (hash !== '#top' && target.id) {
+      this.setHomeProgrammeActive(target.id);
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const smooth = options.behavior === 'auto' || prefersReducedMotion ? false : true;
+    const smoother = window.ScrollSmoother?.get?.();
+
+    if (smoother) {
+      if (hash === '#top') {
+        smoother.scrollTo(0, smooth);
+      } else {
+        smoother.scrollTo(target, smooth, 'top top');
+      }
+    } else {
+      const top = hash === '#top'
+        ? 0
+        : Math.max(target.getBoundingClientRect().top + window.pageYOffset, 0);
+
+      window.scrollTo({
+        top,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+
+    if (options.updateHistory === false) {
+      return;
+    }
+
+    if (window.history?.pushState) {
+      window.history.pushState(null, '', hash);
+    } else {
+      window.location.hash = hash;
+    }
+  },
+
+  initHomeFaq() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    if (!faqItems.length) {
+      return;
+    }
+
+    faqItems.forEach((item) => {
+      const summary = item.querySelector('.faq-question');
+      const answer = item.querySelector('.faq-answer');
+      if (!summary || !answer) {
+        return;
+      }
+
+      answer.style.overflow = 'hidden';
+      answer.style.height = item.open ? 'auto' : '0px';
+
+      summary.addEventListener('click', (event) => {
+        event.preventDefault();
+
+        if (item.dataset.animating === 'true') {
+          return;
+        }
+
+        if (item.open) {
+          this.closeFaqItem(item, answer);
+        } else {
+          this.openFaqItem(item, answer);
+        }
+      });
+    });
+  },
+
+  setHomeProgrammeActive(zoneId) {
+    const links = document.querySelectorAll('[data-programme-link]');
+    if (!links.length) {
+      return;
+    }
+
+    links.forEach((link) => {
+      const isActive = link.dataset.programmeLink === zoneId;
+      link.classList.toggle('is-active', isActive);
+      if (isActive) {
+        link.setAttribute('aria-current', 'location');
+      } else {
+        link.removeAttribute('aria-current');
+      }
+    });
+  },
+
+  syncHomeProgrammePinOffset() {
+    const rail = document.querySelector('.home-programme-rail');
+    const railFrame = document.querySelector('.home-programme-rail-frame');
+    if (!rail || !railFrame) {
+      return {
+        endOffset: 48,
+        startOffset: 48,
+      };
+    }
+
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const minGap = 32;
+    const fallbackGap = 48;
+
+    if (!viewportHeight) {
+      rail.style.setProperty('--home-programme-pin-top', `${fallbackGap}px`);
+      rail.style.setProperty('--home-programme-max-height', `calc(100vh - ${fallbackGap * 2}px)`);
+      return {
+        endOffset: fallbackGap,
+        startOffset: fallbackGap,
+      };
+    }
+
+    const naturalHeight = railFrame.scrollHeight || railFrame.offsetHeight || rail.offsetHeight || 0;
+    const maxVisibleHeight = Math.max(220, viewportHeight - minGap * 2);
+    const visibleHeight = Math.min(naturalHeight, maxVisibleHeight);
+    const centeredOffset = Math.round((viewportHeight - visibleHeight) / 2);
+    const pinOffset = Math.max(minGap, centeredOffset);
+    const endOffset = Math.max(minGap, viewportHeight - pinOffset - visibleHeight);
+
+    rail.style.setProperty('--home-programme-pin-top', `${pinOffset}px`);
+    rail.style.setProperty('--home-programme-max-height', `${visibleHeight}px`);
+
+    return {
+      endOffset,
+      startOffset: pinOffset,
+    };
+  },
+
+  initHomeProgrammeRail() {
+    const zones = Array.from(document.querySelectorAll('[data-home-zone]')).filter((zone) => zone.id);
+    const railLinks = document.querySelectorAll('[data-programme-link]');
+    if (!zones.length || !railLinks.length) {
+      return;
+    }
+
+    const hashId = window.location.hash ? window.location.hash.slice(1) : '';
+    const initialZoneId = zones.some((zone) => zone.id === hashId) ? hashId : zones[0].id;
+    this.setHomeProgrammeActive(initialZoneId);
+
+    const scrollTrigger = window.ScrollTrigger;
+    if (scrollTrigger?.create) {
+      const rail = document.querySelector('.home-programme-rail');
+      const controlMain = document.querySelector('.home-control-main');
+
+      if (rail && controlMain && window.matchMedia('(min-width: 992px)').matches) {
+        rail.classList.remove('is-sticky-fallback');
+
+        scrollTrigger.create({
+          trigger: rail,
+          start: () => {
+            const { startOffset } = this.syncHomeProgrammePinOffset();
+            return `top top+=${startOffset}`;
+          },
+          endTrigger: controlMain,
+          end: () => {
+            const { endOffset } = this.syncHomeProgrammePinOffset();
+            return `bottom bottom-=${endOffset}`;
+          },
+          pin: rail,
+          pinSpacing: false,
+          invalidateOnRefresh: true,
+          onRefreshInit: () => this.syncHomeProgrammePinOffset(),
+          onRefresh: () => this.syncHomeProgrammePinOffset(),
+        });
+      }
+
+      zones.forEach((zone) => {
+        scrollTrigger.create({
+          trigger: zone,
+          start: 'top center',
+          end: 'bottom center',
+          onEnter: () => this.setHomeProgrammeActive(zone.id),
+          onEnterBack: () => this.setHomeProgrammeActive(zone.id),
+        });
+      });
+
+      scrollTrigger.refresh();
+      return;
+    }
+
+    const rail = document.querySelector('.home-programme-rail');
+    if (rail && window.matchMedia('(min-width: 992px)').matches) {
+      this.syncHomeProgrammePinOffset();
+      rail.classList.add('is-sticky-fallback');
+    }
+
+    const updateActiveZone = () => {
+      let activeZone = zones[0];
+      zones.forEach((zone) => {
+        const rect = zone.getBoundingClientRect();
+        if (rect.top <= window.innerHeight * 0.42) {
+          activeZone = zone;
+        }
+      });
+
+      if (activeZone?.id) {
+        this.setHomeProgrammeActive(activeZone.id);
+      }
+    };
+
+    updateActiveZone();
+    window.addEventListener('scroll', updateActiveZone, { passive: true });
+  },
+
+  initHomeSignalAnomaly() {
+    const toggle = document.querySelector('[data-signal-toggle]');
+    const panel = document.querySelector('[data-signal-panel]');
+    if (!toggle || !panel) {
+      return;
+    }
+
+    panel.style.overflow = 'hidden';
+    panel.style.height = '0px';
+
+    toggle.addEventListener('click', () => {
+      if (toggle.dataset.animating === 'true') {
+        return;
+      }
+
+      const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+      if (isOpen) {
+        this.closeHomeSignalPanel(toggle, panel);
+      } else {
+        this.openHomeSignalPanel(toggle, panel);
+      }
+    });
+  },
+
+  initHomeScheduleClock() {
+    const hourHand = document.querySelector('.home-schedule-clock-hand-hour');
+    const minuteHand = document.querySelector('.home-schedule-clock-hand-minute');
+    const secondHand = document.querySelector('.home-schedule-clock-hand-second');
+    if (!hourHand || !minuteHand || !secondHand) {
+      return;
+    }
+
+    window.cancelAnimationFrame(this.state.homeClockFrame);
+    window.clearTimeout(this.state.homeClockTimer);
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const renderClock = () => {
+      const now = new Date();
+      const milliseconds = now.getMilliseconds();
+      const seconds = now.getSeconds() + (prefersReducedMotion ? 0 : milliseconds / 1000);
+      const minutes = now.getMinutes() + seconds / 60;
+      const hours = (now.getHours() % 12) + minutes / 60;
+
+      hourHand.style.setProperty('--home-clock-rotation', `${hours * 30}deg`);
+      minuteHand.style.setProperty('--home-clock-rotation', `${minutes * 6}deg`);
+      secondHand.style.setProperty('--home-clock-rotation', `${seconds * 6}deg`);
+    };
+
+    const tick = () => {
+      renderClock();
+
+      if (prefersReducedMotion) {
+        const millisecondsUntilNextSecond = 1000 - new Date().getMilliseconds();
+        this.state.homeClockTimer = window.setTimeout(tick, millisecondsUntilNextSecond);
+        return;
+      }
+
+      this.state.homeClockFrame = window.requestAnimationFrame(tick);
+    };
+
+    tick();
+
+    window.addEventListener('pagehide', () => {
+      window.cancelAnimationFrame(this.state.homeClockFrame);
+      window.clearTimeout(this.state.homeClockTimer);
+      this.state.homeClockFrame = null;
+      this.state.homeClockTimer = null;
+    }, { once: true });
+  },
+
+  openHomeSignalPanel(toggle, panel) {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stateLabel = toggle.querySelector('.home-signal-toggle-state');
+
+    toggle.dataset.animating = 'true';
+    toggle.setAttribute('aria-expanded', 'true');
+    if (stateLabel) {
+      stateLabel.textContent = 'Decoded';
+    }
+
+    panel.hidden = false;
+    panel.classList.add('is-open');
+
+    if (prefersReducedMotion) {
+      panel.style.height = 'auto';
+      delete toggle.dataset.animating;
+      return;
+    }
+
+    panel.style.height = '0px';
+    const endHeight = panel.scrollHeight;
+
+    window.requestAnimationFrame(() => {
+      panel.style.height = `${endHeight}px`;
+    });
+
+    const onTransitionEnd = (event) => {
+      if (event.propertyName !== 'height') {
+        return;
+      }
+
+      panel.style.height = 'auto';
+      delete toggle.dataset.animating;
+      panel.removeEventListener('transitionend', onTransitionEnd);
+    };
+
+    panel.addEventListener('transitionend', onTransitionEnd);
+  },
+
+  closeHomeSignalPanel(toggle, panel) {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stateLabel = toggle.querySelector('.home-signal-toggle-state');
+
+    toggle.dataset.animating = 'true';
+    toggle.setAttribute('aria-expanded', 'false');
+    if (stateLabel) {
+      stateLabel.textContent = 'Decode';
+    }
+
+    if (prefersReducedMotion) {
+      panel.classList.remove('is-open');
+      panel.hidden = true;
+      panel.style.height = '0px';
+      delete toggle.dataset.animating;
+      return;
+    }
+
+    panel.style.height = `${panel.scrollHeight}px`;
+
+    window.requestAnimationFrame(() => {
+      panel.classList.remove('is-open');
+      panel.style.height = '0px';
+    });
+
+    const onTransitionEnd = (event) => {
+      if (event.propertyName !== 'height') {
+        return;
+      }
+
+      panel.hidden = true;
+      delete toggle.dataset.animating;
+      panel.removeEventListener('transitionend', onTransitionEnd);
+    };
+
+    panel.addEventListener('transitionend', onTransitionEnd);
+  },
+
+  initHomeZoneMotion() {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const gsapInstance = window.gsap;
+    const scrollTrigger = window.ScrollTrigger;
+
+    if (prefersReducedMotion || !gsapInstance || !scrollTrigger?.create) {
+      return;
+    }
+
+    const rail = document.querySelector('.home-programme-rail-frame');
+    if (rail) {
+      gsapInstance.from(rail, {
+        x: -28,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: rail,
+          start: 'top 85%',
+        },
+      });
+    }
+
+    document.querySelectorAll('.home-zone-frame').forEach((frame) => {
+      const targets = frame.querySelectorAll(
+        '.home-zone-kicker, .home-zone-heading, .home-zone-stamp, .home-zone-text, .home-mission-tag, .home-mission-board, .home-protocol-item, .home-register-summary-item, .track-card, .track-route, .home-checkpoint, .faq-item'
+      );
+
+      if (!targets.length) {
+        return;
+      }
+
+      gsapInstance.from(targets, {
+        y: 32,
+        opacity: 0,
+        duration: 0.78,
+        stagger: 0.06,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: frame,
+          start: 'top 78%',
+        },
+        clearProps: 'all',
+      });
+    });
+
+    scrollTrigger.refresh();
+  },
+
+  openFaqItem(item, answer) {
+    item.dataset.animating = 'true';
+    item.setAttribute('open', '');
+    answer.style.height = '0px';
+
+    const endHeight = answer.scrollHeight;
+    window.requestAnimationFrame(() => {
+      answer.style.height = `${endHeight}px`;
+    });
+
+    const onTransitionEnd = (event) => {
+      if (event.propertyName !== 'height') {
+        return;
+      }
+
+      answer.style.height = 'auto';
+      delete item.dataset.animating;
+      answer.removeEventListener('transitionend', onTransitionEnd);
+    };
+
+    answer.addEventListener('transitionend', onTransitionEnd);
+  },
+
+  closeFaqItem(item, answer) {
+    item.dataset.animating = 'true';
+    answer.style.height = `${answer.scrollHeight}px`;
+
+    window.requestAnimationFrame(() => {
+      answer.style.height = '0px';
+    });
+
+    const onTransitionEnd = (event) => {
+      if (event.propertyName !== 'height') {
+        return;
+      }
+
+      item.removeAttribute('open');
+      delete item.dataset.animating;
+      answer.removeEventListener('transitionend', onTransitionEnd);
+    };
+
+    answer.addEventListener('transitionend', onTransitionEnd);
   },
 
   initHomeLogoMotion() {
@@ -2626,6 +3159,11 @@ const FamHack = {
     closeBtn?.addEventListener('click', closeMenu);
     backdrop?.addEventListener('click', closeMenu);
     closeClickArea?.addEventListener('click', closeMenu);
+    menuItems.forEach((item) => {
+      item.querySelectorAll('a[href]').forEach((link) => {
+        link.addEventListener('click', closeMenu);
+      });
+    });
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && flyout.classList.contains('is-open')) {
