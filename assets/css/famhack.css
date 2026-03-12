@@ -3700,7 +3700,7 @@ button.button-link:disabled {
 .home-programme-rail-frame {
   padding: 18px 16px 16px;
   max-height: var(--home-programme-max-height, none);
-  overflow-y: auto;
+  overflow: hidden;
   scrollbar-width: none;
 }
 
