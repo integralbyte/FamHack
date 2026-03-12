@@ -1443,23 +1443,28 @@
         }
       });
       loadHomeEntryRecordedPath();
+      function navigateWithTransition(url) {
+        const destination = new URL(url, window.location.href).href;
+        if (transitionEl) {
+          showTransitionShell();
+          if (homeEntryGate) {
+            gsap.set(homeEntryGate, { display: "none", autoAlpha: 0 });
+          }
+          gsap.set(transitionEl, { display: "flex", rowGap: "400vh" });
+          if (!transitionTimeline) createTransitionTimeline();
+          transitionTimeline.eventCallback("onReverseComplete", () => { window.location.href = destination; });
+          transitionTimeline.reverse();
+          return true;
+        }
+        window.location.href = destination;
+        return true;
+      }
+      window.famhackNavigateWithTransition = navigateWithTransition;
       const links = document.querySelectorAll("a[href]:not([target='_blank']):not([href^='#'])");
       links.forEach((link) => {
         link.addEventListener("click", function (e) {
           e.preventDefault();
-          const url = this.href;
-          if (transitionEl) {
-            showTransitionShell();
-            if (homeEntryGate) {
-              gsap.set(homeEntryGate, { display: "none", autoAlpha: 0 });
-            }
-            gsap.set(transitionEl, { display: "flex", rowGap: "400vh" });
-            if (!transitionTimeline) createTransitionTimeline();
-            transitionTimeline.reverse();
-            transitionTimeline.eventCallback("onReverseComplete", () => { window.location.href = url; });
-          } else {
-            window.location.href = url;
-          }
+          navigateWithTransition(this.href);
         });
       });
     });

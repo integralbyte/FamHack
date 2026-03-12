@@ -283,6 +283,11 @@ const FamHack = {
     }
 
     this.state.registration = registration || null;
+    if (!registration) {
+      this.setText('registered-role', '');
+      return;
+    }
+
     this.setRegisterIntro(REGISTRATION_CONFIRMATION_TITLE, REGISTRATION_CONFIRMATION_COPY);
     this.setText('registered-role', registration?.roleLabel ? `Registered as ${registration.roleLabel}.` : '');
   },
@@ -3288,6 +3293,13 @@ const FamHack = {
   },
 
   redirect(path) {
+    if (typeof window.famhackNavigateWithTransition === 'function') {
+      const handled = window.famhackNavigateWithTransition(path);
+      if (handled !== false) {
+        return;
+      }
+    }
+
     window.location.href = path;
   },
 
