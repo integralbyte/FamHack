@@ -696,81 +696,97 @@
                 <div class="home-zone-frame home-zone-frame-faq">
                   <div class="home-faq-layout">
                     <div class="home-faq-intro">
-                      <p class="home-zone-kicker">Support Desk // 05</p>
-                      <h2 class="home-zone-heading">Questions before the day</h2>
-                      <p class="home-zone-text">Questions about teams, format, costs, and what to expect on the day. If anything is still unclear, organisers will be around to help.</p>
+                      <div class="home-faq-intro-head">
+                        <div class="home-faq-intro-copy">
+                          <p class="home-zone-kicker">Support Desk // 05</p>
+                          <h2 class="home-zone-heading">Questions before the day</h2>
+                          <p class="home-zone-text">Questions about teams, format, costs, and what to expect on the day. If anything is still unclear, organisers will be around to help.</p>
+                        </div>
+
+                        <button type="button" class="home-faq-hover-toggle" data-faq-hover-toggle aria-pressed="false" aria-label="Enable auto expand">
+                          <span class="home-faq-hover-toggle-shell home-faq-hover-toggle-shell-back" aria-hidden="true"></span>
+                          <span class="home-faq-hover-toggle-shell" aria-hidden="true"></span>
+                          <span class="home-faq-hover-toggle-brace home-faq-hover-toggle-brace-1" aria-hidden="true"></span>
+                          <span class="home-faq-hover-toggle-brace home-faq-hover-toggle-brace-2" aria-hidden="true"></span>
+                          <span class="home-faq-hover-toggle-beam home-faq-hover-toggle-beam-1" aria-hidden="true"></span>
+                          <span class="home-faq-hover-toggle-beam home-faq-hover-toggle-beam-2" aria-hidden="true"></span>
+                          <span class="home-faq-hover-toggle-beam home-faq-hover-toggle-beam-3" aria-hidden="true"></span>
+                          <span class="home-faq-hover-toggle-pulse" aria-hidden="true"></span>
+                          <span class="home-faq-hover-toggle-label">Auto Expand</span>
+                        </button>
+                      </div>
                     </div>
 
                     <div class="faq-list">
-                      <details class="faq-item" open>
-                        <summary class="faq-question">What is FamHack, exactly?</summary>
+                      <article class="faq-item is-open">
+                        <button type="button" class="faq-question" aria-expanded="true">What is FamHack, exactly?</button>
                         <div class="faq-answer">
                           <p>FamHack is a one-day hackathon where academic families spend the day building, solving, and showing what they made at the end. It keeps the full hackathon structure, but builds the teams around academic families.</p>
                         </div>
-                      </details>
+                      </article>
 
-                      <details class="faq-item">
-                        <summary class="faq-question">How do I register?</summary>
+                      <article class="faq-item">
+                        <button type="button" class="faq-question" aria-expanded="false">How do I register?</button>
                         <div class="faq-answer">
                           <p>Use the registration page with your university email. Parents can create the family first, and children or other parents can then join with the family code or join link.</p>
                         </div>
-                      </details>
+                      </article>
 
-                      <details class="faq-item">
-                        <summary class="faq-question">Does it cost anything to take part?</summary>
+                      <article class="faq-item">
+                        <button type="button" class="faq-question" aria-expanded="false">Does it cost anything to take part?</button>
                         <div class="faq-answer">
                           <p>FamHack is free to enter for participants.</p>
                         </div>
-                      </details>
+                      </article>
 
-                      <details class="faq-item">
-                        <summary class="faq-question">How big should teams be?</summary>
+                      <article class="faq-item">
+                        <button type="button" class="faq-question" aria-expanded="false">How big should teams be?</button>
                         <div class="faq-answer">
                           <p>Your academic family is the natural team. Smaller groups are completely fine, and larger families can split across different activities if that works better for them.</p>
                         </div>
-                      </details>
+                      </article>
 
-                      <details class="faq-item">
-                        <summary class="faq-question">Can our family split across different tracks?</summary>
+                      <article class="faq-item">
+                        <button type="button" class="faq-question" aria-expanded="false">Can our family split across different tracks?</button>
                         <div class="faq-answer">
                           <p>Yes. If that works best for your team, different people can focus on different parts of the day, from the main build to side challenges, as long as your family stays coordinated.</p>
                         </div>
-                      </details>
+                      </article>
 
-                      <details class="faq-item">
-                        <summary class="faq-question">What if I do not have my team sorted yet?</summary>
+                      <article class="faq-item">
+                        <button type="button" class="faq-question" aria-expanded="false">What if I do not have my team sorted yet?</button>
                         <div class="faq-answer">
                           <p>Register anyway. You do not need to have everything sorted before signing up, and we can help people connect with their family or work out the setup before the event starts.</p>
                         </div>
-                      </details>
+                      </article>
 
-                      <details class="faq-item">
-                        <summary class="faq-question">Who can attend?</summary>
+                      <article class="faq-item">
+                        <button type="button" class="faq-question" aria-expanded="false">Who can attend?</button>
                         <div class="faq-answer">
                           <p>FamHack is aimed at first-year Informatics students and their academic parents. If eligibility changes or expands, the organisers will announce it clearly.</p>
                         </div>
-                      </details>
+                      </article>
 
-                      <details class="faq-item">
-                        <summary class="faq-question">Do I need previous coding or hackathon experience?</summary>
+                      <article class="faq-item">
+                        <button type="button" class="faq-question" aria-expanded="false">Do I need previous coding or hackathon experience?</button>
                         <div class="faq-answer">
                           <p>No. You do not need previous hackathon experience to take part. Teams can contribute through coding, design, clue-solving, planning, and presenting.</p>
                         </div>
-                      </details>
+                      </article>
 
-                      <details class="faq-item">
-                        <summary class="faq-question">What standards of behaviour do you expect on the day?</summary>
+                      <article class="faq-item">
+                        <button type="button" class="faq-question" aria-expanded="false">What standards of behaviour do you expect on the day?</button>
                         <div class="faq-answer">
                           <p>Everyone is expected to be respectful, inclusive, and safe to work with. The event code is available in the <a href="/FH-Code-of-Conduct.pdf">Code of Conduct</a>.</p>
                         </div>
-                      </details>
+                      </article>
 
-                      <details class="faq-item">
-                        <summary class="faq-question">How do we get help if our team gets stuck?</summary>
+                      <article class="faq-item">
+                        <button type="button" class="faq-question" aria-expanded="false">How do we get help if our team gets stuck?</button>
                         <div class="faq-answer">
                           <p>Ask organisers during the day. If your team gets stuck technically or just is not sure what to do next, the event staff are there to help you keep moving.</p>
                         </div>
-                      </details>
+                      </article>
                     </div>
                   </div>
                 </div>

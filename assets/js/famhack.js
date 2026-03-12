@@ -39,6 +39,7 @@ const FamHack = {
     ctfAdvanceTimer: null,
     homeClockFrame: null,
     homeClockTimer: null,
+    homeFaq: null,
   },
 
   async init() {
@@ -558,10 +559,22 @@ const FamHack = {
   },
 
   initHomeFaq() {
-    const faqItems = document.querySelectorAll('.faq-item');
+    const faqItems = Array.from(document.querySelectorAll('.faq-item'));
     if (!faqItems.length) {
       return;
     }
+
+    const faqList = document.querySelector('.faq-list');
+    const hoverToggle = document.querySelector('[data-faq-hover-toggle]');
+
+    this.state.homeFaq = {
+      items: faqItems,
+      list: faqList,
+      hoverToggle,
+      hoverMode: false,
+      hoveredItem: null,
+      toggleAnimationTimeout: null,
+    };
 
     faqItems.forEach((item) => {
       const summary = item.querySelector('.faq-question');
@@ -570,23 +583,199 @@ const FamHack = {
         return;
       }
 
+      const answerInner = this.ensureFaqAnswerInner(answer);
       answer.style.overflow = 'hidden';
-      answer.style.height = item.open ? 'auto' : '0px';
+      answer.style.contain = 'layout paint';
+      const isOpen = item.classList.contains('is-open');
+      answer.style.height = isOpen ? 'auto' : '0px';
+      answerInner.style.opacity = isOpen ? '1' : '0';
+      answerInner.style.visibility = isOpen ? 'visible' : 'hidden';
+      summary.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      item.dataset.targetOpen = isOpen ? 'true' : 'false';
 
       summary.addEventListener('click', (event) => {
         event.preventDefault();
+        this.setFaqItemTarget(item, item.dataset.targetOpen !== 'true');
+      });
 
-        if (item.dataset.animating === 'true') {
+    });
+
+    if (faqList) {
+      faqList.addEventListener('pointermove', (event) => {
+        if (!this.state.homeFaq?.hoverMode) {
           return;
         }
 
-        if (item.open) {
-          this.closeFaqItem(item, answer);
-        } else {
-          this.openFaqItem(item, answer);
-        }
+        const hoveredItem = event.target instanceof Element
+          ? event.target.closest('.faq-item')
+          : null;
+
+        this.setHomeFaqHoveredItem(hoveredItem instanceof HTMLElement ? hoveredItem : null);
       });
+
+      faqList.addEventListener('mouseleave', () => {
+        if (!this.state.homeFaq?.hoverMode) {
+          return;
+        }
+
+        this.setHomeFaqHoveredItem(null);
+      });
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!this.state.homeFaq?.hoverMode) {
+        return;
+      }
+
+      const hoveredItem = document.querySelector('.faq-list .faq-item:hover');
+      if (!hoveredItem) {
+        this.setHomeFaqHoveredItem(null);
+      }
+    }, { passive: true });
+
+    if (hoverToggle) {
+      hoverToggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        this.setHomeFaqHoverMode(!this.state.homeFaq?.hoverMode);
+      });
+    }
+
+    this.syncHomeFaqHoverUi();
+  },
+
+  syncHomeFaqHoverUi() {
+    const homeFaq = this.state.homeFaq;
+    if (!homeFaq) {
+      return;
+    }
+
+    const { hoverToggle, list } = homeFaq;
+
+    if (hoverToggle) {
+      hoverToggle.classList.toggle('is-active', homeFaq.hoverMode);
+      hoverToggle.setAttribute('aria-pressed', homeFaq.hoverMode ? 'true' : 'false');
+      hoverToggle.setAttribute('aria-label', homeFaq.hoverMode ? 'Disable auto expand' : 'Enable auto expand');
+    }
+
+    if (list) {
+      list.classList.toggle('is-hover-mode', homeFaq.hoverMode);
+    }
+  },
+
+  setHomeFaqHoverMode(enabled) {
+    const homeFaq = this.state.homeFaq;
+    if (!homeFaq) {
+      return;
+    }
+
+    const nextState = Boolean(enabled);
+    homeFaq.hoverMode = nextState;
+    this.syncHomeFaqHoverUi();
+    this.animateHomeFaqHoverToggle(nextState);
+
+    if (nextState) {
+      const hoveredItem = document.querySelector('.faq-item:hover');
+      this.setHomeFaqHoveredItem(hoveredItem instanceof HTMLElement ? hoveredItem : null);
+      return;
+    }
+
+    homeFaq.hoveredItem = null;
+    this.closeAllHomeFaqItems();
+  },
+
+  ensureFaqAnswerInner(answer) {
+    const existingInner = answer.querySelector(':scope > .faq-answer-inner');
+    if (existingInner) {
+      return existingInner;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'faq-answer-inner';
+
+    while (answer.firstChild) {
+      wrapper.append(answer.firstChild);
+    }
+
+    answer.append(wrapper);
+    return wrapper;
+  },
+
+  setHomeFaqHoveredItem(item) {
+    const homeFaq = this.state.homeFaq;
+    if (!homeFaq) {
+      return;
+    }
+
+    if (homeFaq.hoveredItem === item) {
+      return;
+    }
+
+    homeFaq.hoveredItem = item;
+    homeFaq.items.forEach((faqItem) => {
+      this.setFaqItemTarget(faqItem, faqItem === item);
     });
+  },
+
+  closeAllHomeFaqItems() {
+    const homeFaq = this.state.homeFaq;
+    if (!homeFaq) {
+      return;
+    }
+
+    homeFaq.items.forEach((item) => {
+      this.setFaqItemTarget(item, false);
+    });
+  },
+
+  animateHomeFaqHoverToggle(enabled) {
+    const homeFaq = this.state.homeFaq;
+    const hoverToggle = homeFaq?.hoverToggle;
+    if (!hoverToggle) {
+      return;
+    }
+
+    const nextClass = enabled ? 'is-switching-on' : 'is-switching-off';
+    hoverToggle.classList.remove('is-switching-on', 'is-switching-off');
+    void hoverToggle.offsetWidth;
+    hoverToggle.classList.add(nextClass);
+
+    if (homeFaq.toggleAnimationTimeout) {
+      window.clearTimeout(homeFaq.toggleAnimationTimeout);
+    }
+
+    homeFaq.toggleAnimationTimeout = window.setTimeout(() => {
+      hoverToggle.classList.remove('is-switching-on', 'is-switching-off');
+      homeFaq.toggleAnimationTimeout = null;
+    }, 620);
+  },
+
+  setFaqItemTarget(item, shouldOpen) {
+    const answer = item.querySelector('.faq-answer');
+    if (!answer) {
+      return;
+    }
+
+    item.dataset.targetOpen = shouldOpen ? 'true' : 'false';
+    this.syncFaqItemState(item, answer);
+  },
+
+  syncFaqItemState(item, answer) {
+    if (item.dataset.animating === 'true') {
+      return;
+    }
+
+    const targetOpen = item.dataset.targetOpen === 'true';
+
+    if (targetOpen === item.classList.contains('is-open')) {
+      return;
+    }
+
+    if (targetOpen) {
+      this.openFaqItem(item, answer);
+      return;
+    }
+
+    this.closeFaqItem(item, answer);
   },
 
   setHomeProgrammeActive(zoneId) {
@@ -919,47 +1108,123 @@ const FamHack = {
   },
 
   openFaqItem(item, answer) {
-    item.dataset.animating = 'true';
-    item.setAttribute('open', '');
-    answer.style.height = '0px';
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const gsapInstance = window.gsap;
+    const answerInner = this.ensureFaqAnswerInner(answer);
+    const trigger = item.querySelector('.faq-question');
+    const startHeight = answer.getBoundingClientRect().height;
 
-    const endHeight = answer.scrollHeight;
-    window.requestAnimationFrame(() => {
-      answer.style.height = `${endHeight}px`;
+    item.dataset.animating = 'true';
+    item.classList.add('is-open');
+    trigger?.setAttribute('aria-expanded', 'true');
+    answer.style.overflow = 'hidden';
+    answer.style.willChange = 'height';
+    answerInner.style.willChange = 'opacity';
+
+    if (!gsapInstance || prefersReducedMotion) {
+      answer.style.height = 'auto';
+      answer.style.willChange = '';
+      answerInner.style.opacity = '1';
+      answerInner.style.visibility = 'visible';
+      answerInner.style.willChange = '';
+      delete item.dataset.animating;
+      this.syncFaqItemState(item, answer);
+      return;
+    }
+
+    gsapInstance.killTweensOf(answer);
+    gsapInstance.killTweensOf(answerInner);
+    answer.style.height = `${startHeight}px`;
+    answerInner.style.visibility = 'hidden';
+    answerInner.style.opacity = '0';
+
+    const timeline = gsapInstance.timeline({
+      defaults: {
+        overwrite: true,
+      },
+      onComplete: () => {
+        answer.style.height = 'auto';
+        answer.style.willChange = '';
+        answerInner.style.opacity = '1';
+        answerInner.style.visibility = 'visible';
+        answerInner.style.willChange = '';
+        delete item.dataset.animating;
+        this.syncFaqItemState(item, answer);
+      },
     });
 
-    const onTransitionEnd = (event) => {
-      if (event.propertyName !== 'height') {
-        return;
-      }
+    timeline.set(answerInner, {
+      visibility: 'visible',
+      opacity: 1,
+    });
 
-      answer.style.height = 'auto';
-      delete item.dataset.animating;
-      answer.removeEventListener('transitionend', onTransitionEnd);
-    };
-
-    answer.addEventListener('transitionend', onTransitionEnd);
+    timeline.to(answer, {
+      height: answer.scrollHeight,
+      duration: 0.16,
+      ease: 'power2.out',
+    });
   },
 
   closeFaqItem(item, answer) {
-    item.dataset.animating = 'true';
-    answer.style.height = `${answer.scrollHeight}px`;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const gsapInstance = window.gsap;
+    const answerInner = this.ensureFaqAnswerInner(answer);
+    const trigger = item.querySelector('.faq-question');
+    const startHeight = answer.getBoundingClientRect().height || answer.scrollHeight;
 
-    window.requestAnimationFrame(() => {
+    item.dataset.animating = 'true';
+    trigger?.setAttribute('aria-expanded', 'false');
+    answer.style.overflow = 'hidden';
+    answer.style.height = `${startHeight}px`;
+    answer.style.willChange = 'height';
+    answerInner.style.willChange = 'opacity';
+
+    if (!gsapInstance || prefersReducedMotion) {
       answer.style.height = '0px';
+      answer.style.willChange = '';
+      answerInner.style.opacity = '0';
+      answerInner.style.visibility = 'hidden';
+      answerInner.style.willChange = '';
+      item.classList.remove('is-open');
+      delete item.dataset.animating;
+      this.syncFaqItemState(item, answer);
+      return;
+    }
+
+    gsapInstance.killTweensOf(answer);
+    gsapInstance.killTweensOf(answerInner);
+
+    const timeline = gsapInstance.timeline({
+      defaults: {
+        overwrite: true,
+      },
+      onComplete: () => {
+        answer.style.height = '0px';
+        answer.style.willChange = '';
+        answerInner.style.opacity = '0';
+        answerInner.style.visibility = 'hidden';
+        answerInner.style.willChange = '';
+        item.classList.remove('is-open');
+        delete item.dataset.animating;
+        this.syncFaqItemState(item, answer);
+      },
     });
 
-    const onTransitionEnd = (event) => {
-      if (event.propertyName !== 'height') {
-        return;
-      }
+    timeline.to(answerInner, {
+      opacity: 0,
+      duration: 0.04,
+      ease: 'none',
+    });
 
-      item.removeAttribute('open');
-      delete item.dataset.animating;
-      answer.removeEventListener('transitionend', onTransitionEnd);
-    };
+    timeline.set(answerInner, {
+      visibility: 'hidden',
+    });
 
-    answer.addEventListener('transitionend', onTransitionEnd);
+    timeline.to(answer, {
+      height: 0,
+      duration: 0.14,
+      ease: 'power2.inOut',
+    });
   },
 
   initHomeLogoMotion() {
