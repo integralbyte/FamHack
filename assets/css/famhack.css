@@ -4659,27 +4659,65 @@ button.button-link:disabled {
   top: 50%;
   left: 50%;
   width: 2px;
-  height: 24px;
+  height: 16px;
   margin-top: -110px;
   margin-left: -1px;
-  background: rgba(255, 233, 206, 0.52);
+  background: rgba(255, 233, 206, 0.44);
   transform-origin: center 110px;
+  transform: rotate(var(--home-clock-tick-angle, 0deg));
+}
+
+.home-schedule-clock-tick-major {
+  height: 24px;
+  background: rgba(255, 233, 206, 0.68);
 }
 
 .home-schedule-clock-tick-1 {
-  transform: rotate(0deg);
+  --home-clock-tick-angle: 0deg;
 }
 
 .home-schedule-clock-tick-2 {
-  transform: rotate(90deg);
+  --home-clock-tick-angle: 30deg;
 }
 
 .home-schedule-clock-tick-3 {
-  transform: rotate(45deg);
+  --home-clock-tick-angle: 60deg;
 }
 
 .home-schedule-clock-tick-4 {
-  transform: rotate(135deg);
+  --home-clock-tick-angle: 90deg;
+}
+
+.home-schedule-clock-tick-5 {
+  --home-clock-tick-angle: 120deg;
+}
+
+.home-schedule-clock-tick-6 {
+  --home-clock-tick-angle: 150deg;
+}
+
+.home-schedule-clock-tick-7 {
+  --home-clock-tick-angle: 180deg;
+}
+
+.home-schedule-clock-tick-8 {
+  --home-clock-tick-angle: 210deg;
+}
+
+.home-schedule-clock-tick-9 {
+  --home-clock-tick-angle: 240deg;
+}
+
+.home-schedule-clock-tick-10 {
+  --home-clock-tick-angle: 270deg;
+}
+
+.home-schedule-clock-tick-11 {
+  --home-clock-tick-angle: 300deg;
+}
+
+.home-schedule-clock-tick-12 {
+  --home-clock-tick-angle: 330deg;
 }
 
 .home-schedule-clock-kicker {
