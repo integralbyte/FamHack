@@ -30,6 +30,8 @@ function renderComingSoonPage(slug) {
   const title = slug === 'join' ? 'Family setup opens on 14 March' : 'Coming soon';
   const copy = slug === 'join'
     ? 'Sign in, create a family, and join a family all unlock on 14 March 2026.'
+    : slug === 'about' || slug === 'tracks'
+      ? 'This page unlocks on 28 March 2026.'
     : 'This page unlocks on 14 March 2026.';
 
   return `<!DOCTYPE html>
@@ -133,6 +135,10 @@ function resolvePageFile(slug, launch) {
 
   if (slug === 'register') {
     return launch.isRegistrationOpen ? 'register-prereg.html' : 'register.html';
+  }
+
+  if (slug === 'about' || slug === 'tracks') {
+    return launch.isInfoPagesOpen ? protectedPageFiles.get(slug) || null : null;
   }
 
   if (!launch.isProtectedContentOpen) {
