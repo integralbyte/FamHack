@@ -1,23 +1,15 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import {
-  getLaunchState,
-  REGISTRATION_CONFIRMATION_COPY,
-  REGISTRATION_CONFIRMATION_TITLE,
-} from '../../shared/launch-state.js';
 
 const FamHack = {
   config: {
     otpLength: 6,
     otpResendDelay: 30,
     maxTeamSize: 15,
-    ctfLeaderboardVisibleCount: 5,
   },
 
   state: {
     page: null,
-    launch: null,
     session: null,
-    registration: null,
     pendingEmail: '',
     registerIntent: 'role',
     teamPreview: null,
@@ -38,25 +30,15 @@ const FamHack = {
     ctfKonamiRetry: false,
     ctfKonamiSolved: false,
     ctfAdvanceTimer: null,
-    ctfSigintModalOpen: false,
-    ctfSigintConsoleHintLogged: false,
-    homeClockFrame: null,
-    homeClockTimer: null,
-    homeFaq: null,
   },
 
   async init() {
     this.state.page = this.getPage();
-    this.state.launch = getLaunchState();
     this.initOTPInputs();
     this.initNavigation();
 
     if (!this.state.page) {
       return;
-    }
-
-    if (this.state.page === 'home') {
-      this.initHomePageBase();
     }
 
     try {
@@ -98,13 +80,6 @@ const FamHack = {
         await this.initDashboardPage();
       }
     } catch (error) {
-      const isLocalHomeConfigFailure = this.state.page === 'home'
-        && (error?.code === 'CONFIG_UNAVAILABLE' || error?.code === 'CONFIG_INVALID');
-
-      if (isLocalHomeConfigFailure) {
-        return;
-      }
-
       console.error(error);
       this.showFatalError(error.message || 'Unable to load the registration flow right now.');
     }
@@ -122,32 +97,10 @@ const FamHack = {
 
   async fetchConfig() {
     const response = await fetch('/api/config');
-    const payloadText = await response.text();
-    const contentType = String(response.headers.get('content-type') || '').toLowerCase();
-    let payload = null;
-
-    if (payloadText) {
-      try {
-        payload = JSON.parse(payloadText);
-      } catch (error) {
-        if (contentType.includes('application/json')) {
-          const parseError = new Error('The app configuration response was not valid JSON.');
-          parseError.code = 'CONFIG_INVALID';
-          throw parseError;
-        }
-      }
-    }
+    const payload = await response.json();
 
     if (!response.ok) {
-      const configError = new Error(payload?.error || 'Unable to load app configuration');
-      configError.code = 'CONFIG_UNAVAILABLE';
-      throw configError;
-    }
-
-    if (!payload || typeof payload !== 'object') {
-      const configError = new Error('The app configuration response was not valid JSON.');
-      configError.code = 'CONFIG_INVALID';
-      throw configError;
+      throw new Error(payload.error || 'Unable to load app configuration');
     }
 
     return payload;
@@ -213,12 +166,7 @@ const FamHack = {
       return 'Primary Parent';
     }
 
-    return role === 'parent' ? 'Parent' : 'Child';
-  },
-
-  getCurrentLaunchState() {
-    this.state.launch = getLaunchState();
-    return this.state.launch;
+    return role === 'parent' ? 'Parent' : 'Student';
   },
 
   setText(id, value) {
@@ -257,42 +205,14 @@ const FamHack = {
       return;
     }
 
-    emailLabel.textContent = mode === 'signin' ? 'Email' : 'Email';
+    if (mode === 'signin') {
+      emailLabel.textContent = 'Email Address';
+      emailInput.placeholder = 's1234567@ed.ac.uk';
+      return;
+    }
+
+    emailLabel.textContent = 'Your Email Address';
     emailInput.placeholder = 's1234567@ed.ac.uk';
-  },
-
-  syncRegisterEmailInput({ lockToSession = false } = {}) {
-    if (this.state.page !== 'register') {
-      return;
-    }
-
-    const emailInput = document.getElementById('email-input');
-    if (!emailInput) {
-      return;
-    }
-
-    if (lockToSession && this.state.session?.user?.email) {
-      emailInput.value = this.state.session.user.email;
-      emailInput.disabled = true;
-      return;
-    }
-
-    emailInput.disabled = false;
-  },
-
-  setRegisteredConfirmation(registration) {
-    if (this.state.page !== 'register') {
-      return;
-    }
-
-    this.state.registration = registration || null;
-    if (!registration) {
-      this.setText('registered-role', '');
-      return;
-    }
-
-    this.setRegisterIntro(REGISTRATION_CONFIRMATION_TITLE, REGISTRATION_CONFIRMATION_COPY);
-    this.setText('registered-role', registration?.roleLabel ? `Registered as ${registration.roleLabel}.` : '');
   },
 
   resetAuthFlowState() {
@@ -303,7 +223,6 @@ const FamHack = {
     this.state.pendingEmail = '';
     this.state.teamPreview = null;
     this.state.dashboard = null;
-    this.state.registration = null;
     this.state.ctf = null;
     this.state.ctfPendingAdvanceState = null;
     this.state.ctfRecentKeys = [];
@@ -430,22 +349,8 @@ const FamHack = {
     this.checkOTPComplete();
   },
 
-  initHomePageBase() {
-    this.initHomeLogoMotion();
-    this.initHomeHashNavigation();
-    this.initHomeFaq();
-    this.initHomeProgrammeRail();
-    this.initHomeScheduleClock();
-    this.initHomeSignalAnomaly();
-    this.initHomeZoneMotion();
-
-    const participateLink = document.getElementById('participate-link');
-    if (participateLink) {
-      participateLink.href = '/register';
-    }
-  },
-
   async initHomePage() {
+    this.initHomeLogoMotion();
 
     const participateLink = document.getElementById('participate-link');
     if (!participateLink) {
@@ -485,754 +390,6 @@ const FamHack = {
     if (labelNode) {
       labelNode.textContent = label;
     }
-  },
-
-  initHomeHashNavigation() {
-    const hashLinks = document.querySelectorAll('a[href^="#"]');
-    if (!hashLinks.length) {
-      return;
-    }
-
-    hashLinks.forEach((link) => {
-      link.addEventListener('click', (event) => {
-        const hash = link.getAttribute('href');
-        if (!hash || hash === '#') {
-          return;
-        }
-
-        const target = hash === '#top' ? document.documentElement : document.querySelector(hash);
-        if (!target) {
-          return;
-        }
-
-        event.preventDefault();
-
-        const delay = document.body.classList.contains('menu-open') ? 360 : 0;
-        window.setTimeout(() => {
-          this.scrollHomeToHash(hash);
-        }, delay);
-      });
-    });
-
-    if (window.location.hash) {
-      window.requestAnimationFrame(() => {
-        this.scrollHomeToHash(window.location.hash, {
-          behavior: 'auto',
-          updateHistory: false,
-        });
-      });
-    }
-  },
-
-  scrollHomeToHash(hash, options = {}) {
-    const target = hash === '#top' ? document.documentElement : document.querySelector(hash);
-    if (!target) {
-      return;
-    }
-
-    if (hash !== '#top' && target.id) {
-      this.setHomeProgrammeActive(target.id);
-    }
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const smooth = options.behavior === 'auto' || prefersReducedMotion ? false : true;
-    const smoother = window.ScrollSmoother?.get?.();
-
-    if (smoother) {
-      if (hash === '#top') {
-        smoother.scrollTo(0, smooth);
-      } else {
-        smoother.scrollTo(target, smooth, 'top top');
-      }
-    } else {
-      const top = hash === '#top'
-        ? 0
-        : Math.max(target.getBoundingClientRect().top + window.pageYOffset, 0);
-
-      window.scrollTo({
-        top,
-        behavior: smooth ? 'smooth' : 'auto',
-      });
-    }
-
-    if (options.updateHistory === false) {
-      return;
-    }
-
-    if (window.history?.pushState) {
-      window.history.pushState(null, '', hash);
-    } else {
-      window.location.hash = hash;
-    }
-  },
-
-  initHomeFaq() {
-    const faqItems = Array.from(document.querySelectorAll('.faq-item'));
-    if (!faqItems.length) {
-      return;
-    }
-
-    const faqList = document.querySelector('.faq-list');
-    const hoverToggle = document.querySelector('[data-faq-hover-toggle]');
-
-    this.state.homeFaq = {
-      items: faqItems,
-      list: faqList,
-      hoverToggle,
-      hoverMode: false,
-      hoveredItem: null,
-      toggleAnimationTimeout: null,
-    };
-
-    faqItems.forEach((item) => {
-      const summary = item.querySelector('.faq-question');
-      const answer = item.querySelector('.faq-answer');
-      if (!summary || !answer) {
-        return;
-      }
-
-      const answerInner = this.ensureFaqAnswerInner(answer);
-      answer.style.overflow = 'hidden';
-      answer.style.contain = 'layout paint';
-      const isOpen = item.classList.contains('is-open');
-      answer.style.height = isOpen ? 'auto' : '0px';
-      answerInner.style.opacity = isOpen ? '1' : '0';
-      answerInner.style.visibility = isOpen ? 'visible' : 'hidden';
-      summary.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      item.dataset.targetOpen = isOpen ? 'true' : 'false';
-
-      summary.addEventListener('click', (event) => {
-        event.preventDefault();
-        this.setFaqItemTarget(item, item.dataset.targetOpen !== 'true');
-      });
-
-    });
-
-    if (faqList) {
-      faqList.addEventListener('pointermove', (event) => {
-        if (!this.state.homeFaq?.hoverMode) {
-          return;
-        }
-
-        const hoveredItem = event.target instanceof Element
-          ? event.target.closest('.faq-item')
-          : null;
-
-        this.setHomeFaqHoveredItem(hoveredItem instanceof HTMLElement ? hoveredItem : null);
-      });
-
-      faqList.addEventListener('mouseleave', () => {
-        if (!this.state.homeFaq?.hoverMode) {
-          return;
-        }
-
-        this.setHomeFaqHoveredItem(null);
-      });
-    }
-
-    window.addEventListener('scroll', () => {
-      if (!this.state.homeFaq?.hoverMode) {
-        return;
-      }
-
-      const hoveredItem = document.querySelector('.faq-list .faq-item:hover');
-      if (!hoveredItem) {
-        this.setHomeFaqHoveredItem(null);
-      }
-    }, { passive: true });
-
-    if (hoverToggle) {
-      hoverToggle.addEventListener('click', (event) => {
-        event.preventDefault();
-        this.setHomeFaqHoverMode(!this.state.homeFaq?.hoverMode);
-      });
-    }
-
-    this.syncHomeFaqHoverUi();
-  },
-
-  syncHomeFaqHoverUi() {
-    const homeFaq = this.state.homeFaq;
-    if (!homeFaq) {
-      return;
-    }
-
-    const { hoverToggle, list } = homeFaq;
-
-    if (hoverToggle) {
-      hoverToggle.classList.toggle('is-active', homeFaq.hoverMode);
-      hoverToggle.setAttribute('aria-pressed', homeFaq.hoverMode ? 'true' : 'false');
-      hoverToggle.setAttribute('aria-label', homeFaq.hoverMode ? 'Disable auto expand' : 'Enable auto expand');
-    }
-
-    if (list) {
-      list.classList.toggle('is-hover-mode', homeFaq.hoverMode);
-    }
-  },
-
-  setHomeFaqHoverMode(enabled) {
-    const homeFaq = this.state.homeFaq;
-    if (!homeFaq) {
-      return;
-    }
-
-    const nextState = Boolean(enabled);
-    homeFaq.hoverMode = nextState;
-    this.syncHomeFaqHoverUi();
-    this.animateHomeFaqHoverToggle(nextState);
-
-    if (nextState) {
-      const hoveredItem = document.querySelector('.faq-item:hover');
-      this.setHomeFaqHoveredItem(hoveredItem instanceof HTMLElement ? hoveredItem : null);
-      return;
-    }
-
-    homeFaq.hoveredItem = null;
-    this.closeAllHomeFaqItems();
-  },
-
-  ensureFaqAnswerInner(answer) {
-    const existingInner = answer.querySelector(':scope > .faq-answer-inner');
-    if (existingInner) {
-      return existingInner;
-    }
-
-    const wrapper = document.createElement('div');
-    wrapper.className = 'faq-answer-inner';
-
-    while (answer.firstChild) {
-      wrapper.append(answer.firstChild);
-    }
-
-    answer.append(wrapper);
-    return wrapper;
-  },
-
-  setHomeFaqHoveredItem(item) {
-    const homeFaq = this.state.homeFaq;
-    if (!homeFaq) {
-      return;
-    }
-
-    if (homeFaq.hoveredItem === item) {
-      return;
-    }
-
-    homeFaq.hoveredItem = item;
-    homeFaq.items.forEach((faqItem) => {
-      this.setFaqItemTarget(faqItem, faqItem === item);
-    });
-  },
-
-  closeAllHomeFaqItems() {
-    const homeFaq = this.state.homeFaq;
-    if (!homeFaq) {
-      return;
-    }
-
-    homeFaq.items.forEach((item) => {
-      this.setFaqItemTarget(item, false);
-    });
-  },
-
-  animateHomeFaqHoverToggle(enabled) {
-    const homeFaq = this.state.homeFaq;
-    const hoverToggle = homeFaq?.hoverToggle;
-    if (!hoverToggle) {
-      return;
-    }
-
-    const nextClass = enabled ? 'is-switching-on' : 'is-switching-off';
-    hoverToggle.classList.remove('is-switching-on', 'is-switching-off');
-    void hoverToggle.offsetWidth;
-    hoverToggle.classList.add(nextClass);
-
-    if (homeFaq.toggleAnimationTimeout) {
-      window.clearTimeout(homeFaq.toggleAnimationTimeout);
-    }
-
-    homeFaq.toggleAnimationTimeout = window.setTimeout(() => {
-      hoverToggle.classList.remove('is-switching-on', 'is-switching-off');
-      homeFaq.toggleAnimationTimeout = null;
-    }, 620);
-  },
-
-  setFaqItemTarget(item, shouldOpen) {
-    const answer = item.querySelector('.faq-answer');
-    if (!answer) {
-      return;
-    }
-
-    item.dataset.targetOpen = shouldOpen ? 'true' : 'false';
-    this.syncFaqItemState(item, answer);
-  },
-
-  syncFaqItemState(item, answer) {
-    if (item.dataset.animating === 'true') {
-      return;
-    }
-
-    const targetOpen = item.dataset.targetOpen === 'true';
-
-    if (targetOpen === item.classList.contains('is-open')) {
-      return;
-    }
-
-    if (targetOpen) {
-      this.openFaqItem(item, answer);
-      return;
-    }
-
-    this.closeFaqItem(item, answer);
-  },
-
-  setHomeProgrammeActive(zoneId) {
-    const links = document.querySelectorAll('[data-programme-link]');
-    if (!links.length) {
-      return;
-    }
-
-    links.forEach((link) => {
-      const isActive = link.dataset.programmeLink === zoneId;
-      link.classList.toggle('is-active', isActive);
-      if (isActive) {
-        link.setAttribute('aria-current', 'location');
-      } else {
-        link.removeAttribute('aria-current');
-      }
-    });
-  },
-
-  syncHomeProgrammePinOffset() {
-    const rail = document.querySelector('.home-programme-rail');
-    const railFrame = document.querySelector('.home-programme-rail-frame');
-    if (!rail || !railFrame) {
-      return {
-        endOffset: 48,
-        startOffset: 48,
-      };
-    }
-
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-    const minGap = 32;
-    const fallbackGap = 48;
-
-    if (!viewportHeight) {
-      rail.style.setProperty('--home-programme-pin-top', `${fallbackGap}px`);
-      rail.style.setProperty('--home-programme-max-height', `calc(100vh - ${fallbackGap * 2}px)`);
-      return {
-        endOffset: fallbackGap,
-        startOffset: fallbackGap,
-      };
-    }
-
-    const naturalHeight = railFrame.scrollHeight || railFrame.offsetHeight || rail.offsetHeight || 0;
-    const maxVisibleHeight = Math.max(220, viewportHeight - minGap * 2);
-    const visibleHeight = Math.min(naturalHeight, maxVisibleHeight);
-    const centeredOffset = Math.round((viewportHeight - visibleHeight) / 2);
-    const pinOffset = Math.max(minGap, centeredOffset);
-    const endOffset = Math.max(minGap, viewportHeight - pinOffset - visibleHeight);
-
-    rail.style.setProperty('--home-programme-pin-top', `${pinOffset}px`);
-    rail.style.setProperty('--home-programme-max-height', `${visibleHeight}px`);
-
-    return {
-      endOffset,
-      startOffset: pinOffset,
-    };
-  },
-
-  initHomeProgrammeRail() {
-    const zones = Array.from(document.querySelectorAll('[data-home-zone]')).filter((zone) => zone.id);
-    const railLinks = document.querySelectorAll('[data-programme-link]');
-    if (!zones.length || !railLinks.length) {
-      return;
-    }
-
-    const hashId = window.location.hash ? window.location.hash.slice(1) : '';
-    const initialZoneId = zones.some((zone) => zone.id === hashId) ? hashId : zones[0].id;
-    this.setHomeProgrammeActive(initialZoneId);
-
-    const scrollTrigger = window.ScrollTrigger;
-    if (scrollTrigger?.create) {
-      const rail = document.querySelector('.home-programme-rail');
-      const controlMain = document.querySelector('.home-control-main');
-
-      if (rail && controlMain && window.matchMedia('(min-width: 992px)').matches) {
-        rail.classList.remove('is-sticky-fallback');
-
-        scrollTrigger.create({
-          trigger: rail,
-          start: () => {
-            const { startOffset } = this.syncHomeProgrammePinOffset();
-            return `top top+=${startOffset}`;
-          },
-          endTrigger: controlMain,
-          end: () => {
-            const { endOffset } = this.syncHomeProgrammePinOffset();
-            return `bottom bottom-=${endOffset}`;
-          },
-          pin: rail,
-          pinSpacing: false,
-          invalidateOnRefresh: true,
-          onRefreshInit: () => this.syncHomeProgrammePinOffset(),
-          onRefresh: () => this.syncHomeProgrammePinOffset(),
-        });
-      }
-
-      zones.forEach((zone) => {
-        scrollTrigger.create({
-          trigger: zone,
-          start: 'top center',
-          end: 'bottom center',
-          onEnter: () => this.setHomeProgrammeActive(zone.id),
-          onEnterBack: () => this.setHomeProgrammeActive(zone.id),
-        });
-      });
-
-      scrollTrigger.refresh();
-      return;
-    }
-
-    const rail = document.querySelector('.home-programme-rail');
-    if (rail && window.matchMedia('(min-width: 992px)').matches) {
-      this.syncHomeProgrammePinOffset();
-      rail.classList.add('is-sticky-fallback');
-    }
-
-    const updateActiveZone = () => {
-      let activeZone = zones[0];
-      zones.forEach((zone) => {
-        const rect = zone.getBoundingClientRect();
-        if (rect.top <= window.innerHeight * 0.42) {
-          activeZone = zone;
-        }
-      });
-
-      if (activeZone?.id) {
-        this.setHomeProgrammeActive(activeZone.id);
-      }
-    };
-
-    updateActiveZone();
-    window.addEventListener('scroll', updateActiveZone, { passive: true });
-  },
-
-  initHomeSignalAnomaly() {
-    const toggle = document.querySelector('[data-signal-toggle]');
-    const panel = document.querySelector('[data-signal-panel]');
-    if (!toggle || !panel) {
-      return;
-    }
-
-    panel.style.overflow = 'hidden';
-    panel.style.height = '0px';
-
-    toggle.addEventListener('click', () => {
-      if (toggle.dataset.animating === 'true') {
-        return;
-      }
-
-      const isOpen = toggle.getAttribute('aria-expanded') === 'true';
-      if (isOpen) {
-        this.closeHomeSignalPanel(toggle, panel);
-      } else {
-        this.openHomeSignalPanel(toggle, panel);
-      }
-    });
-  },
-
-  initHomeScheduleClock() {
-    const hourHand = document.querySelector('.home-schedule-clock-hand-hour');
-    const minuteHand = document.querySelector('.home-schedule-clock-hand-minute');
-    const secondHand = document.querySelector('.home-schedule-clock-hand-second');
-    if (!hourHand || !minuteHand || !secondHand) {
-      return;
-    }
-
-    window.cancelAnimationFrame(this.state.homeClockFrame);
-    window.clearTimeout(this.state.homeClockTimer);
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const renderClock = () => {
-      const now = new Date();
-      const milliseconds = now.getMilliseconds();
-      const seconds = now.getSeconds() + (prefersReducedMotion ? 0 : milliseconds / 1000);
-      const minutes = now.getMinutes() + seconds / 60;
-      const hours = (now.getHours() % 12) + minutes / 60;
-
-      hourHand.style.setProperty('--home-clock-rotation', `${hours * 30}deg`);
-      minuteHand.style.setProperty('--home-clock-rotation', `${minutes * 6}deg`);
-      secondHand.style.setProperty('--home-clock-rotation', `${seconds * 6}deg`);
-    };
-
-    const tick = () => {
-      renderClock();
-
-      if (prefersReducedMotion) {
-        const millisecondsUntilNextSecond = 1000 - new Date().getMilliseconds();
-        this.state.homeClockTimer = window.setTimeout(tick, millisecondsUntilNextSecond);
-        return;
-      }
-
-      this.state.homeClockFrame = window.requestAnimationFrame(tick);
-    };
-
-    tick();
-
-    window.addEventListener('pagehide', () => {
-      window.cancelAnimationFrame(this.state.homeClockFrame);
-      window.clearTimeout(this.state.homeClockTimer);
-      this.state.homeClockFrame = null;
-      this.state.homeClockTimer = null;
-    }, { once: true });
-  },
-
-  openHomeSignalPanel(toggle, panel) {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const stateLabel = toggle.querySelector('.home-signal-toggle-state');
-
-    toggle.dataset.animating = 'true';
-    toggle.setAttribute('aria-expanded', 'true');
-    if (stateLabel) {
-      stateLabel.textContent = 'Decoded';
-    }
-
-    panel.hidden = false;
-    panel.classList.add('is-open');
-
-    if (prefersReducedMotion) {
-      panel.style.height = 'auto';
-      delete toggle.dataset.animating;
-      return;
-    }
-
-    panel.style.height = '0px';
-    const endHeight = panel.scrollHeight;
-
-    window.requestAnimationFrame(() => {
-      panel.style.height = `${endHeight}px`;
-    });
-
-    const onTransitionEnd = (event) => {
-      if (event.propertyName !== 'height') {
-        return;
-      }
-
-      panel.style.height = 'auto';
-      delete toggle.dataset.animating;
-      panel.removeEventListener('transitionend', onTransitionEnd);
-    };
-
-    panel.addEventListener('transitionend', onTransitionEnd);
-  },
-
-  closeHomeSignalPanel(toggle, panel) {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const stateLabel = toggle.querySelector('.home-signal-toggle-state');
-
-    toggle.dataset.animating = 'true';
-    toggle.setAttribute('aria-expanded', 'false');
-    if (stateLabel) {
-      stateLabel.textContent = 'Decode';
-    }
-
-    if (prefersReducedMotion) {
-      panel.classList.remove('is-open');
-      panel.hidden = true;
-      panel.style.height = '0px';
-      delete toggle.dataset.animating;
-      return;
-    }
-
-    panel.style.height = `${panel.scrollHeight}px`;
-
-    window.requestAnimationFrame(() => {
-      panel.classList.remove('is-open');
-      panel.style.height = '0px';
-    });
-
-    const onTransitionEnd = (event) => {
-      if (event.propertyName !== 'height') {
-        return;
-      }
-
-      panel.hidden = true;
-      delete toggle.dataset.animating;
-      panel.removeEventListener('transitionend', onTransitionEnd);
-    };
-
-    panel.addEventListener('transitionend', onTransitionEnd);
-  },
-
-  initHomeZoneMotion() {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const gsapInstance = window.gsap;
-    const scrollTrigger = window.ScrollTrigger;
-
-    if (prefersReducedMotion || !gsapInstance || !scrollTrigger?.create) {
-      return;
-    }
-
-    const rail = document.querySelector('.home-programme-rail-frame');
-    if (rail) {
-      gsapInstance.from(rail, {
-        x: -28,
-        opacity: 0,
-        duration: 0.8,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: rail,
-          start: 'top 85%',
-        },
-      });
-    }
-
-    document.querySelectorAll('.home-zone-frame').forEach((frame) => {
-      const targets = frame.querySelectorAll(
-        '.home-zone-kicker, .home-zone-heading, .home-zone-stamp, .home-zone-text, .home-mission-tag, .home-mission-board, .home-protocol-item, .home-register-summary-item, .track-card, .track-route, .home-checkpoint, .faq-item'
-      );
-
-      if (!targets.length) {
-        return;
-      }
-
-      gsapInstance.from(targets, {
-        y: 32,
-        opacity: 0,
-        duration: 0.78,
-        stagger: 0.06,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: frame,
-          start: 'top 78%',
-        },
-        clearProps: 'all',
-      });
-    });
-
-    scrollTrigger.refresh();
-  },
-
-  openFaqItem(item, answer) {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const gsapInstance = window.gsap;
-    const answerInner = this.ensureFaqAnswerInner(answer);
-    const trigger = item.querySelector('.faq-question');
-    const startHeight = answer.getBoundingClientRect().height;
-
-    item.dataset.animating = 'true';
-    item.classList.add('is-open');
-    trigger?.setAttribute('aria-expanded', 'true');
-    answer.style.overflow = 'hidden';
-    answer.style.willChange = 'height';
-    answerInner.style.willChange = 'opacity';
-
-    if (!gsapInstance || prefersReducedMotion) {
-      answer.style.height = 'auto';
-      answer.style.willChange = '';
-      answerInner.style.opacity = '1';
-      answerInner.style.visibility = 'visible';
-      answerInner.style.willChange = '';
-      delete item.dataset.animating;
-      this.syncFaqItemState(item, answer);
-      return;
-    }
-
-    gsapInstance.killTweensOf(answer);
-    gsapInstance.killTweensOf(answerInner);
-    answer.style.height = `${startHeight}px`;
-    answerInner.style.visibility = 'hidden';
-    answerInner.style.opacity = '0';
-
-    const timeline = gsapInstance.timeline({
-      defaults: {
-        overwrite: true,
-      },
-      onComplete: () => {
-        answer.style.height = 'auto';
-        answer.style.willChange = '';
-        answerInner.style.opacity = '1';
-        answerInner.style.visibility = 'visible';
-        answerInner.style.willChange = '';
-        delete item.dataset.animating;
-        this.syncFaqItemState(item, answer);
-      },
-    });
-
-    timeline.set(answerInner, {
-      visibility: 'visible',
-      opacity: 1,
-    });
-
-    timeline.to(answer, {
-      height: answer.scrollHeight,
-      duration: 0.16,
-      ease: 'power2.out',
-    });
-  },
-
-  closeFaqItem(item, answer) {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const gsapInstance = window.gsap;
-    const answerInner = this.ensureFaqAnswerInner(answer);
-    const trigger = item.querySelector('.faq-question');
-    const startHeight = answer.getBoundingClientRect().height || answer.scrollHeight;
-
-    item.dataset.animating = 'true';
-    trigger?.setAttribute('aria-expanded', 'false');
-    answer.style.overflow = 'hidden';
-    answer.style.height = `${startHeight}px`;
-    answer.style.willChange = 'height';
-    answerInner.style.willChange = 'opacity';
-
-    if (!gsapInstance || prefersReducedMotion) {
-      answer.style.height = '0px';
-      answer.style.willChange = '';
-      answerInner.style.opacity = '0';
-      answerInner.style.visibility = 'hidden';
-      answerInner.style.willChange = '';
-      item.classList.remove('is-open');
-      delete item.dataset.animating;
-      this.syncFaqItemState(item, answer);
-      return;
-    }
-
-    gsapInstance.killTweensOf(answer);
-    gsapInstance.killTweensOf(answerInner);
-
-    const timeline = gsapInstance.timeline({
-      defaults: {
-        overwrite: true,
-      },
-      onComplete: () => {
-        answer.style.height = '0px';
-        answer.style.willChange = '';
-        answerInner.style.opacity = '0';
-        answerInner.style.visibility = 'hidden';
-        answerInner.style.willChange = '';
-        item.classList.remove('is-open');
-        delete item.dataset.animating;
-        this.syncFaqItemState(item, answer);
-      },
-    });
-
-    timeline.to(answerInner, {
-      opacity: 0,
-      duration: 0.04,
-      ease: 'none',
-    });
-
-    timeline.set(answerInner, {
-      visibility: 'hidden',
-    });
-
-    timeline.to(answer, {
-      height: 0,
-      duration: 0.14,
-      ease: 'power2.inOut',
-    });
   },
 
   initHomeLogoMotion() {
@@ -1304,16 +461,7 @@ const FamHack = {
     }
 
     this.state.participateCheckPromise = (async () => {
-      const launch = this.getCurrentLaunchState();
-
       if (!this.state.session) {
-        return {
-          destination: '/register',
-          label: launch.isRegistrationOpen ? 'Participate' : 'Sign In',
-        };
-      }
-
-      if (launch.isRegistrationOpen) {
         return {
           destination: '/register',
           label: 'Participate',
@@ -1324,7 +472,7 @@ const FamHack = {
       if (!dashboard) {
         return {
           destination: '/register',
-          label: 'Sign In',
+          label: 'Participate',
         };
       }
 
@@ -1346,8 +494,7 @@ const FamHack = {
 
   async initRegisterPage() {
     document.getElementById('choose-parent-btn')?.addEventListener('click', () => this.handleChooseParent());
-    document.getElementById('choose-child-btn')?.addEventListener('click', () => this.handleChooseChildRole());
-    document.getElementById('choose-student-btn')?.addEventListener('click', () => this.handleChooseChildRole());
+    document.getElementById('choose-student-btn')?.addEventListener('click', () => this.handleChooseStudent());
     document.getElementById('choose-signin-btn')?.addEventListener('click', () => this.handleChooseSignIn());
     document.getElementById('continue-child-btn')?.addEventListener('click', () => this.handleChooseChild());
     document.getElementById('back-to-role-btn')?.addEventListener('click', () => this.handleBackToRole());
@@ -1378,88 +525,23 @@ const FamHack = {
       }
     });
 
-    if (this.getCurrentLaunchState().isRegistrationOpen) {
-      await this.initPrelaunchRegisterPage();
-      return;
-    }
-
-    await this.initPostLaunchRegisterPage();
-  },
-
-  async initPrelaunchRegisterPage() {
+    this.setRegisterIntro('What are you?', 'Choose how you want to enter FamHack.');
+    this.setRegisterEmailMode('parent');
     this.state.registerIntent = 'role';
-    this.setRegisterIntro('Register', 'Choose whether you are joining as a Parent or Child.');
-    this.setRegisterEmailMode('register');
-    this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
-    this.setRegisteredConfirmation(this.state.registration);
-    this.setButtonLabel(document.getElementById('send-otp-btn'), this.state.session ? 'Continue' : 'Send verification code');
 
-    if (!this.state.session) {
+    if (this.state.session) {
+      const dashboard = await this.fetchDashboard({ suppressMissing: true });
+      if (dashboard) {
+        this.redirectToDashboard();
+        return;
+      }
+
       this.showStep('role');
-      return;
+      this.showPageMessage(
+        'register-page-message',
+        'You are already signed in. Choose whether you are creating a family or joining one.'
+      );
     }
-
-    const status = await this.fetchRegistrationStatus({ suppressMissing: true });
-    if (status?.registration) {
-      this.showRegisteredConfirmation(status.registration);
-      return;
-    }
-
-    this.showStep('role');
-  },
-
-  async initPostLaunchRegisterPage() {
-    this.state.registerIntent = 'signin';
-    this.setRegisterIntro('Sign in', 'Use your email to continue into FamHack.');
-    this.setRegisterEmailMode('signin');
-    this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
-    this.setButtonLabel(document.getElementById('send-otp-btn'), this.state.session ? 'Continue' : 'Send sign-in code');
-
-    const backButton = document.getElementById('back-from-parent-btn');
-    if (backButton) {
-      backButton.hidden = true;
-    }
-
-    if (!this.state.session) {
-      this.showStep('email');
-      return;
-    }
-
-    await this.routePostLaunchRegisterUser();
-  },
-
-  async routePostLaunchRegisterUser() {
-    const dashboard = await this.fetchDashboard({ suppressMissing: true });
-    if (dashboard) {
-      this.redirectToDashboard();
-      return;
-    }
-
-    const status = await this.fetchRegistrationStatus({ suppressMissing: true });
-    const registration = status?.registration || null;
-
-    if (!registration?.role) {
-      this.showStep('email');
-      this.showPageMessage('register-page-message', 'Registration has closed for this account.');
-      return;
-    }
-
-    this.state.registration = registration;
-
-    if (!status?.launch?.isNormalParticipationOpen) {
-      this.showRegisteredConfirmation(registration);
-      return;
-    }
-
-    if (registration.role === 'parent') {
-      this.state.registerIntent = 'parent';
-      this.setRegisterIntro('Create a Family', 'Parents create the family first on 20 March.');
-      this.showStep('create-team');
-      this.showPageMessage('register-page-message', 'Signed in. Create a Family to continue.');
-      return;
-    }
-
-    this.redirect('/join');
   },
 
   async initJoinPage() {
@@ -1511,11 +593,6 @@ const FamHack = {
         return;
       }
 
-      const canJoin = await this.ensureJoinAccess();
-      if (!canJoin) {
-        return;
-      }
-
       if (emailInput && this.state.session.user?.email) {
         emailInput.value = this.state.session.user.email;
         emailInput.disabled = true;
@@ -1550,42 +627,19 @@ const FamHack = {
 
   async initCtfPage() {
     const signOutButton = document.getElementById('ctf-sign-out-btn');
-    const challengeShell = document.getElementById('ctf-challenge-shell');
-    const sigintModal = document.getElementById('ctf-sigint-modal');
     signOutButton?.addEventListener('click', () => this.handleSignOut());
     if (signOutButton) {
       signOutButton.hidden = !this.state.session;
     }
-    challengeShell?.addEventListener('submit', (event) => this.handleCtfSubmit(event));
-    challengeShell?.addEventListener('submit', (event) => {
-      if (event.target.closest('[data-ctf-prize-claim-form]')) {
-        this.handleCtfPrizeClaim(event);
-      }
-    });
-    challengeShell?.addEventListener('click', (event) => {
+    document.getElementById('ctf-challenge-shell')?.addEventListener('submit', (event) => this.handleCtfSubmit(event));
+    document.getElementById('ctf-challenge-shell')?.addEventListener('click', (event) => {
       const nextButton = event.target.closest('[data-ctf-next]');
       if (nextButton) {
         this.advanceSolvedCtfChallenge();
-        return;
-      }
-
-      const sigintOpenButton = event.target.closest('[data-ctf-sigint-open]');
-      if (sigintOpenButton) {
-        this.openCtfSigintModal();
-      }
-    });
-    sigintModal?.addEventListener('click', (event) => {
-      if (event.target === sigintModal || event.target.closest('[data-ctf-sigint-close]')) {
-        this.closeCtfSigintModal();
       }
     });
 
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        this.closeCtfSigintModal();
-      }
-      this.handleKonamiKeydown(event);
-    });
+    document.addEventListener('keydown', (event) => this.handleKonamiKeydown(event));
 
     this.setCtfLoading(true);
     await this.loadCtfState();
@@ -1595,15 +649,20 @@ const FamHack = {
     this.state.registerIntent = 'parent';
     this.showFieldError('role-error', '');
     this.showPageMessage('register-page-message', '');
-    this.setRegisterEmailMode('register');
+    this.setRegisterEmailMode('parent');
     this.setRegisterIntro(
-      'Register as Parent',
-      'Use your email to save your place before 28 March.'
+      'Create your academic family',
+      'Parents verify their email first, then create the family dashboard.'
     );
 
-    this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
-    this.setButtonLabel(document.getElementById('send-otp-btn'), this.state.session ? 'Continue' : 'Send verification code');
+    if (this.state.session) {
+      this.showStep('create-team');
+      this.showPageMessage('register-page-message', 'You are signed in. Finish creating your family.');
+      return;
+    }
+
     this.showStep('email');
+    this.showPageMessage('register-page-message', '');
     document.getElementById('email-input')?.focus();
   },
 
@@ -1613,40 +672,35 @@ const FamHack = {
     this.showPageMessage('register-page-message', '');
     this.setRegisterEmailMode('signin');
     this.setRegisterIntro(
-      'Sign in',
-      'Use your email to continue into FamHack.'
+      'Sign in to FamHack',
+      'Use your email to get back into your account. If you already have a family, you will land on your dashboard.'
     );
 
     if (this.state.session) {
-      this.routePostLaunchRegisterUser().catch((error) => {
-        console.error(error);
-        this.showPageMessage('register-page-message', error.message || 'Unable to continue right now.');
-      });
+      this.showPageMessage('register-page-message', 'You are already signed in.');
       return;
     }
 
-    this.syncRegisterEmailInput({ lockToSession: false });
-    this.setButtonLabel(document.getElementById('send-otp-btn'), 'Send sign-in code');
     this.showStep('email');
+    this.showPageMessage('register-page-message', '');
     document.getElementById('email-input')?.focus();
   },
 
-  handleChooseChildRole() {
-    this.state.registerIntent = 'child';
+  handleChooseStudent() {
+    this.state.registerIntent = 'student';
     this.showFieldError('role-error', '');
     this.showPageMessage('register-page-message', '');
     this.setRegisterIntro(
-      'Register as Child',
-      'Use your email to save your place before 28 March.'
+      'Join an existing family',
+      'Enter the family code from an approved parent, or open the invite link they sent you.'
     );
-
-    this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
-    this.setButtonLabel(document.getElementById('send-otp-btn'), this.state.session ? 'Continue' : 'Send verification code');
-    this.showStep('email');
-    document.getElementById('email-input')?.focus();
+    this.showStep('child');
+    document.getElementById('role-family-code-input')?.focus();
   },
 
   handleChooseChild() {
+    this.showFieldError('role-error', '');
+
     const joinCodeInput = document.getElementById('role-family-code-input');
     const joinCode = this.normalizeJoinCode(joinCodeInput?.value);
 
@@ -1659,86 +713,17 @@ const FamHack = {
   },
 
   handleBackToRole() {
+    this.state.registerIntent = 'role';
     this.showFieldError('role-error', '');
-    this.showFieldError('email-error', '');
-    this.showFieldError('otp-error', '');
-
-    if (this.getCurrentLaunchState().isRegistrationOpen) {
-      this.state.registerIntent = 'role';
-      this.setRegisterEmailMode('register');
-      this.setRegisterIntro('Register', 'Choose whether you are joining as a Parent or Child.');
-      this.showStep('role');
-      return;
-    }
-
-    this.state.registerIntent = 'signin';
-    this.setRegisterEmailMode('signin');
-    this.setRegisterIntro('Sign in', 'Use your email to continue into FamHack.');
-    this.showStep('email');
-  },
-
-  async fetchRegistrationStatus({ suppressMissing } = {}) {
-    try {
-      const payload = await this.apiRequest('/api/registration/status');
-      this.state.registration = payload.registration || null;
-      return payload;
-    } catch (error) {
-      if (suppressMissing && (error.status === 401 || error.status === 404)) {
-        this.state.registration = null;
-        return null;
-      }
-      throw error;
-    }
-  },
-
-  showRegisteredConfirmation(registration, message = '') {
-    this.setRegisteredConfirmation(registration);
-    this.showStep('registered');
-    this.showPageMessage('register-page-message', message);
-  },
-
-  async completePrelaunchRegistration() {
-    const requestedRole = this.state.registerIntent;
-    if (!['parent', 'child'].includes(requestedRole)) {
-      this.showFieldError('role-error', 'Choose Parent or Child before continuing.');
-      this.handleBackToRole();
-      return;
-    }
-
-    try {
-      const payload = await this.apiRequest('/api/registration/complete', {
-        method: 'POST',
-        body: {
-          role: requestedRole,
-        },
-      });
-
-      this.showRegisteredConfirmation(payload.registration);
-    } catch (error) {
-      if (error.status === 409 && error.details?.registration) {
-        this.showRegisteredConfirmation(error.details.registration, error.message);
-        return;
-      }
-
-      throw error;
-    }
-  },
-
-  async ensureJoinAccess() {
-    const status = await this.fetchRegistrationStatus({ suppressMissing: true });
-    if (status?.registration?.role === 'child') {
-      return true;
-    }
-
-    this.redirect('/register');
-    return false;
+    this.setRegisterEmailMode('parent');
+    this.setRegisterIntro('What are you?', 'Choose how you want to enter FamHack.');
+    this.showStep('role');
   },
 
   async handleSendOTP() {
-    const launch = this.getCurrentLaunchState();
     const sendButton = document.getElementById('send-otp-btn');
     const emailInput = document.getElementById('email-input');
-    const email = this.normalizeEmail(this.state.session?.user?.email || emailInput?.value);
+    const email = this.normalizeEmail(emailInput?.value);
 
     this.showFieldError('email-error', '');
     this.showFieldError('join-code-error', '');
@@ -1764,11 +749,7 @@ const FamHack = {
 
     if (this.state.session) {
       if (this.state.page === 'register') {
-        if (launch.isRegistrationOpen) {
-          await this.completePrelaunchRegistration();
-        } else {
-          await this.routePostLaunchRegisterUser();
-        }
+        this.showStep('create-team');
       } else if (this.state.page === 'join') {
         this.showStep('join-team');
       }
@@ -1783,11 +764,7 @@ const FamHack = {
     this.setButtonState(sendButton, {
       busy: true,
       label: 'Sending...',
-      idleLabel: this.state.page === 'join'
-        ? (this.state.session ? 'Continue' : 'Send OTP')
-        : launch.isRegistrationOpen
-          ? 'Send verification code'
-          : 'Send sign-in code',
+      idleLabel: this.state.page === 'join' && this.state.session ? 'Continue' : 'Send OTP',
     });
 
     try {
@@ -1817,17 +794,12 @@ const FamHack = {
       this.setButtonState(sendButton, {
         busy: false,
         label: 'Sending...',
-        idleLabel: this.state.page === 'join'
-          ? (this.state.session ? 'Continue' : 'Send OTP')
-          : launch.isRegistrationOpen
-            ? 'Send verification code'
-            : 'Send sign-in code',
+        idleLabel: this.state.page === 'join' && this.state.session ? 'Continue' : 'Send OTP',
       });
     }
   },
 
   async handleVerifyOTP() {
-    const launch = this.getCurrentLaunchState();
     const verifyButton = document.getElementById('verify-otp-btn');
     const emailInput = document.getElementById('email-input');
     const otp = this.getOTPValue();
@@ -1850,19 +822,24 @@ const FamHack = {
       const data = await this.verifyEmailOtp(email, otp);
 
       this.state.session = data.session;
+      const dashboard = await this.fetchDashboard({ suppressMissing: true });
+      if (dashboard) {
+        this.redirectToDashboard();
+        return;
+      }
 
       if (this.state.page === 'register') {
-        if (launch.isRegistrationOpen) {
-          await this.completePrelaunchRegistration();
+        if (this.state.registerIntent === 'signin') {
+          this.handleBackToRole();
+          this.showPageMessage(
+            'register-page-message',
+            'Signed in. Choose whether you are creating a family or joining one.'
+          );
         } else {
-          await this.routePostLaunchRegisterUser();
+          this.showStep('create-team');
+          this.showPageMessage('register-page-message', 'Verified. Finish creating your family.');
         }
       } else if (this.state.page === 'join') {
-        const canJoin = await this.ensureJoinAccess();
-        if (!canJoin) {
-          return;
-        }
-
         const joinCode = this.normalizeJoinCode(document.getElementById('join-code-input')?.value);
         const team = this.state.teamPreview || await this.lookupTeam(joinCode, { showErrors: true });
         if (!team) {
@@ -1875,10 +852,7 @@ const FamHack = {
       }
     } catch (error) {
       console.error(error);
-      this.showFieldError(
-        'otp-error',
-        error.status === 403 ? (error.message || 'This flow is not available yet.') : this.getFriendlyOtpErrorMessage(error)
-      );
+      this.showFieldError('otp-error', this.getFriendlyOtpErrorMessage(error));
       this.clearOTPInputs();
     } finally {
       this.setButtonState(verifyButton, {
@@ -2043,7 +1017,7 @@ const FamHack = {
     this.setButtonState(createButton, {
       busy: true,
       label: 'Creating...',
-      idleLabel: 'Create a Family',
+      idleLabel: 'Create Family',
     });
 
     try {
@@ -2064,7 +1038,7 @@ const FamHack = {
       this.setButtonState(createButton, {
         busy: false,
         label: 'Creating...',
-        idleLabel: 'Create a Family',
+        idleLabel: 'Create Family',
       });
     }
   },
@@ -2148,20 +1122,11 @@ const FamHack = {
     });
 
     const text = await response.text();
-    let payload = {};
-
-    if (text) {
-      try {
-        payload = JSON.parse(text);
-      } catch (error) {
-        payload = {};
-      }
-    }
+    const payload = text ? JSON.parse(text) : {};
 
     if (!response.ok) {
       const error = new Error(payload.error || 'Request failed');
       error.status = response.status;
-      error.details = payload.details;
       throw error;
     }
 
@@ -2170,193 +1135,6 @@ const FamHack = {
 
   async fetchCtfState() {
     return this.apiRequest('/api/ctf/state');
-  },
-
-  hasAcknowledgedCtfEntryNotice() {
-    try {
-      return window.localStorage.getItem('famhack-ctf-entry-notice-acknowledged') === '1';
-    } catch (error) {
-      return false;
-    }
-  },
-
-  markCtfEntryNoticeAcknowledged() {
-    try {
-      window.localStorage.setItem('famhack-ctf-entry-notice-acknowledged', '1');
-    } catch (error) {
-      // Ignore storage failures and continue with the CTF page reveal.
-    }
-  },
-
-  async waitForCtfIntroLoaderGate() {
-    try {
-      await window.FamHackCtfIntro?.waitForBoardLoader?.();
-    } catch (error) {
-      // Fall back to the normal loader flow if the intro gate is unavailable.
-    }
-  },
-
-  resetCtfScrollPosition() {
-    const smoother = window.ScrollSmoother?.get?.();
-
-    if (smoother) {
-      smoother.scrollTo(0, false);
-    }
-
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    window.scrollTo(0, 0);
-
-    window.requestAnimationFrame(() => {
-      const nextSmoother = window.ScrollSmoother?.get?.();
-      if (nextSmoother) {
-        nextSmoother.scrollTo(0, false);
-      }
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-      window.scrollTo(0, 0);
-    });
-  },
-
-  async maybeShowCtfEntryNotice() {
-    const notice = document.getElementById('ctf-entry-notice');
-    const confirmButton = document.getElementById('ctf-entry-notice-confirm');
-    const noticeCard = notice?.querySelector('.ctf-entry-notice-card');
-
-    if (!notice || !confirmButton || this.hasAcknowledgedCtfEntryNotice()) {
-      return;
-    }
-
-    notice.hidden = false;
-    notice.style.opacity = '1';
-    document.body.classList.add('ctf-entry-notice-open');
-    this.resetCtfScrollPosition();
-
-    if (typeof window.gsap !== 'undefined' && noticeCard) {
-      window.gsap.fromTo(
-        noticeCard,
-        { opacity: 0, y: 22, scale: 0.985 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.34, ease: 'power2.out' },
-      );
-    }
-
-    await new Promise((resolve) => {
-      const handleConfirm = () => {
-        this.markCtfEntryNoticeAcknowledged();
-        document.body.classList.remove('ctf-entry-notice-open');
-        if (document.activeElement instanceof HTMLElement) {
-          document.activeElement.blur();
-        }
-
-        const finish = () => {
-          notice.hidden = true;
-          this.resetCtfScrollPosition();
-          resolve();
-        };
-
-        if (typeof window.gsap !== 'undefined' && noticeCard) {
-          window.gsap.to(noticeCard, {
-            opacity: 0,
-            y: -10,
-            scale: 0.985,
-            duration: 0.2,
-            ease: 'power1.in',
-            onComplete: finish,
-          });
-          window.gsap.to(notice, {
-            opacity: 0,
-            duration: 0.2,
-            ease: 'power1.in',
-            onComplete: () => {
-              notice.style.opacity = '';
-            },
-          });
-        } else {
-          finish();
-        }
-      };
-
-      confirmButton.addEventListener('click', handleConfirm, { once: true });
-    });
-  },
-
-  logCtfSigintConsoleHint() {
-    if (this.state.ctfSigintConsoleHintLogged) {
-      return;
-    }
-
-    this.state.ctfSigintConsoleHintLogged = true;
-
-    console.log('%cBackstage visitor detected.', 'color:#fc2f20;font-family:"Azeret Mono",monospace;font-size:15px;font-weight:700;');
-    console.log('%cThe rabbit holes get deeper over at SIGINT.', 'color:#ffe9ce;font-family:"Azeret Mono",monospace;font-size:12px;');
-    console.log('Website: https://sigint.mx/');
-    console.log('Discord: https://discord.gg/2raDA8pbtd');
-  },
-
-  openCtfSigintModal() {
-    const modal = document.getElementById('ctf-sigint-modal');
-    const card = modal?.querySelector('.ctf-sigint-card');
-
-    if (!modal || this.state.ctfSigintModalOpen) {
-      return;
-    }
-
-    this.state.ctfSigintModalOpen = true;
-    modal.hidden = false;
-    modal.style.opacity = '1';
-    document.body.classList.add('ctf-sigint-modal-open');
-    this.logCtfSigintConsoleHint();
-
-    if (typeof window.gsap !== 'undefined' && card) {
-      window.gsap.fromTo(
-        card,
-        { opacity: 0, y: 24, scale: 0.986 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.32, ease: 'power2.out' },
-      );
-    }
-  },
-
-  closeCtfSigintModal(options = {}) {
-    const modal = document.getElementById('ctf-sigint-modal');
-    const card = modal?.querySelector('.ctf-sigint-card');
-
-    if (!modal || (!this.state.ctfSigintModalOpen && modal.hidden)) {
-      return;
-    }
-
-    this.state.ctfSigintModalOpen = false;
-    document.body.classList.remove('ctf-sigint-modal-open');
-
-    const finish = () => {
-      modal.hidden = true;
-      modal.style.opacity = '';
-    };
-
-    if (options.silent || typeof window.gsap === 'undefined' || !card) {
-      finish();
-      return;
-    }
-
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-
-    window.gsap.to(card, {
-      opacity: 0,
-      y: -10,
-      scale: 0.986,
-      duration: 0.2,
-      ease: 'power1.in',
-      onComplete: finish,
-    });
-    window.gsap.to(modal, {
-      opacity: 0,
-      duration: 0.2,
-      ease: 'power1.in',
-      onComplete: () => {
-        modal.style.opacity = '';
-      },
-    });
   },
 
   setCtfLoading(isLoading) {
@@ -2387,16 +1165,13 @@ const FamHack = {
       this.state.ctfKonamiRetry = false;
       this.state.ctfKonamiSolved = false;
       this.renderCtf(ctf);
-      await this.waitForCtfIntroLoaderGate();
       this.setCtfLoading(false);
-      await this.maybeShowCtfEntryNotice();
     } catch (error) {
       console.error(error);
       if (error.status === 401) {
         this.redirect('/register');
         return;
       }
-      await this.waitForCtfIntroLoaderGate();
       this.setCtfLoading(false);
       this.showFatalError(error.message || 'Unable to load the CTF right now.');
     }
@@ -2498,19 +1273,17 @@ const FamHack = {
       signOutButton.hidden = !this.state.session;
     }
 
-      if (statusBanner) {
-        statusBanner.hidden = false;
-        if (isGuest) {
-          statusBanner.classList.remove('is-success');
-          statusBanner.textContent = 'Guest mode only. Your progress will not be saved.';
+    if (statusBanner) {
+      statusBanner.hidden = false;
+      if (isGuest) {
+        statusBanner.classList.remove('is-success');
+        statusBanner.textContent = 'Guest mode only. Your progress will not be saved.';
       } else if (ctf.completionMessage) {
         statusBanner.classList.add('is-success');
         statusBanner.textContent = ctf.completionMessage.copy;
       } else {
         statusBanner.classList.remove('is-success');
-        statusBanner.textContent = ctf.leaderboard.some((row) => row.winner)
-          ? 'A Y1 winner is on the board. The CTF is still open for more clears.'
-          : 'No Y1 winners yet. The CTF is still running.';
+        statusBanner.textContent = 'The first person to clear all six challenges wins the prize.';
       }
     }
 
@@ -2560,9 +1333,7 @@ const FamHack = {
       return;
     }
 
-    const visibleRows = ctf.leaderboard.slice(0, this.config.ctfLeaderboardVisibleCount);
-
-    container.innerHTML = visibleRows.map((row) => {
+    container.innerHTML = ctf.leaderboard.map((row) => {
       const isCurrentPlayer = !ctf.viewer?.guest && row.userId === ctf.viewer.id;
       const stamp = row.reachedAt ? this.formatDateTime(row.reachedAt) : 'Waiting for first clear';
       const levelMarkup = row.winner
@@ -2598,62 +1369,6 @@ const FamHack = {
     `;
   },
 
-  getCtfPrizeYearOptions(selectedStudyYear = '') {
-    const selected = String(selectedStudyYear || '').trim().toLowerCase();
-    const options = [
-      ['year_1', 'Year 1'],
-      ['year_2', 'Year 2'],
-      ['year_3', 'Year 3'],
-      ['year_4', 'Year 4'],
-      ['masters', "Master's"],
-      ['phd', 'PhD'],
-    ];
-
-    return options.map(([value, label]) => (
-      `<option value="${value}"${selected === value ? ' selected' : ''}>${label}</option>`
-    )).join('');
-  },
-
-  getCtfPrizeClaimStatusMarkup(ctf) {
-    const claim = ctf?.prizeClaim || {};
-    if (!claim.recorded) {
-      return '<p class="ctf-prize-claim-note">Save your year for prize checking. The board stays open until a Y1 winner is confirmed.</p>';
-    }
-
-    if (claim.eligible) {
-      return ctf?.completionMessage?.winner
-        ? '<p class="ctf-prize-claim-note is-success">First through the board. You won!</p>'
-        : `<p class="ctf-prize-claim-note is-success">Recorded as ${this.escapeHtml(claim.studyYearLabel)}.</p>`;
-    }
-
-    return `<p class="ctf-prize-claim-note">Recorded as ${this.escapeHtml(claim.studyYearLabel)}. Your clear still counts, and the board stays open until a Y1 winner is confirmed.</p>`;
-  },
-
-  renderCtfPrizeClaimBlock(ctf) {
-    if (ctf.viewer?.guest) {
-      return '';
-    }
-
-    const claim = ctf.prizeClaim || {};
-    const buttonLabel = claim.recorded ? 'Update Year' : 'Save Year';
-
-    return `
-      <form class="ctf-prize-claim" data-ctf-prize-claim-form autocomplete="off">
-        <p class="ctf-step-kicker">Prize Eligibility</p>
-        <p class="ctf-challenge-copy">Which year are you in?</p>
-        <div class="ctf-prize-claim-controls">
-          <select id="ctf-prize-study-year" class="form-input form-select ctf-prize-claim-select" name="studyYear">
-            <option value="">Select your year</option>
-            ${this.getCtfPrizeYearOptions(claim.studyYear)}
-          </select>
-          <button type="submit" class="copy-btn ctf-prize-claim-submit" data-ctf-prize-claim-submit>${buttonLabel}</button>
-        </div>
-        ${this.getCtfPrizeClaimStatusMarkup(ctf)}
-        <p id="ctf-prize-claim-error" class="error-message ctf-inline-error"></p>
-      </form>
-    `;
-  },
-
   renderCtfChallenge() {
     const shell = document.getElementById('ctf-challenge-shell');
     if (!shell) {
@@ -2683,23 +1398,17 @@ const FamHack = {
           <p class="ctf-step-kicker">Run Complete</p>
           <h2 class="ctf-challenge-title">${this.escapeHtml(ctf.completionMessage?.title || 'Every signal is clear.')}</h2>
           <p class="ctf-challenge-copy">${this.escapeHtml(ctf.completionMessage?.copy || 'You finished the full FamHack CTF.')}</p>
-          ${this.renderCtfPrizeClaimBlock(ctf)}
-          <div class="ctf-completion-actions">
-            <button type="button" class="copy-btn ctf-sigint-trigger" data-ctf-sigint-open>Interested in more?</button>
-          </div>
         </section>
       `;
       return;
     }
-
-    this.closeCtfSigintModal({ silent: true });
 
     const gate = this.state.ctfPendingAdvanceState;
     if (gate) {
       if (gate.mode === 'konami') {
         shell.innerHTML = `
           <section class="ctf-challenge-card ctf-challenge-card-konami">
-            <div class="ctf-konami-stage" aria-label="Konami unlocked">
+            <div class="ctf-konami-stage" tabindex="0" aria-label="Konami unlocked">
               <p class="ctf-konami-text is-solved">${this.escapeHtml(gate.successTitle)}</p>
             </div>
             <div class="ctf-gate-actions">
@@ -2759,17 +1468,19 @@ const FamHack = {
 
       shell.innerHTML = `
         <section class="ctf-challenge-card ctf-challenge-card-konami">
-          <div class="ctf-konami-stage" aria-label="Konami challenge">
+          <div class="ctf-konami-stage" tabindex="0" aria-label="Konami challenge">
             <p id="ctf-konami-text" class="ctf-konami-text${konamiClass}">${this.escapeHtml(konamiText)}</p>
           </div>
           <p id="ctf-answer-error" class="error-message ctf-inline-error"></p>
         </section>
       `;
+
+      document.querySelector('.ctf-konami-stage')?.focus();
       return;
     }
 
     shell.innerHTML = `
-      <form class="ctf-challenge-card ctf-challenge-card-form" autocomplete="off">
+      <form class="ctf-challenge-card" autocomplete="off">
         <p class="ctf-step-kicker">Challenge ${challenge.number} / ${ctf.challengeCount}</p>
         <h2 class="ctf-challenge-title">${this.escapeHtml(challenge.title)}</h2>
         ${promptMarkup}
@@ -2849,7 +1560,7 @@ const FamHack = {
 
   async handleCtfSubmit(event) {
     const form = event.target.closest('form');
-    if (!form || form.matches('[data-ctf-prize-claim-form]')) {
+    if (!form) {
       return;
     }
 
@@ -2889,54 +1600,6 @@ const FamHack = {
         busy: false,
         label: 'Checking...',
         idleLabel: challenge.actionLabel || 'Submit Answer',
-      });
-    }
-  },
-
-  async handleCtfPrizeClaim(event) {
-    const form = event.target.closest('[data-ctf-prize-claim-form]');
-    if (!form) {
-      return;
-    }
-
-    event.preventDefault();
-
-    const select = form.querySelector('#ctf-prize-study-year');
-    const submitButton = form.querySelector('[data-ctf-prize-claim-submit]');
-    const studyYear = String(select?.value || '').trim().toLowerCase();
-
-    this.showFieldError('ctf-prize-claim-error', '');
-
-    if (!studyYear) {
-      this.showFieldError('ctf-prize-claim-error', 'Choose your year of study.');
-      select?.focus();
-      return;
-    }
-
-    this.setButtonState(submitButton, {
-      busy: true,
-      label: 'Saving...',
-      idleLabel: submitButton?.textContent || 'Save Year',
-    });
-
-    try {
-      await this.apiRequest('/api/ctf/submit', {
-        method: 'POST',
-        body: {
-          action: 'prize-claim',
-          studyYear,
-        },
-      });
-      const refreshedCtf = await this.fetchCtfState();
-      this.renderCtf(refreshedCtf);
-    } catch (error) {
-      console.error(error);
-      this.showFieldError('ctf-prize-claim-error', error.message || 'Unable to save prize eligibility right now.');
-    } finally {
-      this.setButtonState(submitButton, {
-        busy: false,
-        label: 'Saving...',
-        idleLabel: submitButton?.textContent || 'Save Year',
       });
     }
   },
@@ -3093,7 +1756,7 @@ const FamHack = {
     try {
       return await this.apiRequest('/api/team/dashboard');
     } catch (error) {
-      if (suppressMissing && (error.status === 404 || error.status === 401 || error.status === 403)) {
+      if (suppressMissing && (error.status === 404 || error.status === 401)) {
         return null;
       }
       throw error;
@@ -3229,7 +1892,7 @@ const FamHack = {
         statusBanner.textContent = `This family is full at ${dashboard.team.approvedCount}/${dashboard.team.maxMembers}. Pending requests can be declined, but no further approvals can go through until someone leaves.`;
       } else {
         statusBanner.hidden = !(dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved');
-        statusBanner.textContent = 'Share the family code or the invite link below with other parents and children.';
+        statusBanner.textContent = 'Share the family code or the invite link below with other parents and students.';
       }
     }
 
@@ -3314,7 +1977,7 @@ const FamHack = {
 
     if (options.reviewable) {
       const approveDisabled = Boolean(dashboard?.team?.isFull);
-      const approveStudentLabel = approveDisabled ? 'Family Full' : 'Approve as Child';
+      const approveStudentLabel = approveDisabled ? 'Family Full' : 'Approve as Student';
       const approveParentLabel = approveDisabled ? 'Family Full' : 'Approve as Parent';
       return `
         <div class="member-card">
@@ -3626,13 +2289,6 @@ const FamHack = {
   },
 
   redirect(path) {
-    if (typeof window.famhackNavigateWithTransition === 'function') {
-      const handled = window.famhackNavigateWithTransition(path);
-      if (handled !== false) {
-        return;
-      }
-    }
-
     window.location.href = path;
   },
 
@@ -3769,11 +2425,6 @@ const FamHack = {
     closeBtn?.addEventListener('click', closeMenu);
     backdrop?.addEventListener('click', closeMenu);
     closeClickArea?.addEventListener('click', closeMenu);
-    menuItems.forEach((item) => {
-      item.querySelectorAll('a[href]').forEach((link) => {
-        link.addEventListener('click', closeMenu);
-      });
-    });
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && flyout.classList.contains('is-open')) {

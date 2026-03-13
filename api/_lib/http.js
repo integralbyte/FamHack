@@ -47,7 +47,7 @@ export function statusFromError(error) {
 
   if (
     message === 'Choose whether you are registering as a Parent or Child'
-    || message === 'Normal participation opens on 14 March.'
+    || message === 'Normal participation opens on 20 March.'
     || message === 'Registration has closed for this account.'
     || message === 'Only accounts registered as a Parent can create a Family.'
     || message === 'Only accounts registered as a Child can join a Family.'
@@ -57,7 +57,7 @@ export function statusFromError(error) {
     || message === 'You must agree to attend and participate in FamHack to claim a key ring.'
   ) {
     return (
-      message === 'Normal participation opens on 14 March.'
+      message === 'Normal participation opens on 20 March.'
       || message === 'Registration has closed for this account.'
       || message.startsWith('Only accounts registered as a ')
     ) ? 403 : 400;

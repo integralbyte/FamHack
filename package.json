@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npx vercel dev"
+    "dev": "npx vercel dev",
+    "preview:ctf": "node scripts/preview-ctf-intro.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"

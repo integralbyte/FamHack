@@ -19,7 +19,7 @@ export function isNormalParticipationOpen(now = new Date()) {
 
 export function assertNormalParticipationOpen() {
   if (!isNormalParticipationOpen()) {
-    throw new Error('Normal participation opens on 14 March.');
+    throw new Error('Normal participation opens on 20 March.');
   }
 }
 

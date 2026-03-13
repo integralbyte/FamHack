@@ -1,0 +1,2834 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>macOS Web Experience</title>
+
+    <!-- External Libraries via CDN for single-file functionality -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+    <style>
+        :root {
+            --bg-peal: rgba(255, 255, 255, 0.1);
+            /* non-blurred fallback */
+            --dock-bg: rgba(20, 20, 20, 0.3);
+            --menu-bg: rgba(20, 20, 20, 0.3);
+            --window-bg: rgba(30, 30, 32, 0.85);
+            --window-header: #2d2d2d;
+            --text-color: #ffffff;
+            --accent: #007aff;
+            --system-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: var(--system-font);
+            color: var(--text-color);
+            /* Default wallpaper */
+            background-image: url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80');
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            animation: none;
+            cursor: default;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* --- Boot Screen --- */
+        #power-on-screen {
+            position: fixed;
+            inset: 0;
+            background: #06070a;
+            z-index: 100000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .power-on-button {
+            width: 84px;
+            height: 84px;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            color: #fc2f20;
+            font-size: 52px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.14s ease;
+        }
+
+        .power-on-button:hover {
+            color: #fc2f20;
+            transform: scale(1.08);
+        }
+
+        .power-on-button:active {
+            color: #fc2f20;
+            transform: scale(0.96);
+        }
+
+        #boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease-out;
+        }
+
+        .apple-logo {
+            color: white;
+            font-size: 80px;
+            margin-bottom: 40px;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            border-radius: 3px;
+            transition: width 3s ease-in-out;
+        }
+
+        #mac-ctf-transition {
+            position: fixed;
+            inset: 0;
+            z-index: 100001;
+            display: none;
+            pointer-events: none;
+            overflow: hidden;
+            background: #05070c;
+            opacity: 0;
+            transition: opacity 0.24s ease;
+        }
+
+        #mac-ctf-transition::before,
+        #mac-ctf-transition::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+        }
+
+        #mac-ctf-transition::before {
+            opacity: 0;
+            background:
+                radial-gradient(circle at center, rgba(5, 7, 12, 0) 0 24%, rgba(5, 7, 12, 0.38) 54%, rgba(5, 7, 12, 0.92) 100%),
+                linear-gradient(180deg, rgba(5, 7, 12, 0.22), rgba(5, 7, 12, 0.94));
+            transition: opacity 0.42s ease;
+        }
+
+        #mac-ctf-transition::after {
+            opacity: 0;
+            background:
+                repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0 2px, rgba(255, 255, 255, 0) 2px 6px);
+            mix-blend-mode: screen;
+            transform: translateY(-12%);
+            transition: opacity 0.42s ease, transform 0.82s linear;
+        }
+
+        .mac-ctf-grid,
+        .mac-ctf-noise,
+        .mac-ctf-reticle,
+        .mac-ctf-ripples,
+        .mac-ctf-packets,
+        .mac-ctf-beams,
+        .mac-ctf-seal,
+        .mac-ctf-flash,
+        .mac-ctf-slices {
+            position: absolute;
+            inset: 0;
+        }
+
+        .mac-ctf-grid {
+            inset: -16% -8%;
+            opacity: 0;
+            background-image:
+                linear-gradient(rgba(252, 47, 32, 0.14) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(252, 47, 32, 0.1) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(72, 184, 255, 0.08), rgba(72, 184, 255, 0));
+            background-size: 100% 84px, 88px 100%, 100% 100%;
+            transform-origin: center bottom;
+            transform: perspective(1080px) rotateX(82deg) translateY(22%);
+            transition: opacity 0.34s ease, transform 1.08s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .mac-ctf-noise {
+            inset: -10%;
+            opacity: 0;
+            background:
+                radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.1) 0 1px, transparent 1.4px) 0 0 / 18px 18px,
+                radial-gradient(circle at 74% 34%, rgba(252, 47, 32, 0.14) 0 1px, transparent 1.5px) 0 0 / 22px 22px,
+                radial-gradient(circle at 48% 68%, rgba(72, 184, 255, 0.1) 0 1px, transparent 1.5px) 0 0 / 20px 20px;
+            mix-blend-mode: screen;
+            animation: ctfSignalNoise 0.56s linear infinite;
+            transition: opacity 0.28s ease;
+        }
+
+        .mac-ctf-reticle {
+            display: grid;
+            place-items: center;
+            opacity: 0;
+            transform: scale(0.88);
+            transition: opacity 0.36s ease, transform 1.02s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .mac-ctf-reticle-ring {
+            position: relative;
+            width: min(34vmin, 360px);
+            aspect-ratio: 1;
+            border-radius: 0;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            clip-path: polygon(12% 0, 88% 0, 100% 12%, 100% 88%, 88% 100%, 12% 100%, 0 88%, 0 12%);
+            box-shadow: inset 0 0 0 1px rgba(252, 47, 32, 0.12), 0 0 56px rgba(252, 47, 32, 0.08);
+        }
+
+        .mac-ctf-reticle-ring::before,
+        .mac-ctf-reticle-ring::after {
+            content: '';
+            position: absolute;
+            border-radius: 0;
+            inset: 0;
+            clip-path: polygon(12% 0, 88% 0, 100% 12%, 100% 88%, 88% 100%, 12% 100%, 0 88%, 0 12%);
+        }
+
+        .mac-ctf-reticle-ring::before {
+            inset: 12%;
+            border: 1px dashed rgba(72, 184, 255, 0.28);
+            animation: ctfReticleSpin 8s linear infinite;
+        }
+
+        .mac-ctf-reticle-ring::after {
+            inset: 30%;
+            border: 1px solid rgba(255, 245, 220, 0.24);
+            box-shadow: 0 0 20px rgba(255, 245, 220, 0.05);
+        }
+
+        .mac-ctf-reticle-core,
+        .mac-ctf-reticle-crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .mac-ctf-reticle-core {
+            width: 26px;
+            height: 26px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 245, 220, 0.42);
+            background:
+                linear-gradient(180deg, rgba(255, 245, 220, 0.96), rgba(252, 47, 32, 0.68));
+            box-shadow: 0 0 24px rgba(252, 47, 32, 0.18);
+        }
+
+        .mac-ctf-reticle-crosshair {
+            opacity: 0.56;
+        }
+
+        .mac-ctf-reticle-crosshair-h {
+            width: min(42vmin, 460px);
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 245, 220, 0.16) 18%, rgba(252, 47, 32, 0.32) 50%, rgba(255, 245, 220, 0.16) 82%, rgba(255, 255, 255, 0) 100%);
+        }
+
+        .mac-ctf-reticle-crosshair-v {
+            width: 1px;
+            height: min(42vmin, 460px);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 245, 220, 0.14) 18%, rgba(72, 184, 255, 0.28) 50%, rgba(255, 245, 220, 0.14) 82%, rgba(255, 255, 255, 0) 100%);
+        }
+
+        .mac-ctf-ripples {
+            display: grid;
+            place-items: center;
+            opacity: 0;
+            transition: opacity 0.28s ease;
+        }
+
+        .mac-ctf-ripple {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: min(18vmin, 220px);
+            aspect-ratio: 1;
+            border-radius: 0;
+            clip-path: polygon(12% 0, 88% 0, 100% 12%, 100% 88%, 88% 100%, 12% 100%, 0 88%, 0 12%);
+            border: 1px solid rgba(255, 245, 220, 0.16);
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.4);
+            box-shadow: 0 0 32px rgba(252, 47, 32, 0.08);
+            transition: opacity 0.24s ease, transform 0.92s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .mac-ctf-ripple:nth-child(2) {
+            width: min(28vmin, 340px);
+            transition-delay: 0.06s;
+        }
+
+        .mac-ctf-ripple:nth-child(3) {
+            width: min(38vmin, 460px);
+            transition-delay: 0.12s;
+        }
+
+        .mac-ctf-packets {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mac-ctf-packet {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: min(18vmin, 220px);
+            height: 6px;
+            border-radius: 999px;
+            opacity: 0;
+            filter: blur(1px);
+            background:
+                linear-gradient(90deg, rgba(252, 47, 32, 0) 0%, rgba(252, 47, 32, 0.24) 12%, rgba(252, 47, 32, 0.86) 36%, rgba(255, 245, 220, 0.98) 50%, rgba(72, 184, 255, 0.6) 68%, rgba(72, 184, 255, 0.14) 86%, rgba(72, 184, 255, 0) 100%);
+            box-shadow: 0 0 26px rgba(252, 47, 32, 0.14);
+            transform: translate(-50%, -50%) rotate(var(--packet-rotate, 0deg)) translateX(var(--packet-start)) scaleX(0.72);
+            transition: transform 1.06s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease, filter 0.82s ease;
+        }
+
+        .mac-ctf-packet:nth-child(1) {
+            --packet-rotate: 0deg;
+            --packet-start: -34vmin;
+            --packet-arm: -20vmin;
+            --packet-live: -8vmin;
+            --packet-burst: -2vmin;
+            transition-delay: 0.04s;
+        }
+
+        .mac-ctf-packet:nth-child(2) {
+            --packet-rotate: 0deg;
+            --packet-start: 34vmin;
+            --packet-arm: 20vmin;
+            --packet-live: 8vmin;
+            --packet-burst: 2vmin;
+            transition-delay: 0.08s;
+        }
+
+        .mac-ctf-packet:nth-child(3) {
+            --packet-rotate: 90deg;
+            --packet-start: -34vmin;
+            --packet-arm: -20vmin;
+            --packet-live: -8vmin;
+            --packet-burst: -2vmin;
+            transition-delay: 0.12s;
+        }
+
+        .mac-ctf-packet:nth-child(4) {
+            --packet-rotate: 90deg;
+            --packet-start: 34vmin;
+            --packet-arm: 20vmin;
+            --packet-live: 8vmin;
+            --packet-burst: 2vmin;
+            transition-delay: 0.16s;
+        }
+
+        .mac-ctf-packet:nth-child(5) {
+            --packet-rotate: 45deg;
+            --packet-start: -28vmin;
+            --packet-arm: -16vmin;
+            --packet-live: -7vmin;
+            --packet-burst: -1vmin;
+            transition-delay: 0.2s;
+        }
+
+        .mac-ctf-packet:nth-child(6) {
+            --packet-rotate: 45deg;
+            --packet-start: 28vmin;
+            --packet-arm: 16vmin;
+            --packet-live: 7vmin;
+            --packet-burst: 1vmin;
+            transition-delay: 0.24s;
+        }
+
+        .mac-ctf-packet:nth-child(7) {
+            --packet-rotate: -45deg;
+            --packet-start: -28vmin;
+            --packet-arm: -16vmin;
+            --packet-live: -7vmin;
+            --packet-burst: -1vmin;
+            transition-delay: 0.28s;
+        }
+
+        .mac-ctf-packet:nth-child(8) {
+            --packet-rotate: -45deg;
+            --packet-start: 28vmin;
+            --packet-arm: 16vmin;
+            --packet-live: 7vmin;
+            --packet-burst: 1vmin;
+            transition-delay: 0.32s;
+        }
+
+        .mac-ctf-flash {
+            inset: -14%;
+            opacity: 0;
+            background:
+                radial-gradient(circle at center, rgba(255, 245, 220, 0.68) 0 6%, rgba(252, 47, 32, 0.44) 14%, rgba(58, 18, 100, 0.2) 22%, rgba(5, 7, 12, 0) 44%);
+            filter: blur(18px);
+            transform: scale(0.26);
+            transition: opacity 0.34s ease, transform 1.02s cubic-bezier(0.16, 1, 0.3, 1), filter 1.02s ease;
+        }
+
+        .mac-ctf-beams {
+            opacity: 0;
+            transition: opacity 0.28s ease;
+        }
+
+        .mac-ctf-beam {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            opacity: 0;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(252, 47, 32, 0) 0%, rgba(252, 47, 32, 0.72) 24%, rgba(255, 245, 220, 0.98) 50%, rgba(72, 184, 255, 0.62) 76%, rgba(72, 184, 255, 0) 100%);
+            box-shadow: 0 0 18px rgba(252, 47, 32, 0.24), 0 0 42px rgba(72, 184, 255, 0.1);
+            transition: opacity 0.24s ease, transform 1.16s cubic-bezier(0.16, 1, 0.3, 1), filter 1s ease;
+        }
+
+        .mac-ctf-beam.is-horizontal {
+            width: min(54vmin, 680px);
+            height: 2px;
+            transform: translate(-50%, -50%) rotate(var(--beam-rotate, 0deg)) translateX(var(--beam-start, 0)) scaleX(0.22);
+        }
+
+        .mac-ctf-beam.is-vertical {
+            width: 2px;
+            height: min(54vmin, 680px);
+            background: linear-gradient(180deg, rgba(252, 47, 32, 0) 0%, rgba(252, 47, 32, 0.72) 24%, rgba(255, 245, 220, 0.98) 50%, rgba(72, 184, 255, 0.62) 76%, rgba(72, 184, 255, 0) 100%);
+            transform: translate(-50%, -50%) translateY(var(--beam-start, 0)) scaleY(0.22);
+        }
+
+        .mac-ctf-beam-left {
+            --beam-start: -30vmin;
+            --beam-arm: -16vmin;
+            --beam-live: -4vmin;
+            --beam-burst: -1vmin;
+            --beam-rotate: 0deg;
+        }
+
+        .mac-ctf-beam-right {
+            --beam-start: 30vmin;
+            --beam-arm: 16vmin;
+            --beam-live: 4vmin;
+            --beam-burst: 1vmin;
+            --beam-rotate: 0deg;
+        }
+
+        .mac-ctf-beam-top {
+            --beam-start: -30vmin;
+            --beam-arm: -16vmin;
+            --beam-live: -4vmin;
+            --beam-burst: -1vmin;
+        }
+
+        .mac-ctf-beam-bottom {
+            --beam-start: 30vmin;
+            --beam-arm: 16vmin;
+            --beam-live: 4vmin;
+            --beam-burst: 1vmin;
+        }
+
+        .mac-ctf-seal {
+            opacity: 0;
+            background:
+                radial-gradient(circle at center, rgba(252, 47, 32, 0.24) 0 16%, rgba(72, 184, 255, 0.08) 24%, rgba(5, 7, 12, 0) 42%),
+                linear-gradient(180deg, rgba(5, 7, 12, 0.08), rgba(5, 7, 12, 0.98));
+            clip-path: inset(49% 0 49% 0 round 22px);
+            filter: blur(12px);
+            transform: scaleX(0.9);
+            transition: opacity 0.22s ease, clip-path 0.82s cubic-bezier(0.16, 1, 0.3, 1), filter 0.82s ease, transform 0.82s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .mac-ctf-slices {
+            overflow: hidden;
+        }
+
+        .mac-ctf-slice {
+            position: absolute;
+            left: -8%;
+            width: 116%;
+            height: 9vh;
+            opacity: 0;
+            filter: blur(10px);
+            will-change: transform, opacity, filter;
+            background:
+                linear-gradient(90deg, rgba(252, 47, 32, 0) 0%, rgba(252, 47, 32, 0.18) 12%, rgba(252, 47, 32, 0.92) 36%, rgba(255, 241, 205, 0.98) 50%, rgba(72, 184, 255, 0.74) 64%, rgba(72, 184, 255, 0.18) 88%, rgba(72, 184, 255, 0) 100%),
+                repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 2px, transparent 2px 14px);
+            mix-blend-mode: screen;
+            transform: translate3d(var(--start-x, -12%), 0, 0) scaleX(0.74) skewX(var(--skew, -18deg));
+            transition: transform 0.92s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.16s ease, filter 0.92s ease;
+        }
+
+        .mac-ctf-slice:nth-child(1) {
+            top: 11%;
+            --start-x: -18%;
+            --skew: -14deg;
+            --glitch-skew: -7deg;
+            --slice-drift: -2px;
+            transition-delay: 0.03s;
+        }
+
+        .mac-ctf-slice:nth-child(2) {
+            top: 24%;
+            height: 8vh;
+            --start-x: 14%;
+            --skew: 11deg;
+            --glitch-skew: 5deg;
+            --slice-drift: 3px;
+            transition-delay: 0.07s;
+        }
+
+        .mac-ctf-slice:nth-child(3) {
+            top: 37%;
+            height: 11vh;
+            --start-x: -12%;
+            --skew: -10deg;
+            --glitch-skew: -4deg;
+            --slice-drift: -4px;
+            transition-delay: 0.11s;
+        }
+
+        .mac-ctf-slice:nth-child(4) {
+            top: 50%;
+            height: 9vh;
+            --start-x: 16%;
+            --skew: 15deg;
+            --glitch-skew: 7deg;
+            --slice-drift: 4px;
+            transition-delay: 0.16s;
+        }
+
+        .mac-ctf-slice:nth-child(5) {
+            top: 63%;
+            height: 8vh;
+            --start-x: -14%;
+            --skew: -12deg;
+            --glitch-skew: -5deg;
+            --slice-drift: -3px;
+            transition-delay: 0.21s;
+        }
+
+        .mac-ctf-slice:nth-child(6) {
+            top: 76%;
+            height: 10vh;
+            --start-x: 12%;
+            --skew: 10deg;
+            --glitch-skew: 4deg;
+            --slice-drift: 2px;
+            transition-delay: 0.26s;
+        }
+
+        #mac-ctf-transition.is-active {
+            opacity: 1;
+        }
+
+        #mac-ctf-transition.is-active::before {
+            opacity: 1;
+        }
+
+        #mac-ctf-transition.is-active::after {
+            opacity: 0.14;
+            transform: translateY(0);
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-grid {
+            opacity: 0.12;
+            transform: perspective(1080px) rotateX(78deg) translateY(14%);
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-noise {
+            opacity: 0.1;
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-reticle {
+            opacity: 0.3;
+            transform: scale(0.96);
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-ripples {
+            opacity: 0.4;
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-ripple {
+            opacity: 0.1;
+            transform: translate(-50%, -50%) scale(0.72);
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-packets {
+            opacity: 0.2;
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-packet {
+            opacity: 0.14;
+            transform: translate(-50%, -50%) rotate(var(--packet-rotate)) translateX(var(--packet-start)) scaleX(0.78);
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-flash {
+            opacity: 0.18;
+            transform: scale(0.62);
+            filter: blur(22px);
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-beams {
+            opacity: 0.36;
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-beam.is-horizontal {
+            opacity: 0.18;
+            transform: translate(-50%, -50%) rotate(var(--beam-rotate)) translateX(var(--beam-start)) scaleX(0.34);
+        }
+
+        #mac-ctf-transition.is-active .mac-ctf-beam.is-vertical {
+            opacity: 0.18;
+            transform: translate(-50%, -50%) translateY(var(--beam-start)) scaleY(0.34);
+        }
+
+        #mac-ctf-transition.is-arming::before {
+            background:
+                radial-gradient(circle at center, rgba(252, 47, 32, 0.16) 0 14%, rgba(72, 184, 255, 0.05) 24%, rgba(5, 7, 12, 0) 42%),
+                linear-gradient(180deg, rgba(5, 7, 12, 0.18), rgba(5, 7, 12, 0.92));
+        }
+
+        #mac-ctf-transition.is-arming::after {
+            opacity: 0.28;
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-grid {
+            opacity: 0.22;
+            transform: perspective(1080px) rotateX(73deg) translateY(7%);
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-noise {
+            opacity: 0.18;
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-reticle {
+            opacity: 0.72;
+            transform: scale(1);
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-ripples {
+            opacity: 0.84;
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-ripple {
+            opacity: 0.18;
+            transform: translate(-50%, -50%) scale(0.94);
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-packets {
+            opacity: 1;
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-packet {
+            opacity: 0.38;
+            transform: translate(-50%, -50%) rotate(var(--packet-rotate)) translateX(var(--packet-arm)) scaleX(0.9);
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-flash {
+            opacity: 0.32;
+            transform: scale(0.88);
+            filter: blur(26px);
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-beams {
+            opacity: 0.72;
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-beam.is-horizontal {
+            opacity: 0.42;
+            transform: translate(-50%, -50%) rotate(var(--beam-rotate)) translateX(var(--beam-arm)) scaleX(0.72);
+        }
+
+        #mac-ctf-transition.is-arming .mac-ctf-beam.is-vertical {
+            opacity: 0.42;
+            transform: translate(-50%, -50%) translateY(var(--beam-arm)) scaleY(0.72);
+        }
+
+        #mac-ctf-transition.is-glitching::before {
+            background:
+                radial-gradient(circle at center, rgba(252, 47, 32, 0.2) 0 15%, rgba(72, 184, 255, 0.08) 24%, rgba(5, 7, 12, 0) 42%),
+                linear-gradient(180deg, rgba(5, 7, 12, 0.18), rgba(5, 7, 12, 0.9));
+        }
+
+        #mac-ctf-transition.is-glitching::after {
+            opacity: 0.48;
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-grid {
+            opacity: 0.32;
+            transform: perspective(1080px) rotateX(68deg) translateY(3%);
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-noise {
+            opacity: 0.24;
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-reticle {
+            opacity: 0.92;
+            transform: scale(1.04);
+            animation: ctfReticleGlitch 1.02s cubic-bezier(0.22, 1, 0.36, 1) 1 both;
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-ripples {
+            opacity: 1;
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-ripple {
+            opacity: 0.26;
+            transform: translate(-50%, -50%) scale(1.18);
+            animation: ctfRipplePulse 1.36s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-packets {
+            opacity: 1;
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-packet {
+            opacity: 0.64;
+            transform: translate(-50%, -50%) rotate(var(--packet-rotate)) translateX(var(--packet-live)) scaleX(1);
+            filter: blur(0.4px);
+            animation: ctfPacketPulse 0.9s ease-in-out 2 both;
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-beams {
+            opacity: 1;
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-beam.is-horizontal {
+            opacity: 0.72;
+            transform: translate(-50%, -50%) rotate(var(--beam-rotate)) translateX(var(--beam-live)) scaleX(1);
+            animation: ctfAxisPulseX 1.18s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-beam.is-vertical {
+            opacity: 0.72;
+            transform: translate(-50%, -50%) translateY(var(--beam-live)) scaleY(1);
+            animation: ctfAxisPulseY 1.18s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-flash {
+            opacity: 0.34;
+            transform: scale(1.04);
+            filter: blur(34px);
+        }
+
+        #mac-ctf-transition.is-glitching .mac-ctf-slice {
+            opacity: 0.48;
+            filter: blur(8px);
+            transform: translate3d(0, var(--slice-drift), 0) scaleX(1.04) skewX(var(--glitch-skew));
+            animation: ctfSliceFlicker 0.96s ease-in-out 1 both;
+        }
+
+        #mac-ctf-transition.is-sealing::before {
+            opacity: 1;
+            background:
+                radial-gradient(circle at center, rgba(252, 47, 32, 0.18) 0 14%, rgba(5, 7, 12, 0) 38%),
+                linear-gradient(180deg, rgba(5, 7, 12, 0.14), rgba(5, 7, 12, 0.98));
+        }
+
+        #mac-ctf-transition.is-sealing::after {
+            opacity: 0.1;
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-grid {
+            opacity: 0.08;
+            transform: perspective(1080px) rotateX(64deg) translateY(0);
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-noise {
+            opacity: 0.08;
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-reticle {
+            opacity: 0.12;
+            transform: scale(1.18);
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-ripples {
+            opacity: 0.16;
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-ripple {
+            opacity: 0.08;
+            transform: translate(-50%, -50%) scale(1.38);
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-packets {
+            opacity: 0.26;
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-packet {
+            opacity: 0.16;
+            transform: translate(-50%, -50%) rotate(var(--packet-rotate)) translateX(var(--packet-burst)) scaleX(1.08);
+            filter: blur(8px);
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-beams {
+            opacity: 0.18;
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-beam.is-horizontal {
+            opacity: 0.08;
+            transform: translate(-50%, -50%) rotate(var(--beam-rotate)) translateX(var(--beam-burst)) scaleX(1.08);
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-beam.is-vertical {
+            opacity: 0.08;
+            transform: translate(-50%, -50%) translateY(var(--beam-burst)) scaleY(1.08);
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-flash {
+            opacity: 0.52;
+            transform: scale(1.44);
+            filter: blur(34px);
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-seal {
+            opacity: 1;
+            clip-path: inset(0 0 0 0 round 0);
+            filter: blur(0);
+            transform: scaleX(1);
+        }
+
+        #mac-ctf-transition.is-sealing .mac-ctf-slice {
+            opacity: 0.16;
+            filter: blur(18px);
+            transform: translate3d(0, 0, 0) scaleX(1.12) skewX(0deg);
+        }
+
+        /* --- UI Layout --- */
+        #desktop {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-origin: center center;
+            transition: filter 0.74s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.74s ease, transform 0.74s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.ctf-launching #desktop {
+            opacity: 0.72;
+            filter: blur(1.2px) brightness(0.52) saturate(1.18) contrast(1.12) drop-shadow(10px 0 0 rgba(252, 47, 32, 0.14)) drop-shadow(-8px 0 0 rgba(72, 184, 255, 0.1));
+            animation: ctfDesktopGlitch 0.88s cubic-bezier(0.22, 1, 0.36, 1) 1 both;
+        }
+
+        @keyframes ctfDesktopGlitch {
+            0% {
+                transform: scale(1) translate3d(0, 0, 0);
+            }
+
+            18% {
+                transform: scale(1.003) translate3d(-2px, 0, 0);
+            }
+
+            38% {
+                transform: scale(1.007) translate3d(2px, -1px, 0);
+            }
+
+            58% {
+                transform: scale(1.012) translate3d(-1px, 2px, 0);
+            }
+
+            78% {
+                transform: scale(1.016) translate3d(2px, 0, 0);
+            }
+
+            100% {
+                transform: scale(1.02) translate3d(0, 0, 0);
+            }
+        }
+
+        @keyframes ctfReticleSpin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes ctfReticleGlitch {
+            0%,
+            100% {
+                transform: scale(1.04) translate3d(0, 0, 0);
+            }
+
+            20% {
+                transform: scale(1.045) translate3d(-2px, 1px, 0);
+            }
+
+            46% {
+                transform: scale(1.03) translate3d(2px, -1px, 0);
+            }
+
+            72% {
+                transform: scale(1.048) translate3d(-1px, 2px, 0);
+            }
+        }
+
+        @keyframes ctfSignalNoise {
+            0% {
+                background-position: 0 0, 0 0, 0 0;
+            }
+
+            33% {
+                background-position: 3px 2px, -2px 2px, 2px -1px;
+            }
+
+            66% {
+                background-position: 5px 4px, -4px 3px, 3px -2px;
+            }
+
+            100% {
+                background-position: 8px 6px, -6px 4px, 5px -4px;
+            }
+        }
+
+        @keyframes ctfPacketPulse {
+            0%,
+            100% {
+                opacity: 0.58;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes ctfRipplePulse {
+            0%,
+            100% {
+                opacity: 0.24;
+                transform: translate(-50%, -50%) scale(1.04);
+            }
+
+            50% {
+                opacity: 0.08;
+                transform: translate(-50%, -50%) scale(1.32);
+            }
+        }
+
+        @keyframes ctfSliceFlicker {
+            0%,
+            100% {
+                opacity: 0.44;
+            }
+
+            50% {
+                opacity: 0.62;
+            }
+
+            74% {
+                opacity: 0.54;
+            }
+        }
+
+        @keyframes ctfAxisPulseX {
+            0% {
+                transform: translate(-50%, -50%) rotate(var(--beam-rotate)) translateX(var(--beam-live)) scaleX(0.96);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(var(--beam-rotate)) translateX(var(--beam-live)) scaleX(1.02);
+            }
+        }
+
+        @keyframes ctfAxisPulseY {
+            0% {
+                transform: translate(-50%, -50%) translateY(var(--beam-live)) scaleY(0.96);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) translateY(var(--beam-live)) scaleY(1.02);
+            }
+        }
+
+        /* Menu Bar */
+        #menubar {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 30px;
+            background: var(--menu-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 5000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-left,
+        .menu-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 2px 8px;
+            margin: -2px -8px;
+        }
+
+        .apple-icon {
+            font-size: 16px;
+        }
+
+        #active-app-name {
+            font-weight: 700;
+        }
+
+        /* Dock */
+        #dock-container {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 6000;
+        }
+
+        #dock {
+            background: var(--dock-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: 70px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .dock-item {
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+            cursor: pointer;
+        }
+
+        /* SVG Icon Styles */
+        .dock-icon-svg {
+            width: 100%;
+            height: 100%;
+            border-radius: 14px;
+        }
+
+        .dock-item:hover {
+            transform: scale(1.2) translateY(-10px);
+            margin: 0 5px;
+        }
+
+        .dock-dot {
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            position: absolute;
+            bottom: -8px;
+            display: none;
+        }
+
+        .dock-item.active .dock-dot {
+            display: block;
+        }
+
+        /* Bounce Animation */
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .bouncing {
+            animation: bounce 0.6s ease infinite;
+        }
+
+        /* --- Windows System --- */
+        .window {
+            position: absolute;
+            background: var(--window-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 300px;
+            min-height: 200px;
+            transition: transform 0.15s, opacity 0.15s, box-shadow 0.2s;
+            transform-origin: center;
+        }
+
+        /* Window opening animation */
+        .window.opening {
+            animation: winOpen 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes winOpen {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Inactive window state */
+        .window.inactive {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .window.inactive .traffic-lights span {
+            background-color: #555 !important;
+            color: #555 !important;
+        }
+
+        .window-header {
+            height: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            position: relative;
+            cursor: grab;
+        }
+
+        .window-header:active {
+            cursor: grabbing;
+        }
+
+        .traffic-lights {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+            z-index: 2;
+        }
+
+        .t-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 8px;
+            color: transparent;
+            transition: 0.1s;
+            cursor: default;
+        }
+
+        .traffic-lights:hover .t-btn {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .close-btn {
+            background: #ff5f56;
+        }
+
+        .min-btn {
+            background: #ffbd2e;
+        }
+
+        .max-btn {
+            background: #27c93f;
+        }
+
+        .window-title {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            pointer-events: none;
+        }
+
+        .window-content {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            user-select: text;
+            /* Allow text selection inside apps */
+        }
+
+        /* jQuery UI Resizable Handle Fix */
+        .ui-resizable-se {
+            bottom: 0;
+            right: 0;
+            width: 15px;
+            height: 15px;
+            background: none;
+        }
+
+        /* --- Context Menu --- */
+        #context-menu {
+            position: absolute;
+            background: rgba(40, 40, 40, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 5px 0;
+            width: 180px;
+            display: none;
+            z-index: 99999;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .ctx-item {
+            padding: 6px 15px;
+            font-size: 13px;
+            cursor: default;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .ctx-item:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .ctx-hr {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 4px 0;
+        }
+
+        /* --- APP SPECIFIC STYLES --- */
+
+        /* Finder */
+        .finder-layout {
+            display: flex;
+            height: 100%;
+            background: #1e1e1e;
+            color: #ddd;
+        }
+
+        .finder-sidebar {
+            width: 140px;
+            background: rgba(50, 50, 50, 0.3);
+            padding: 10px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .sidebar-item {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-item i {
+            color: var(--accent);
+            width: 15px;
+            text-align: center;
+        }
+
+        .finder-main {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .finder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+        }
+
+        .file-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .file-icon {
+            font-size: 40px;
+            color: #5dade2;
+            margin-bottom: 5px;
+        }
+
+        .file-icon.folder {
+            color: #5dade2;
+        }
+
+        .file-icon.text {
+            color: #ddd;
+        }
+
+        .file-icon.img {
+            color: #58d68d;
+        }
+
+        .file-icon.launcher {
+            color: #fc5a4c;
+        }
+
+        .file-name {
+            font-size: 12px;
+            word-break: normal;
+            overflow-wrap: normal;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .file-item:hover .file-name {
+            background: var(--accent);
+        }
+
+        /* Terminal */
+        .terminal-app {
+            background: #101010;
+            color: #33ff00;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            height: 100%;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .term-line {
+            margin-bottom: 2px;
+            line-height: 1.4;
+        }
+
+        .term-input-line {
+            display: flex;
+        }
+
+        .term-prompt {
+            color: #00bfff;
+            margin-right: 8px;
+        }
+
+        #term-input {
+            background: transparent;
+            border: none;
+            color: #33ff00;
+            font-family: inherit;
+            font-size: inherit;
+            flex: 1;
+            outline: none;
+        }
+
+        /* TextEdit */
+        .textedit-app {
+            background: #2d2d2d;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-toolbar {
+            padding: 5px;
+            background: #3a3a3a;
+            border-bottom: 1px solid #444;
+            display: flex;
+            gap: 5px;
+        }
+
+        .text-tool {
+            padding: 4px 8px;
+            background: #444;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        #text-area {
+            flex: 1;
+            background: #1e1e1e;
+            color: #eee;
+            border: none;
+            padding: 15px;
+            font-family: var(--system-font);
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            line-height: 1.5;
+        }
+
+        #text-rich-area {
+            flex: 1;
+            background: #1e1e1e;
+            color: #eee;
+            padding: 15px;
+            font-family: var(--system-font);
+            font-size: 14px;
+            line-height: 1.6;
+            overflow: auto;
+            white-space: pre-wrap;
+            user-select: text;
+        }
+
+        #text-rich-area strong {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        /* Sketch (Paint) */
+        .paint-app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #fff;
+        }
+
+        .paint-toolbar {
+            padding: 8px;
+            background: #f0f0f0;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            color: #333;
+        }
+
+        #paint-canvas {
+            background: white;
+            cursor: crosshair;
+            touch-action: none;
+            flex: 1;
+            display: block;
+        }
+
+        /* Calculator */
+        .calc-app {
+            background: #333;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        #calc-display {
+            background: transparent;
+            color: white;
+            font-size: 36px;
+            text-align: right;
+            border: none;
+            width: 100%;
+            margin-bottom: 10px;
+            outline: none;
+            font-weight: 300;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            flex: 1;
+        }
+
+        .calc-btn {
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            transition: filter 0.1s;
+            color: white;
+        }
+
+        .calc-btn:active {
+            filter: brightness(1.2);
+        }
+
+        .c-num {
+            background: #555;
+        }
+
+        .c-op {
+            background: #ff9f0a;
+            font-size: 22px;
+            padding-top: 3px;
+        }
+
+        .c-top {
+            background: #a5a5a5;
+            color: black;
+        }
+
+        .c-zero {
+            grid-column: span 2;
+            border-radius: 30px;
+            text-align: left;
+            padding-left: 25px;
+        }
+
+        /* Safari */
+        .safari-app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #fff;
+        }
+
+        .safari-bar {
+            padding: 8px;
+            background: #f0f0f0;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .url-bar {
+            flex: 1;
+            background: #ddd;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: #333;
+            outline: none;
+        }
+
+        .safari-frame {
+            flex: 1;
+            border: none;
+            width: 100%;
+            background: white;
+        }
+
+        /* Studio (Video) */
+        .studio-app {
+            background: #000;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #main-video {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .studio-controls {
+            height: 80px;
+            background: #1a1a1a;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 4px 10px;
+            background: #333;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            border: 1px solid #444;
+        }
+
+        .filter-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .playback-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            color: #ddd;
+        }
+
+        /* Settings */
+        .settings-app {
+            padding: 20px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .wall-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+        }
+
+        .wall-thumb {
+            height: 80px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .wall-thumb:hover {
+            transform: scale(1.02);
+        }
+
+        .wall-thumb.selected {
+            border-color: var(--accent);
+        }
+
+        /* SVGs for Icons (Data URIs for single file) */
+        /* Using generated geometric gradients to look like modern macOS icons */
+        .icon-finder {
+            background: linear-gradient(180deg, #e3e3e3 0%, #c7c7c7 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .icon-finder::after {
+            content: ':)';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(90deg);
+            font-size: 30px;
+            font-weight: bold;
+            color: #2a62b3;
+            font-family: monospace;
+        }
+
+        .icon-safari {
+            background: white;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fff'/%3E%3Ccircle cx='50' cy='50' r='45' fill='%231facfd'/%3E%3Cpath d='M50 5 L50 95 M5 50 L95 50' stroke='rgba(255,255,255,0.3)' stroke-width='1'/%3E%3Cpolygon points='50,10 60,45 90,50 55,60 50,90 40,55 10,50 45,40' fill='white'/%3E%3Cpolygon points='50,10 55,45 50,50 45,45' fill='%23ea4335'/%3E%3C/svg%3E");
+            background-size: cover;
+        }
+
+        .icon-terminal {
+            background: #222;
+            position: relative;
+        }
+
+        .icon-terminal::after {
+            content: '>_';
+            color: #fff;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-family: monospace;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .icon-text {
+            background: linear-gradient(180deg, #fdfdfd 0%, #dcdcdc 100%);
+            position: relative;
+        }
+
+        .icon-text::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 10px;
+            right: 10px;
+            height: 2px;
+            background: #999;
+            box-shadow: 0 5px 0 #999, 0 10px 0 #999, 0 15px 0 #999;
+        }
+
+        .icon-paint {
+            background: linear-gradient(45deg, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #007aff, #5856d6, #ff2d55);
+        }
+
+        .icon-paint::after {
+            content: '\f1fc';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: white;
+            font-size: 30px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .icon-calc {
+            background: #333;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            padding: 5px;
+            gap: 2px;
+        }
+
+        .icon-calc div {
+            background: #ff9f0a;
+            border-radius: 4px;
+        }
+
+        .icon-calc div:nth-child(1),
+        .icon-calc div:nth-child(2) {
+            background: #555;
+        }
+
+        .icon-studio {
+            background: linear-gradient(135deg, #3a1c71, #d76d77, #ffaf7b);
+            position: relative;
+        }
+
+        .icon-studio::after {
+            content: '\f008';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: white;
+            font-size: 28px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .icon-settings {
+            background: linear-gradient(180deg, #8e8e93 0%, #636366 100%);
+            position: relative;
+        }
+
+        .icon-settings::after {
+            content: '\f013';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: #ddd;
+            font-size: 35px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .icon-trash {
+            background: linear-gradient(180deg, #f2f2f7 0%, #d1d1d6 100%);
+            position: relative;
+        }
+
+        .icon-trash::after {
+            content: '\f1f8';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: #777;
+            font-size: 30px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="power-on-screen">
+        <button id="power-on-button" class="power-on-button" type="button" aria-label="Power on">
+            <i class="fas fa-power-off"></i>
+        </button>
+    </div>
+
+    <!-- Boot Screen -->
+    <div id="boot-screen">
+        <i class="fab fa-apple apple-logo"></i>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+
+    <div id="mac-ctf-transition" aria-hidden="true">
+        <div class="mac-ctf-grid"></div>
+        <div class="mac-ctf-noise"></div>
+        <div class="mac-ctf-reticle">
+            <div class="mac-ctf-reticle-ring"></div>
+            <div class="mac-ctf-reticle-core"></div>
+            <div class="mac-ctf-reticle-crosshair mac-ctf-reticle-crosshair-h"></div>
+            <div class="mac-ctf-reticle-crosshair mac-ctf-reticle-crosshair-v"></div>
+        </div>
+        <div class="mac-ctf-ripples">
+            <div class="mac-ctf-ripple"></div>
+            <div class="mac-ctf-ripple"></div>
+            <div class="mac-ctf-ripple"></div>
+        </div>
+        <div class="mac-ctf-packets">
+            <div class="mac-ctf-packet"></div>
+            <div class="mac-ctf-packet"></div>
+            <div class="mac-ctf-packet"></div>
+            <div class="mac-ctf-packet"></div>
+            <div class="mac-ctf-packet"></div>
+            <div class="mac-ctf-packet"></div>
+            <div class="mac-ctf-packet"></div>
+            <div class="mac-ctf-packet"></div>
+        </div>
+        <div class="mac-ctf-flash"></div>
+        <div class="mac-ctf-beams">
+            <div class="mac-ctf-beam mac-ctf-beam-left is-horizontal"></div>
+            <div class="mac-ctf-beam mac-ctf-beam-right is-horizontal"></div>
+            <div class="mac-ctf-beam mac-ctf-beam-top is-vertical"></div>
+            <div class="mac-ctf-beam mac-ctf-beam-bottom is-vertical"></div>
+        </div>
+        <div class="mac-ctf-seal"></div>
+        <div class="mac-ctf-slices">
+            <div class="mac-ctf-slice"></div>
+            <div class="mac-ctf-slice"></div>
+            <div class="mac-ctf-slice"></div>
+            <div class="mac-ctf-slice"></div>
+            <div class="mac-ctf-slice"></div>
+            <div class="mac-ctf-slice"></div>
+        </div>
+    </div>
+
+    <!-- Desktop Environment -->
+    <div id="desktop">
+
+        <!-- Menu Bar -->
+        <div id="menubar">
+            <div class="menu-left">
+                <div class="menu-item"><i class="fab fa-apple apple-icon"></i></div>
+                <div class="menu-item" id="active-app-name">Finder</div>
+                <div class="menu-item">File</div>
+                <div class="menu-item">Edit</div>
+                <div class="menu-item">View</div>
+                <div class="menu-item">Go</div>
+                <div class="menu-item">Window</div>
+                <div class="menu-item">Help</div>
+            </div>
+            <div class="menu-right">
+                <div class="menu-item"><i class="fas fa-battery-three-quarters"></i> <span id="battery-level">84%</span>
+                </div>
+                <div class="menu-item"><i class="fas fa-wifi"></i></div>
+                <div class="menu-item"><i class="fas fa-search"></i></div>
+                <div class="menu-item"><i class="fas fa-sliders-h"></i></div>
+                <div class="menu-item" id="clock">Tue Jan 9 9:41 AM</div>
+            </div>
+        </div>
+
+        <!-- Windows Container (Apps go here) -->
+        <div id="windows-container"></div>
+
+        <!-- Context Menu -->
+        <div id="context-menu">
+            <div class="ctx-item" onclick="wm.openApp('finder')">New Folder</div>
+            <div class="ctx-hr"></div>
+            <div class="ctx-item">Get Info</div>
+            <div class="ctx-item" onclick="wm.openApp('settings')">Change Wallpaper...</div>
+            <div class="ctx-hr"></div>
+            <div class="ctx-item">Sort By</div>
+        </div>
+
+        <!-- Dock -->
+        <div id="dock-container">
+            <div id="dock">
+                <!-- Dock Items generated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- System Config & State ---
+        const apps = [
+            { id: 'finder', name: 'Finder', iconClass: 'icon-finder' },
+            { id: 'safari', name: 'Safari', iconClass: 'icon-safari' },
+            { id: 'terminal', name: 'Terminal', iconClass: 'icon-terminal' },
+            { id: 'textedit', name: 'TextEdit', iconClass: 'icon-text' },
+            { id: 'paint', name: 'Sketch', iconClass: 'icon-paint' },
+            { id: 'calculator', name: 'Calculator', iconClass: 'icon-calc', htmlIcon: '<div></div><div></div><div></div><div></div>' },
+            { id: 'studio', name: 'Studio', iconClass: 'icon-studio' },
+            { id: 'settings', name: 'Settings', iconClass: 'icon-settings' },
+            { id: 'trash', name: 'Bin', iconClass: 'icon-trash', separator: true }
+        ];
+
+        // Simulated File System
+        const fileSystem = {
+            'Desktop': {
+                type: 'folder', children: {
+                    'Welcome.txt': {
+                        type: 'text',
+                        content: 'In terminal, enter open -a "CTF" to launch the CTF.',
+                        richContent: 'In terminal, enter <strong>open -a "CTF"</strong> to launch the CTF.'
+                    },
+                    'Accessibility Unlock.app': {
+                        type: 'launcher',
+                        launch: 'ctf'
+                    },
+                    'Project': { type: 'folder', children: {} }
+                }
+            },
+            'Documents': {
+                type: 'folder', children: {
+                    'notes.txt': { type: 'text', content: 'Note: This Mac does not contain any CTF hints or answers.' }
+                }
+            },
+            'Downloads': {
+                type: 'folder', children: {
+                    'image.jpg': { type: 'img', src: '' }
+                }
+            }
+        };
+        let currentPath = ['Desktop'];
+        let activeTextDocument = null;
+        const CTF_INTRO_COMPLETE_KEY = 'famhack-ctf-intro-complete';
+        const TERMINAL_HOME_DIR = '/Users/guest';
+        const OPEN_USAGE_MARKUP = [
+            'Usage: open [-e] [-t] [-f] [-W] [-R] [-n] [-g] [-h] [-s &lt;partial SDK name&gt;][-b &lt;bundle identifier&gt;] [-a &lt;application&gt;] [-u URL] [filenames] [--args arguments]',
+            'Help: Open opens files from a shell.',
+            '      By default, opens each file using the default application for that file.',
+            '      If the file is in the form of a URL, the file will be opened as a URL.',
+            'Options:',
+            '      -a                    Opens with the specified application.',
+            '      -b                    Opens with the specified application bundle identifier.',
+            '      -e                    Opens with TextEdit.',
+            '      -t                    Opens with default text editor.',
+            '      -f                    Reads input from standard input and opens with TextEdit.',
+            '      -R, --reveal          Selects in the Finder instead of opening.',
+            '      -W, --wait-apps       Blocks until the used applications are closed.',
+            '      -n, --new             Open a new instance of the application even if one is already running.',
+            '      -g, --background      Does not bring the application to the foreground.',
+            '      -u, --url URL         Open this URL, even if it matches exactly a filepath'
+        ].join('<br>');
+
+        function markCtfIntroComplete() {
+            try {
+                window.localStorage.setItem(CTF_INTRO_COMPLETE_KEY, '1');
+            } catch (error) {
+                // Ignore storage failures and continue with the launch.
+            }
+        }
+
+        function escapeTerminalHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function tokenizeTerminalCommand(cmd) {
+            const matches = String(cmd || '').match(/"[^"]*"|'[^']*'|\S+/g) || [];
+            return matches.map((token) => {
+                if ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'"))) {
+                    return token.slice(1, -1);
+                }
+                return token;
+            });
+        }
+
+        function buildOpenUsageMarkup(prefix = '') {
+            return prefix ? `${prefix}<br>${OPEN_USAGE_MARKUP}` : OPEN_USAGE_MARKUP;
+        }
+
+        function findOpenAppId(appName) {
+            const normalized = String(appName || '').trim().toLowerCase();
+            if (!normalized) {
+                return null;
+            }
+
+            const aliases = {
+                finder: 'finder',
+                safari: 'safari',
+                terminal: 'terminal',
+                textedit: 'textedit',
+                sketch: 'paint',
+                paint: 'paint',
+                calculator: 'calculator',
+                studio: 'studio',
+                settings: 'settings',
+                trash: 'trash',
+                bin: 'trash',
+                ctf: 'ctf',
+            };
+
+            if (aliases[normalized]) {
+                return aliases[normalized];
+            }
+
+            const app = apps.find((candidate) => candidate.id.toLowerCase() === normalized || candidate.name.toLowerCase() === normalized);
+            return app?.id || null;
+        }
+
+        function handleOpenCommand(cmd) {
+            const tokens = tokenizeTerminalCommand(cmd);
+
+            if (tokens.length <= 1) {
+                return { handled: true, response: OPEN_USAGE_MARKUP };
+            }
+
+            const option = tokens[1];
+
+            if (option === '-a') {
+                const appName = tokens.slice(2).join(' ').trim();
+
+                if (!appName) {
+                    return {
+                        handled: true,
+                        response: buildOpenUsageMarkup('open: option requires an argument -- a')
+                    };
+                }
+
+                const appId = findOpenAppId(appName);
+                if (!appId) {
+                    return {
+                        handled: true,
+                        response: `Unable to find application named '${escapeTerminalHtml(appName)}'`
+                    };
+                }
+
+                if (appId === 'ctf') {
+                    return { handled: true, launchCtf: true };
+                }
+
+                wm.openApp(appId);
+                return { handled: true };
+            }
+
+            if (option.startsWith('-')) {
+                const invalidOption = escapeTerminalHtml(option.replace(/^-+/, '').charAt(0) || option);
+                return {
+                    handled: true,
+                    response: buildOpenUsageMarkup(`open: invalid option -- ${invalidOption}`)
+                };
+            }
+
+            const requestedTarget = tokens.slice(1).join(' ').trim();
+            const targetPath = requestedTarget.startsWith('/') ? requestedTarget : `${TERMINAL_HOME_DIR}/${requestedTarget}`;
+            return {
+                handled: true,
+                response: `The file ${escapeTerminalHtml(targetPath)} does not exist.`
+            };
+        }
+
+        function requestMacFullscreen() {
+            const root = document.documentElement;
+            const requestFullscreen = root.requestFullscreen || root.webkitRequestFullscreen;
+
+            if (document.fullscreenElement || document.webkitFullscreenElement || typeof requestFullscreen !== 'function') {
+                return Promise.resolve();
+            }
+
+            const requestResult = requestFullscreen.call(root);
+            return requestResult && typeof requestResult.catch === 'function'
+                ? requestResult.catch(() => { })
+                : Promise.resolve();
+        }
+
+        function exitMacFullscreen() {
+            const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+
+            if (!(document.fullscreenElement || document.webkitFullscreenElement) || typeof exitFullscreen !== 'function') {
+                return Promise.resolve();
+            }
+
+            const exitResult = exitFullscreen.call(document);
+            return exitResult && typeof exitResult.catch === 'function'
+                ? exitResult.catch(() => { })
+                : Promise.resolve();
+        }
+
+        function startBootSequence() {
+            if (startBootSequence.started) {
+                return;
+            }
+
+            startBootSequence.started = true;
+            requestMacFullscreen().finally(() => {
+                $('#power-on-screen').fadeOut(180, function () { $(this).remove(); });
+                $('.loading-progress').css('width', '100%');
+                setTimeout(() => {
+                    $('#boot-screen').fadeOut(500, function () { $(this).remove(); });
+                    setTimeout(() => {
+                        wm.openApp('finder');
+                        setTimeout(() => {
+                            wm.openApp('terminal');
+                            setTimeout(positionBootTerminalWindow, 80);
+                        }, 260);
+                    }, 600);
+                }, 3200);
+            });
+        }
+
+        function isCtfLaunchCommand(cmd) {
+            return /^open\s+-a\s+["']?ctf["']?$/i.test(String(cmd || '').trim());
+        }
+
+        function finishCtfLaunchFromMac() {
+            const message = { type: 'famhack:launch-ctf', persistIntroComplete: true, transitionPlayed: true };
+            const targetOrigin = window.location.origin && window.location.origin !== 'null'
+                ? window.location.origin
+                : '*';
+
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage(message, targetOrigin);
+                return;
+            }
+
+            window.location.href = '/ctf?skipMacIntro=1';
+        }
+
+        function launchCtfFromMac() {
+            if (launchCtfFromMac.started) {
+                return;
+            }
+
+            launchCtfFromMac.started = true;
+            markCtfIntroComplete();
+
+            const transition = document.getElementById('mac-ctf-transition');
+            if (!transition) {
+                finishCtfLaunchFromMac();
+                return;
+            }
+
+            document.body.classList.add('ctf-launching');
+            transition.style.display = 'block';
+            transition.classList.remove('is-active', 'is-arming', 'is-glitching', 'is-sealing');
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    transition.classList.add('is-active');
+                });
+            });
+
+            window.setTimeout(() => {
+                transition.classList.add('is-arming');
+            }, 520);
+
+            window.setTimeout(() => {
+                transition.classList.add('is-glitching');
+            }, 1320);
+
+            window.setTimeout(() => {
+                transition.classList.add('is-sealing');
+            }, 2420);
+
+            window.setTimeout(() => {
+                exitMacFullscreen().finally(() => {
+                    finishCtfLaunchFromMac();
+                });
+            }, 3200);
+        }
+
+        function positionBootTerminalWindow() {
+            const $finder = $('#win-finder');
+            const $terminal = $('#win-terminal');
+
+            if (!$finder.length || !$terminal.length) {
+                return;
+            }
+
+            const finderTop = parseInt($finder.css('top'), 10) || 70;
+            const finderLeft = parseInt($finder.css('left'), 10) || 70;
+            const terminalWidth = $terminal.outerWidth() || 600;
+            const terminalHeight = $terminal.outerHeight() || 400;
+            const maxLeft = Math.max(20, window.innerWidth - terminalWidth - 24);
+            const maxTop = Math.max(40, window.innerHeight - terminalHeight - 110);
+            const nextLeft = Math.min(maxLeft, finderLeft + 320);
+            const nextTop = Math.min(maxTop, finderTop + 170);
+
+            $terminal.css({ left: `${nextLeft}px`, top: `${nextTop}px` });
+        }
+
+        // --- Window Manager Class ---
+        class WindowManager {
+            constructor() {
+                this.windows = {};
+                this.zIndexCounter = 100;
+                this.activeApp = 'Finder';
+                this.initDock();
+                this.setupDesktop();
+            }
+
+            initDock() {
+                const dock = $('#dock');
+                apps.forEach(app => {
+                    if (app.separator) dock.append('<div style="width:1px; height:40px; background:rgba(255,255,255,0.2); margin: 0 5px;"></div>');
+
+                    let iconHtml = app.htmlIcon ? app.htmlIcon : '';
+                    let el = $(`
+                    <div class="dock-item" id="dock-${app.id}" title="${app.name}">
+                        <div class="dock-icon-svg ${app.iconClass}">${iconHtml}</div>
+                        <div class="dock-dot"></div>
+                    </div>
+                `);
+                    el.on('click', () => this.openApp(app.id));
+                    dock.append(el);
+                });
+            }
+
+            setupDesktop() {
+                // Context Menu
+                $(document).on('contextmenu', '#desktop', (e) => {
+                    if ($(e.target).closest('.window').length === 0 && $(e.target).closest('#dock').length === 0 && $(e.target).closest('#menubar').length === 0) {
+                        e.preventDefault();
+                        $('#context-menu').css({ top: e.clientY, left: e.clientX }).fadeIn(100);
+                    }
+                });
+                $(document).on('click', () => $('#context-menu').fadeOut(100));
+            }
+
+            updateMenubar(appName) {
+                this.activeApp = appName;
+                $('#active-app-name').text(appName);
+            }
+
+            setActiveWindow(id) {
+                $('.window').addClass('inactive');
+                $(`#win-${id}`).removeClass('inactive').css('z-index', ++this.zIndexCounter);
+                this.updateMenubar(this.windows[id].name);
+            }
+
+            openApp(appId) {
+                const appConfig = apps.find(a => a.id === appId);
+
+                // Bounce animation
+                const dockItem = $(`#dock-${appId}`);
+                if (!dockItem.hasClass('active') && !dockItem.hasClass('bouncing')) {
+                    dockItem.addClass('bouncing');
+                    setTimeout(() => dockItem.removeClass('bouncing').addClass('active'), 600);
+                }
+
+                // Check if already open
+                if (this.windows[appId]) {
+                    if ($(`#win-${appId}`).is(':hidden')) {
+                        this.restoreWindow(appId);
+                    } else {
+                        this.setActiveWindow(appId);
+                    }
+                    return;
+                }
+
+                this.createWindow(appId, appConfig);
+            }
+
+            createWindow(id, config) {
+                this.windows[id] = config;
+
+                // Default dimensions based on app type
+                let w = 600, h = 400;
+                if (id === 'calculator') { w = 250; h = 350; }
+                if (id === 'paint' || id === 'studio') { w = 700; h = 500; }
+                if (id === 'settings') { w = 500; h = 300; }
+
+                // Random position placement
+                const top = 50 + (Object.keys(this.windows).length * 20);
+                const left = 50 + (Object.keys(this.windows).length * 20);
+
+                const winHTML = `
+                <div class="window opening" id="win-${id}" style="width:${w}px; height:${h}px; top:${top}px; left:${left}px; z-index:${++this.zIndexCounter}">
+                    <div class="window-header">
+                        <div class="traffic-lights">
+                            <div class="t-btn close-btn"><i class="fas fa-times"></i></div>
+                            <div class="t-btn min-btn"><i class="fas fa-minus"></i></div>
+                            <div class="t-btn max-btn"><i class="fas fa-plus"></i></div>
+                        </div>
+                        <div class="window-title">${config.name}</div>
+                    </div>
+                    <div class="window-content" id="content-${id}"></div>
+                </div>
+            `;
+
+                $('#windows-container').append(winHTML);
+                const $win = $(`#win-${id}`);
+
+                // Make interactive
+                $win.draggable({ handle: '.window-header', containment: '#desktop', start: () => this.setActiveWindow(id) })
+                    .resizable({ minHeight: 200, minWidth: 250, stop: () => { if (id === 'paint') resizeCanvas(); } })
+                    .on('mousedown', () => this.setActiveWindow(id));
+
+                // Window button events
+                $win.find('.close-btn').on('click', (e) => { e.stopPropagation(); this.closeWindow(id); });
+                $win.find('.min-btn').on('click', (e) => { e.stopPropagation(); this.minimizeWindow(id); });
+                $win.find('.max-btn').on('click', (e) => { e.stopPropagation(); this.maximizeWindow(id); });
+
+                // Remove opening class after animation
+                setTimeout(() => $win.removeClass('opening'), 200);
+
+                this.setActiveWindow(id);
+                this.loadAppContent(id);
+            }
+
+            closeWindow(id) {
+                $(`#win-${id}`).fadeOut(150, function () { $(this).remove(); });
+                delete this.windows[id];
+                $(`#dock-${id}`).removeClass('active');
+                this.updateMenubar('Finder');
+            }
+
+            minimizeWindow(id) {
+                // Simple fade out for simulate minimize to dock
+                $(`#win-${id}`).fadeOut(200);
+                this.updateMenubar('Finder');
+            }
+
+            restoreWindow(id) {
+                $(`#win-${id}`).fadeIn(200);
+                this.setActiveWindow(id);
+            }
+
+            maximizeWindow(id) {
+                const $win = $(`#win-${id}`);
+                if ($win.hasClass('maximized')) {
+                    $win.css({ top: $win.data('top'), left: $win.data('left'), width: $win.data('width'), height: $win.data('height') }).removeClass('maximized');
+                } else {
+                    $win.data({ top: $win.css('top'), left: $win.css('left'), width: $win.css('width'), height: $win.css('height') });
+                    $win.css({ top: '30px', left: '0', width: '100%', height: 'calc(100% - 100px)' }).addClass('maximized');
+                }
+                if (id === 'paint') setTimeout(resizeCanvas, 200);
+            }
+
+            loadAppContent(id) {
+                const container = $(`#content-${id}`);
+                switch (id) {
+                    case 'finder': renderFinder(container); break;
+                    case 'terminal': renderTerminal(container); break;
+                    case 'textedit': renderTextEdit(container); break;
+                    case 'paint': renderPaint(container); break;
+                    case 'calculator': renderCalculator(container); break;
+                    case 'safari': renderSafari(container); break;
+                    case 'studio': renderStudio(container); break;
+                    case 'settings': renderSettings(container); break;
+                    case 'trash': container.html('<div style="padding:20px; text-align:center; color:#aaa;">Trash is empty.<br><i class="fas fa-trash fa-3x" style="margin-top:20px;"></i></div>'); break;
+                }
+            }
+        }
+
+        const wm = new WindowManager();
+
+        // --- App Implementations ---
+
+        // 1. FINDER
+        function renderFinder(container) {
+            container.html(`
+            <div class="finder-layout">
+                <div class="finder-sidebar">
+                    <div style="font-size:10px; color:#888; padding-left:10px; margin-top:10px;">Favorites</div>
+                    <div class="sidebar-item" onclick="navFinder(['Desktop'])"><i class="fas fa-desktop"></i> Desktop</div>
+                    <div class="sidebar-item" onclick="navFinder(['Documents'])"><i class="fas fa-file-alt"></i> Documents</div>
+                    <div class="sidebar-item" onclick="navFinder(['Downloads'])"><i class="fas fa-download"></i> Downloads</div>
+                </div>
+                <div class="finder-main">
+                    <div style="margin-bottom:10px; color:#888; font-size:12px;"><i class="fas fa-chevron-left"></i> <i class="fas fa-chevron-right"></i> &nbsp; ${currentPath.join(' > ')}</div>
+                    <div class="finder-grid" id="finder-grid"></div>
+                </div>
+            </div>
+        `);
+            updateFinderGrid();
+        }
+
+        window.navFinder = function (path) {
+            currentPath = path;
+            renderFinder($('#content-finder'));
+        }
+
+        function updateFinderGrid() {
+            const grid = $('#finder-grid');
+            grid.empty();
+
+            let target = fileSystem;
+            currentPath.forEach(p => target = target[p] ? target[p].children : target);
+
+            if (!target) return;
+
+            Object.keys(target).forEach(key => {
+                const item = target[key];
+                let icon = 'fa-folder folder';
+                if (item.type === 'text') icon = 'fa-file-alt text';
+                if (item.type === 'img') icon = 'fa-file-image img';
+                if (item.type === 'launcher') icon = 'fa-universal-access launcher';
+
+                const el = $(`
+                <div class="file-item">
+                    <i class="fas ${icon} file-icon"></i>
+                    <div class="file-name">${key}</div>
+                </div>
+            `);
+
+                if (item.type === 'launcher' && item.launch === 'ctf') {
+                    el.on('click', () => launchCtfFromMac());
+                }
+
+                el.on('dblclick', () => {
+                    if (item.type === 'folder') {
+                        currentPath.push(key);
+                        renderFinder($('#content-finder'));
+                    } else if (item.type === 'text') {
+                        activeTextDocument = item;
+                        wm.openApp('textedit');
+                        setTimeout(() => renderTextEdit($('#content-textedit')), 120);
+                    } else if (item.type === 'launcher' && item.launch === 'ctf') {
+                        launchCtfFromMac();
+                    }
+                });
+                grid.append(el);
+            });
+        }
+
+        // 2. TERMINAL
+        function renderTerminal(container) {
+            container.html(`
+            <div class="terminal-app" id="term-output">
+                <div class="term-line">Last login: ${new Date().toLocaleString()} on ttys000</div>
+                <div class="term-line">macOS Web Edition [Version 1.0]</div>
+                <br>
+                <div id="term-history"></div>
+                <div class="term-input-line">
+                    <span class="term-prompt">guest@macbook ~ %</span>
+                    <input type="text" id="term-input" autocomplete="off" autofocus>
+                </div>
+            </div>
+        `);
+
+            const history = $('#term-history');
+            const input = $('#term-input');
+            const output = $('#term-output');
+
+            container.on('click', () => input.focus());
+
+            input.on('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    const cmd = this.value.trim();
+                    history.append(`<div class="term-line"><span class="term-prompt">guest@macbook ~ %</span> ${cmd}</div>`);
+                    this.value = '';
+                    processCommand(cmd);
+                    output.scrollTop(output[0].scrollHeight);
+                }
+            });
+
+            function processCommand(cmd) {
+                const args = cmd.split(' ');
+                const openResult = args[0] && args[0].toLowerCase() === 'open' ? handleOpenCommand(cmd) : null;
+                let response = '';
+
+                if (openResult?.launchCtf) {
+                    history.append('<div class="term-line">Launching CTF...</div>');
+                    window.setTimeout(() => launchCtfFromMac(), 250);
+                    return;
+                }
+
+                if (openResult?.handled) {
+                    if (openResult.response) {
+                        history.append(`<div class="term-line">${openResult.response}</div>`);
+                    }
+                    return;
+                }
+
+                if (isCtfLaunchCommand(cmd)) {
+                    history.append('<div class="term-line">Launching CTF...</div>');
+                    window.setTimeout(() => launchCtfFromMac(), 250);
+                    return;
+                }
+
+                switch (args[0].toLowerCase()) {
+                    case 'help': response = 'Available commands: help, clear, ls, whoami, date, echo, matrix, open'; break;
+                    case 'clear': history.empty(); return;
+                    case 'ls': response = 'Desktop  Documents  Downloads  Music  Pictures'; break;
+                    case 'whoami': response = 'guest'; break;
+                    case 'date': response = new Date().toString(); break;
+                    case 'echo': response = args.slice(1).join(' '); break;
+                    case 'sudo': response = 'Password: 🔑 (Just kidding, you have no power here)'; break;
+                    case 'matrix': startMatrix(); return;
+                    case '': return;
+                    default: response = `zsh: command not found: ${args[0]}`;
+                }
+                history.append(`<div class="term-line">${response}</div>`);
+            }
+
+            function startMatrix() {
+                $('.terminal-app').css({ 'color': '#0f0', 'background': 'black' }).html('<canvas id="matrix" style="position:absolute;top:0;left:0;"></canvas>');
+                // Matrix effect simplified
+                const C = document.getElementById("matrix");
+                const $p = C.parentElement; C.width = $p.clientWidth; C.height = $p.clientHeight;
+                const ctx = C.getContext("2d");
+                const txts = "01"; const msg = txts.split("");
+                const font_size = 10; const columns = C.width / font_size; const drops = [];
+                for (let x = 0; x < columns; x++) drops[x] = 1;
+                function draw() {
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, C.width, C.height);
+                    ctx.fillStyle = "#0F0"; ctx.font = font_size + "px monospace";
+                    for (let i = 0; i < drops.length; i++) {
+                        const text = msg[Math.floor(Math.random() * msg.length)];
+                        ctx.fillText(text, i * font_size, drops[i] * font_size);
+                        if (drops[i] * font_size > C.height && Math.random() > 0.975) drops[i] = 0;
+                        drops[i]++;
+                    }
+                }
+                setInterval(draw, 33);
+            }
+        }
+
+        // 3. TEXTEDIT
+        function renderTextEdit(container) {
+            const documentData = activeTextDocument;
+            const editorMarkup = documentData?.richContent
+                ? `<div id="text-rich-area">${documentData.richContent}</div>`
+                : '<textarea id="text-area" placeholder="Start typing..."></textarea>';
+
+            container.html(`
+            <div class="textedit-app">
+                <div class="text-toolbar">
+                    <select class="text-tool"><option>Helvetica</option><option>Courier</option><option>Times</option></select>
+                    <select class="text-tool"><option>12</option><option>14</option><option>18</option></select>
+                    <button class="text-tool"><i class="fas fa-bold"></i></button>
+                    <button class="text-tool"><i class="fas fa-italic"></i></button>
+                </div>
+                ${editorMarkup}
+            </div>
+        `);
+
+            if (!documentData?.richContent) {
+                container.find('#text-area').val(documentData?.content || '');
+            }
+        }
+
+        // 4. SKETCH (Paint)
+        let canvas, ctx, painting = false;
+        function renderPaint(container) {
+            container.html(`
+            <div class="paint-app">
+                <div class="paint-toolbar">
+                    <input type="color" id="p-color" value="#000000">
+                    <input type="range" id="p-size" min="1" max="50" value="5" title="Brush Size">
+                    <button class="text-tool" onclick="clearCanvas()"><i class="fas fa-trash"></i> Clear</button>
+                    <button class="text-tool" id="p-eraser"><i class="fas fa-eraser"></i></button>
+                </div>
+                <div style="flex:1; overflow:hidden; position:relative;">
+                    <canvas id="paint-canvas"></canvas>
+                </div>
+            </div>
+        `);
+
+            setTimeout(initCanvas, 100); // Wait for DOM
+        }
+
+        function initCanvas() {
+            canvas = document.getElementById('paint-canvas');
+            if (!canvas) return;
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+
+            let color = '#000000';
+            let size = 5;
+            let mode = 'draw';
+
+            $('#p-color').on('change', function () { color = this.value; mode = 'draw'; });
+            $('#p-size').on('input', function () { size = this.value; });
+            $('#p-eraser').on('click', function () { mode = 'erase'; });
+
+            function startPosition(e) {
+                painting = true;
+                draw(e);
+            }
+            function finishedPosition() {
+                painting = false;
+                ctx.beginPath();
+            }
+            function draw(e) {
+                if (!painting) return;
+                const rect = canvas.getBoundingClientRect();
+                ctx.lineWidth = size;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = mode === 'erase' ? '#ffffff' : color;
+
+                ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+            }
+
+            canvas.addEventListener('mousedown', startPosition);
+            canvas.addEventListener('mouseup', finishedPosition);
+            canvas.addEventListener('mousemove', draw);
+        }
+
+        window.resizeCanvas = function () {
+            if (!canvas) return;
+            const parent = canvas.parentElement;
+            // Save img data
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            canvas.width = parent.clientWidth;
+            canvas.height = parent.clientHeight;
+            // Fill white background
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.putImageData(imgData, 0, 0);
+        }
+        window.clearCanvas = function () {
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 5. CALCULATOR
+        function renderCalculator(container) {
+            container.html(`
+            <div class="calc-app">
+                <input type="text" id="calc-display" value="0" readonly>
+                <div class="calc-grid">
+                    <button class="calc-btn c-top" onclick="calcClear()">AC</button>
+                    <button class="calc-btn c-top">+/-</button>
+                    <button class="calc-btn c-top">%</button>
+                    <button class="calc-btn c-op" onclick="calcOp('/')">÷</button>
+                    <button class="calc-btn c-num" onclick="calcNum(7)">7</button>
+                    <button class="calc-btn c-num" onclick="calcNum(8)">8</button>
+                    <button class="calc-btn c-num" onclick="calcNum(9)">9</button>
+                    <button class="calc-btn c-op" onclick="calcOp('*')">×</button>
+                    <button class="calc-btn c-num" onclick="calcNum(4)">4</button>
+                    <button class="calc-btn c-num" onclick="calcNum(5)">5</button>
+                    <button class="calc-btn c-num" onclick="calcNum(6)">6</button>
+                    <button class="calc-btn c-op" onclick="calcOp('-')">−</button>
+                    <button class="calc-btn c-num" onclick="calcNum(1)">1</button>
+                    <button class="calc-btn c-num" onclick="calcNum(2)">2</button>
+                    <button class="calc-btn c-num" onclick="calcNum(3)">3</button>
+                    <button class="calc-btn c-op" onclick="calcOp('+')">+</button>
+                    <button class="calc-btn c-num c-zero" onclick="calcNum(0)">0</button>
+                    <button class="calc-btn c-num">.</button>
+                    <button class="calc-btn c-op" onclick="calcEq()">=</button>
+                </div>
+            </div>
+        `);
+        }
+
+        let calcCur = '0', calcPrev = null, calcOper = null, newNum = true;
+        const updateDisp = () => $('#calc-display').val(calcCur);
+        window.calcNum = (num) => {
+            if (newNum) { calcCur = num.toString(); newNum = false; } else { calcCur = calcCur === '0' ? num.toString() : calcCur + num; }
+            updateDisp();
+        };
+        window.calcOp = (op) => { calcPrev = parseFloat(calcCur); calcOper = op; newNum = true; };
+        window.calcClear = () => { calcCur = '0'; calcPrev = null; calcOper = null; newNum = true; updateDisp(); };
+        window.calcEq = () => {
+            if (calcOper && !newNum) {
+                const cur = parseFloat(calcCur);
+                switch (calcOper) {
+                    case '+': calcCur = calcPrev + cur; break;
+                    case '-': calcCur = calcPrev - cur; break;
+                    case '*': calcCur = calcPrev * cur; break;
+                    case '/': calcCur = calcPrev / cur; break;
+                }
+                calcOper = null; newNum = true; updateDisp();
+            }
+        };
+
+        // 6. SAFARI
+        function renderSafari(container) {
+            container.html(`
+            <div class="safari-app">
+                <div class="safari-bar">
+                    <i class="fas fa-chevron-left" style="color:#888;"></i>
+                    <i class="fas fa-chevron-right" style="color:#888;"></i>
+                    <i class="fas fa-redo" style="color:#555; font-size:12px;"></i>
+                    <input type="text" class="url-bar" value="en.wikipedia.org/wiki/MacOS" id="safari-url">
+                    <i class="fas fa-share-square" style="color:#555;"></i>
+                </div>
+                <iframe src="https://en.wikipedia.org/wiki/MacOS"class="safari-frame" id="safari-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+        `);
+            $('#safari-url').on('keypress', function (e) {
+                if (e.which == 13) {
+                    let url = this.value;
+                    if (!url.startsWith('http')) url = 'https://' + url;
+                    $('#safari-frame').attr('src', url);
+                }
+            });
+        }
+
+        // 7. STUDIO (Video Editor sim)
+        function renderStudio(container) {
+            // Using a color gradient animation as a placeholder "video" to avoid external video files
+            container.html(`
+            <div class="studio-app">
+                <div class="video-stage">
+                    <div id="vid-placeholder" style="width:80%; height:80%; background:linear-gradient(45deg, #ff00cc, #3333ff); animation: hue 5s infinite linear; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; font-size:20px; transition:filter 0.3s;">NO SIGNAL</div>
+                    <style>@keyframes hue { 0%{filter: hue-rotate(0deg);} 100%{filter: hue-rotate(360deg);} }</style>
+                </div>
+                <div class="studio-controls">
+                    <div class="filters-row">
+                        <div style="color:#888; font-size:10px; align-self:center;">Filters:</div>
+                        <button class="filter-btn" onclick="applyFilter('none')">Normal</button>
+                        <button class="filter-btn" onclick="applyFilter('grayscale(1)')">B&W</button>
+                        <button class="filter-btn" onclick="applyFilter('sepia(1)')">Sepia</button>
+                        <button class="filter-btn" onclick="applyFilter('blur(5px)')">Blur</button>
+                        <button class="filter-btn" onclick="applyFilter('invert(1)')">Invert</button>
+                    </div>
+                    <div class="playback-row">
+                        <i class="fas fa-backward"></i>
+                        <i class="fas fa-play" id="play-btn" style="font-size:20px; color:white; cursor:pointer;"></i>
+                        <i class="fas fa-forward"></i>
+                    </div>
+                    <div style="height:3px; background:#333; margin-top:5px;"><div style="width:40%; height:100%; background:var(--accent);"></div></div>
+                </div>
+            </div>
+        `);
+
+            let playing = true;
+            $('#play-btn').on('click', function () {
+                playing = !playing;
+                $(this).toggleClass('fa-play fa-pause');
+                $('#vid-placeholder').css('animation-play-state', playing ? 'running' : 'paused');
+            });
+        }
+        window.applyFilter = function (filter) {
+            // Normally applies to video element, here applies to placeholder
+            $('#vid-placeholder').css('filter', filter === 'none' ? '' : filter + ' hue-rotate(0deg)'); // Reset animation filter for demo
+            if (filter !== 'none') $('#vid-placeholder').css('animation', 'none'); // Stop hue anim to show filter
+        }
+
+        // 8. SETTINGS
+        function renderSettings(container) {
+            container.html(`
+            <div class="settings-app">
+                <div style="display:flex; align-items:center; gap:15px; width:100%; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px;">
+                    <div style="width:60px; height:60px; background:#ccc; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:30px; color:#555;"><i class="fas fa-user"></i></div>
+                    <div><div style="font-weight:600; font-size:16px;">Guest User</div><div style="font-size:12px; color:#aaa;">Apple ID, iCloud, Media & App Store</div></div>
+                </div>
+                <div style="align-self:flex-start; font-weight:600;">Wallpaper</div>
+                <div class="wall-grid">
+                    <div class="wall-thumb" style="background: linear-gradient(200deg, #a729f5, #5823d6, #092775, #1d6f9c);" onclick="changeWall(this)"></div>
+                    <div class="wall-thumb" style="background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);" onclick="changeWall(this)"></div>
+                    <div class="wall-thumb selected" style="background-image: url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80');" onclick="changeWall(this)"></div>
+                    <div class="wall-thumb" style="background: #000;" onclick="changeWall(this)"></div>
+                </div>
+            </div>
+        `);
+        }
+        window.changeWall = function (el) {
+            $('.wall-thumb').removeClass('selected');
+            $(el).addClass('selected');
+            const $el = $(el);
+            const backgroundImage = $el.css('background-image');
+            const isImageWallpaper = String(backgroundImage || '').includes('url(');
+
+            $('body').css({
+                'background': $el.css('background'),
+                'background-image': backgroundImage,
+                'background-position': $el.css('background-position'),
+                'background-repeat': $el.css('background-repeat'),
+                'background-size': $el.css('background-size'),
+                'animation': isImageWallpaper ? 'none' : 'gradientBG 15s ease infinite'
+            });
+        }
+
+        // --- Infrastructure ---
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            $('#clock').text(`${dateStr} ${timeStr}`);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Battery (if supported)
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(battery => {
+                $('#battery-level').text(Math.round(battery.level * 100) + '%');
+            });
+        }
+
+        // Boot Sequence
+        $(window).on('load', () => {
+            $('#power-on-button').on('click', startBootSequence);
+        });
+
+    </script>
+</body>
+
+</html>

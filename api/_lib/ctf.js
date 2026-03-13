@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { assertAllowedEmail } from './teams.js';
+import { assertAllowedEmail, formatStudyYearLabel, normalizeEmail, sanitizeStudyYear } from './teams.js';
 import { getServiceClient } from './supabase.js';
 
 export const CTF_CHALLENGE_COUNT = 6;
@@ -492,12 +492,21 @@ function getCompletionMessage(viewer, leaderboard) {
 
   const winningRow = leaderboard.find((row) => row.winner) || null;
   const viewerWon = Boolean(winningRow && winningRow.userId === viewer.id);
+  const hasYearOneWinner = Boolean(winningRow);
 
   if (viewerWon) {
     return {
       title: 'You won the FamHack CTF.',
-      copy: 'You were first through every signal. Prize secured.',
+      copy: 'You were the first Year 1 finisher through every signal.',
       winner: true,
+    };
+  }
+
+  if (!hasYearOneWinner) {
+    return {
+      title: 'You cleared the FamHack CTF.',
+      copy: 'All six signals are done. No Y1 winners yet, so the CTF is still running.',
+      winner: false,
     };
   }
 
@@ -506,6 +515,32 @@ function getCompletionMessage(viewer, leaderboard) {
     copy: 'All six signals are done. Strong finish.',
     winner: false,
   };
+}
+
+function buildPrizeClaimState(viewer) {
+  if (viewer.guest) {
+    return {
+      recorded: false,
+      studyYear: '',
+      studyYearLabel: '',
+      eligible: false,
+    };
+  }
+
+  const studyYear = String(viewer.studyYear || '').trim().toLowerCase();
+  const studyYearLabel = formatStudyYearLabel(studyYear);
+
+  return {
+    recorded: Boolean(studyYearLabel),
+    studyYear,
+    studyYearLabel,
+    eligible: studyYear === 'year_1',
+  };
+}
+
+function hasCompletedCtfChallengeSet(solvedChallengeNumbers) {
+  return Array.from({ length: CTF_CHALLENGE_COUNT }, (_, index) => index + 1)
+    .every((challengeNumber, index) => solvedChallengeNumbers[index] === challengeNumber);
 }
 
 function createAccessToken(viewer, solvedChallengeNumbers, currentChallengeNumber) {
@@ -575,6 +610,7 @@ function buildCtfState({ viewer, solvedChallengeNumbers, leaderboard }) {
       .map((challengeNumber) => serializeSolvedChallenge(challengeNumber))
       .filter(Boolean),
     currentChallenge,
+    prizeClaim: buildPrizeClaimState(viewer),
     leaderboard,
     completionMessage: highestSolvedChallenge >= CTF_CHALLENGE_COUNT
       ? getCompletionMessage(viewer, leaderboard)
@@ -602,7 +638,7 @@ async function getProfileByUserId(userId) {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, full_name')
+    .select('id, email, full_name, study_year')
     .eq('id', userId)
     .maybeSingle();
 
@@ -638,6 +674,53 @@ export async function getMemberCtfSolves(userId) {
   return data || [];
 }
 
+export async function saveCtfPrizeClaimForUser(user, studyYearInput) {
+  assertAllowedEmail(user.email);
+  await ensureCtfProfile(user);
+
+  const studyYear = sanitizeStudyYear(studyYearInput);
+  if (!studyYear) {
+    throw createStatusError(400, 'Choose your year of study.');
+  }
+
+  const solves = await getMemberCtfSolves(user.id);
+  const solvedChallengeNumbers = solves
+    .map((row) => Number(row.challenge_number))
+    .filter((value) => Number.isInteger(value) && value >= 1 && value <= CTF_CHALLENGE_COUNT)
+    .sort((left, right) => left - right);
+
+  if (!hasCompletedCtfChallengeSet(solvedChallengeNumbers)) {
+    throw createStatusError(403, 'Finish the CTF before saving prize eligibility.');
+  }
+
+  const supabase = getServiceClient();
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({
+      id: user.id,
+      email: normalizeEmail(user.email),
+      study_year: studyYear,
+    }, {
+      onConflict: 'id',
+    });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const claim = buildPrizeClaimState({
+    guest: false,
+    studyYear,
+  });
+
+  return {
+    claim,
+    message: claim.eligible
+      ? 'Recorded as Year 1.'
+      : 'Recorded. Your clear still counts on the board, and it stays open until a Year 1 winner is confirmed.',
+  };
+}
+
 export async function getCtfLeaderboard() {
   const supabase = getServiceClient();
   const { data: solves, error: solvesError } = await supabase
@@ -657,7 +740,7 @@ export async function getCtfLeaderboard() {
   const profileIds = Array.from(new Set(solves.map((row) => row.user_id)));
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
-    .select('id, email, full_name')
+    .select('id, email, full_name, study_year')
     .in('id', profileIds);
 
   if (profilesError) {
@@ -681,6 +764,7 @@ export async function getCtfLeaderboard() {
         name: getDisplayName(profile),
         level: solve.challenge_number || 0,
         reachedAt: solve.solved_at || null,
+        studyYear: sanitizeStudyYear(profile?.study_year),
       };
     })
     .sort((left, right) => {
@@ -703,7 +787,9 @@ export async function getCtfLeaderboard() {
       return left.name.localeCompare(right.name);
     });
 
-  const winningUserId = rows.find((row) => row.level === CTF_CHALLENGE_COUNT)?.userId || null;
+  const winningUserId = rows.find(
+    (row) => row.level === CTF_CHALLENGE_COUNT && row.studyYear === 'year_1'
+  )?.userId || null;
 
   return rows.map((row, index) => ({
     rank: index + 1,
@@ -729,6 +815,7 @@ export async function getCtfStateForUser(user) {
       id: user.id,
       email: user.email,
       name: participant.displayName,
+      studyYear: participant.profile?.study_year || '',
       guest: false,
     },
     solvedChallengeNumbers,
@@ -745,6 +832,7 @@ export async function getGuestCtfState(solvedChallenges = []) {
       id: null,
       email: null,
       name: 'Guest Run',
+      studyYear: '',
       guest: true,
     },
     solvedChallengeNumbers,

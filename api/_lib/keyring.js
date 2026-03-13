@@ -54,8 +54,7 @@ function mapClaimErrorMessage(message) {
   return normalizedMessage;
 }
 
-export async function getSecretKeyringStatus() {
-  const supabase = getServiceClient();
+async function getClaimCount(supabase) {
   const { count, error } = await supabase
     .from('secret_keyring_claims')
     .select('id', { count: 'exact', head: true });
@@ -64,7 +63,40 @@ export async function getSecretKeyringStatus() {
     throw new Error(error.message);
   }
 
-  return parseInventory(SECRET_KEYRING_TOTAL, count || 0);
+  return Math.max(0, Number(count) || 0);
+}
+
+async function insertSecretKeyringClaimFallback(supabase, email, source) {
+  const currentClaimed = await getClaimCount(supabase);
+  if (currentClaimed >= SECRET_KEYRING_TOTAL) {
+    throw new Error('All FamHack key rings have already been claimed.');
+  }
+
+  const { data, error } = await supabase
+    .from('secret_keyring_claims')
+    .insert({
+      email,
+      source,
+      agreed_to_terms: true,
+    })
+    .select('id, email, source')
+    .single();
+
+  if (error) {
+    throw new Error(mapClaimErrorMessage(error.message));
+  }
+
+  return {
+    id: data.id,
+    email: data.email,
+    source: data.source,
+    inventory: parseInventory(SECRET_KEYRING_TOTAL, currentClaimed + 1),
+  };
+}
+
+export async function getSecretKeyringStatus() {
+  const supabase = getServiceClient();
+  return parseInventory(SECRET_KEYRING_TOTAL, await getClaimCount(supabase));
 }
 
 export async function claimSecretKeyring(email, { acceptedTerms = false, source } = {}) {
@@ -84,21 +116,32 @@ export async function claimSecretKeyring(email, { acceptedTerms = false, source 
   }
 
   const supabase = getServiceClient();
+  const normalizedSource = normalizeSecretPageSource(source);
   const { data, error } = await supabase
     .rpc('claim_secret_keyring', {
       p_email: normalizedEmail,
-      p_source: normalizeSecretPageSource(source),
+      p_source: normalizedSource,
     })
     .single();
 
   if (error) {
-    throw new Error(mapClaimErrorMessage(error.message));
+    const mappedMessage = mapClaimErrorMessage(error.message);
+    if (mappedMessage !== 'All FamHack key rings have already been claimed.') {
+      throw new Error(mappedMessage);
+    }
+
+    const inventory = await getSecretKeyringStatus();
+    if (inventory.remaining <= 0) {
+      throw new Error(mappedMessage);
+    }
+
+    return insertSecretKeyringClaimFallback(supabase, normalizedEmail, normalizedSource);
   }
 
   return {
     id: data.claim_id,
     email: data.email,
     source: data.source,
-    inventory: parseInventory(data.total, data.claimed),
+    inventory: parseInventory(SECRET_KEYRING_TOTAL, data.claimed),
   };
 }

@@ -1,6 +1,6 @@
 import { getOptionalUser } from '../_lib/auth.js';
 import { readJsonBody, allowMethods, sendError } from '../_lib/http.js';
-import { assertCtfReleaseAccess, saveCtfPrizeClaimForUser, submitCtfAnswerForUser, submitGuestCtfAnswer } from '../_lib/ctf.js';
+import { assertCtfReleaseAccess, submitCtfAnswerForUser, submitGuestCtfAnswer } from '../_lib/ctf.js';
 
 export default async function handler(req, res) {
   if (!allowMethods(req, res, ['POST'])) {
@@ -11,17 +11,6 @@ export default async function handler(req, res) {
     assertCtfReleaseAccess(req);
     const body = readJsonBody(req);
     const user = await getOptionalUser(req);
-    if (body.action === 'prize-claim') {
-      if (!user) {
-        sendError(res, 401, 'Sign in to save prize eligibility.');
-        return;
-      }
-
-      const result = await saveCtfPrizeClaimForUser(user, body.studyYear);
-      res.status(200).json(result);
-      return;
-    }
-
     const state = user
       ? await submitCtfAnswerForUser(user, body.challengeNumber, body.answer, body.accessToken)
       : await submitGuestCtfAnswer(body.challengeNumber, body.answer, body.accessToken);

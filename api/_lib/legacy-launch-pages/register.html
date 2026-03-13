@@ -5,10 +5,10 @@
   <meta charset="utf-8" />
   <title>Register | FamHack</title>
   <meta
-    content="Register for FamHack. Parents create family teams first, and other parents or children can join later with a family code."
+    content="Register for FamHack. Parents create family teams first, and other parents or students can join later with a family code."
     name="description" />
   <meta content="Register | FamHack" property="og:title" />
-  <meta content="Parents create family teams first, and other parents or children can join later with a family code."
+  <meta content="Parents create family teams first, and other parents or students can join later with a family code."
     property="og:description" />
   <meta content="assets/images/famhack-logo.png" property="og:image" />
   <meta property="og:type" content="website" />
@@ -135,27 +135,27 @@
                   </style>
                 </div>
                 <a href="/" class="menu-item-layout w-inline-block">
-                  <h4>HOME</h4>
+                  <h4>Home</h4>
                 </a>
               </div>
               <div class="menu-item">
                 <a href="/about" class="menu-item-layout w-inline-block">
-                  <h4>ABOUT</h4>
+                  <h4>About</h4>
                 </a>
               </div>
               <div class="menu-item">
                 <a href="/tracks" class="menu-item-layout w-inline-block">
-                  <h4>TRACKS</h4>
+                  <h4>Tracks</h4>
                 </a>
               </div>
               <div class="menu-item">
                 <a href="/register" class="menu-item-layout w-inline-block w--current">
-                  <h4>REGISTER</h4>
+                  <h4>Register</h4>
                 </a>
               </div>
               <div class="menu-item">
                 <a href="/dashboard" class="menu-item-layout w-inline-block">
-                  <h4>DASHBOARD</h4>
+                  <h4>Dashboard</h4>
                 </a>
               </div>
               <div class="menu-item">
@@ -256,11 +256,11 @@
                 </div>
               </div>
 
-              <h1 id="register-heading" class="register-heading">Sign in</h1>
-              <p id="register-subheading" class="register-subheading">Use your email to continue into FamHack.</p>
+              <h1 id="register-heading" class="register-heading">What are you?</h1>
+              <p id="register-subheading" class="register-subheading">Choose how you want to enter FamHack.</p>
               <p id="register-page-message" class="success-message page-message"></p>
 
-              <div class="register-step" data-step="role">
+              <div class="register-step active" data-step="role">
                 <div class="register-form">
                   <div class="role-grid">
                     <button id="choose-parent-btn" type="button" class="role-card">
@@ -269,8 +269,8 @@
                       <p class="role-card-copy">Start the family, get the code, and approve join requests.</p>
                     </button>
 
-                    <button id="choose-child-btn" type="button" class="role-card">
-                      <p class="role-card-eyebrow">Child</p>
+                    <button id="choose-student-btn" type="button" class="role-card">
+                      <p class="role-card-eyebrow">Parent / Student</p>
                       <h2 class="role-card-heading">Join a family</h2>
                       <p class="role-card-copy">Continue if someone in your family already has a code or invite link.</p>
                     </button>
@@ -319,17 +319,17 @@
                 </div>
               </div>
 
-              <div class="register-step active" data-step="email">
+              <div class="register-step" data-step="email">
                 <div class="register-form">
                   <div class="form-group">
-                    <label id="email-label" class="form-label" for="email-input">Email</label>
+                    <label id="email-label" class="form-label" for="email-input">Your Email Address</label>
                     <input type="email" id="email-input" class="form-input" placeholder="s1234567@ed.ac.uk"
                       autocomplete="email" />
                     <p class="error-message" id="email-error"></p>
                   </div>
                   <button id="send-otp-btn" class="button-link w-inline-block" style="width: 100%;">
                     <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Send sign-in code</p>
+                      <p class="button-label">Send OTP</p>
                       <div class="button-icon">
                         <div class="button-icon-svg w-embed">
                           <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -401,12 +401,12 @@
                     <input type="text" id="team-name-input" class="form-input" placeholder="House Lovelace"
                       autocomplete="organization" />
                   </div>
-                  <p class="register-subheading helper-copy">Other parents or children will use the join code from the dashboard to
+                  <p class="register-subheading helper-copy">Other parents or students will use the join code from the dashboard to
                     request access.</p>
                   <p class="error-message" id="team-error"></p>
                   <button id="create-team-btn" class="button-link w-inline-block" style="width: 100%;">
                     <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Create a Family</p>
+                      <p class="button-label">Create Family</p>
                       <div class="button-icon">
                         <div class="button-icon-svg w-embed">
                           <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -448,12 +448,12 @@
                 <a href="/tracks">Tracks</a>
                 <a href="/register">Register</a>
                 <a href="/dashboard">Dashboard</a>
-                <a href="/ctf">CTF</a>
               </div>
               <div class="footer-col">
                 <h6>Community</h6>
-                <a href="https://discord.gg/rZpUhsm7NN" target="_blank" rel="noreferrer">Discord</a>
-                <a href="https://www.instagram.com/famhack_/" target="_blank" rel="noreferrer">Instagram</a>
+                <a href="#">Discord</a>
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
               </div>
               <div class="footer-col">
                 <h6>Legal</h6>

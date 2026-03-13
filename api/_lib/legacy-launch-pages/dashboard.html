@@ -3,13 +3,10 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>Register | FamHack</title>
-  <meta
-    content="Register for FamHack. Parents create family teams first, and other parents or children can join later with a family code."
-    name="description" />
-  <meta content="Register | FamHack" property="og:title" />
-  <meta content="Parents create family teams first, and other parents or children can join later with a family code."
-    property="og:description" />
+  <title>Dashboard | FamHack</title>
+  <meta content="Manage your FamHack team. Invite team members and view your team status." name="description" />
+  <meta content="Dashboard | FamHack" property="og:title" />
+  <meta content="Manage your FamHack team." property="og:description" />
   <meta content="assets/images/famhack-logo.png" property="og:image" />
   <meta property="og:type" content="website" />
   <meta content="summary_large_image" name="twitter:card" />
@@ -61,9 +58,8 @@
     data-easing="ease" data-collapse="all" role="banner" data-duration="400" data-doc-height="1">
     <div data-w-id="e903e6ca-9cbf-65a6-cd1d-c65d08b38e2b" class="flyout-menu">
       <div class="flyout-menu-backdrop-blur"></div>
-      <div id="w-node-aa64fe34-539e-74b2-cead-d54968040dce-93a441be" data-w-id="aa64fe34-539e-74b2-cead-d54968040dce"
-        class="nav-blur"></div>
-      <div id="w-node-_2307badf-cfbb-5634-caef-7bce66751576-93a441be" class="flyout-menu-wrapper">
+      <div class="nav-blur"></div>
+      <div class="flyout-menu-wrapper">
         <div class="flyout-menu-tab">
           <div class="flyout-tab-wrapper">
             <div class="flyout-menu-tab-inner">
@@ -92,7 +88,7 @@
               </div>
             </div>
           </div>
-          <div data-w-id="facc4c8e-1389-3b24-b4a7-7c9622bdba70" class="nav-close-click-area">
+          <div class="nav-close-click-area">
             <div class="nav-close-curve-wrapper">
               <div data-wf--nav-curve--variant="left" class="nav-curve">
                 <div class="curve w-embed">
@@ -135,27 +131,27 @@
                   </style>
                 </div>
                 <a href="/" class="menu-item-layout w-inline-block">
-                  <h4>HOME</h4>
+                  <h4>Home</h4>
                 </a>
               </div>
               <div class="menu-item">
                 <a href="/about" class="menu-item-layout w-inline-block">
-                  <h4>ABOUT</h4>
+                  <h4>About</h4>
                 </a>
               </div>
               <div class="menu-item">
                 <a href="/tracks" class="menu-item-layout w-inline-block">
-                  <h4>TRACKS</h4>
+                  <h4>Tracks</h4>
                 </a>
               </div>
               <div class="menu-item">
-                <a href="/register" class="menu-item-layout w-inline-block w--current">
-                  <h4>REGISTER</h4>
+                <a href="/register" class="menu-item-layout w-inline-block">
+                  <h4>Register</h4>
                 </a>
               </div>
               <div class="menu-item">
-                <a href="/dashboard" class="menu-item-layout w-inline-block">
-                  <h4>DASHBOARD</h4>
+                <a href="/dashboard" class="menu-item-layout w-inline-block w--current">
+                  <h4>Dashboard</h4>
                 </a>
               </div>
               <div class="menu-item">
@@ -244,9 +240,9 @@
   <div class="smooth-wrapper">
     <div class="smooth-content">
       <div>
-        <section class="register-section">
-          <div class="register-inner">
-            <div class="register-content">
+        <section class="dashboard-section">
+          <div class="dashboard-inner">
+            <div class="dashboard-header">
               <div data-wf--bracket--variant="top-left" class="bracket">
                 <div class="bracket-svg w-embed">
                   <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
@@ -255,179 +251,181 @@
                   </svg>
                 </div>
               </div>
+              <div class="dashboard-header-top">
+                <div>
+                  <h1 class="dashboard-heading dashboard-heading-signal" id="dashboard-team-name" data-heading="Team Dashboard">Team Dashboard</h1>
+                  <p class="dashboard-subheading" id="dashboard-capacity-copy">Loading family size...</p>
+                </div>
+                <div class="dashboard-header-actions">
+                  <button id="sign-out-btn" class="copy-btn copy-btn-secondary">Sign out</button>
+                </div>
+              </div>
+            </div>
 
-              <h1 id="register-heading" class="register-heading">Sign in</h1>
-              <p id="register-subheading" class="register-subheading">Use your email to continue into FamHack.</p>
-              <p id="register-page-message" class="success-message page-message"></p>
+            <div id="dashboard-loading" class="dashboard-loading" aria-live="polite">
+              <div class="dashboard-loading-stage">
+                <div class="dashboard-loading-orbit">
+                  <span class="dashboard-loading-core">FH</span>
+                  <span class="dashboard-loading-node dashboard-loading-node-a"></span>
+                  <span class="dashboard-loading-node dashboard-loading-node-b"></span>
+                  <span class="dashboard-loading-node dashboard-loading-node-c"></span>
+                  <span class="dashboard-loading-node dashboard-loading-node-d"></span>
+                </div>
+              </div>
+              <div class="dashboard-loading-copy">
+                <p class="dashboard-loading-kicker">Family Sync</p>
+                <h2 class="dashboard-loading-heading">Assembling your dashboard</h2>
+                <p class="dashboard-loading-text">Pulling members, pending requests, and join tools into place.</p>
+              </div>
+            </div>
 
-              <div class="register-step" data-step="role">
-                <div class="register-form">
-                  <div class="role-grid">
-                    <button id="choose-parent-btn" type="button" class="role-card">
-                      <p class="role-card-eyebrow">Parent</p>
-                      <h2 class="role-card-heading">Create a family</h2>
-                      <p class="role-card-copy">Start the family, get the code, and approve join requests.</p>
-                    </button>
+            <div id="dashboard-body" hidden>
+              <div id="dashboard-status-banner" class="status-banner" hidden></div>
 
-                    <button id="choose-child-btn" type="button" class="role-card">
-                      <p class="role-card-eyebrow">Child</p>
-                      <h2 class="role-card-heading">Join a family</h2>
-                      <p class="role-card-copy">Continue if someone in your family already has a code or invite link.</p>
-                    </button>
+              <div id="invite-grid" class="invite-grid">
+                <div class="invite-section">
+                  <p class="invite-label">Family Code</p>
+                  <p class="register-subheading invite-copy">Share this code with parents or students who want to join</p>
+                  <div class="invite-link-wrapper">
+                    <input type="text" id="join-code-display" class="invite-link-input" readonly value="Loading..." />
+                    <button id="copy-code-btn" class="copy-btn">Copy</button>
                   </div>
+                </div>
 
-                  <button id="choose-signin-btn" type="button" class="button-link role-signin-btn w-inline-block">
-                    <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Sign In</p>
-                      <div class="button-icon">
-                        <div class="button-icon-svg w-embed">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                            <path
-                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                              fill="currentColor" stroke-width="0.155153" />
+                <div class="invite-section">
+                  <p class="invite-label">Invite Link</p>
+                  <p class="register-subheading invite-copy">Optional shortcut that prefills the family code</p>
+                  <div class="invite-link-wrapper">
+                    <input type="text" id="invite-link-input" class="invite-link-input" readonly value="Loading..." />
+                    <button id="copy-invite-btn" class="copy-btn">Copy</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="ctf-launch-card" class="members-section ctf-launch-card">
+                <div class="ctf-launch-copy-wrap">
+                  <p class="ctf-launch-kicker">Individual CTF</p>
+                  <h2 id="ctf-launch-title" class="members-heading ctf-launch-title">Take on the CTF</h2>
+                  <p id="ctf-launch-copy" class="ctf-launch-copy">First to clear all challenges wins £20 and a certificate.</p>
+                </div>
+                <a id="ctf-launch-link" data-wf--button--variant="colour" href="/ctf" class="button-link w-inline-block">
+                  <div class="button">
+                    <p class="button-label">Start CTF</p>
+                    <div class="button-icon">
+                      <div class="button-icon-svg w-embed">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                          <path d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                            fill="currentColor" stroke-width="0.155153" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              </div>
+
+              <div class="members-section members-section-primary">
+                <div data-wf--bracket--variant="top-left" class="bracket">
+                  <div class="bracket-svg w-embed">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                      <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                        stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                    </svg>
+                  </div>
+                </div>
+                <h2 class="members-heading members-heading-primary">Current Members</h2>
+                <div id="members-list" class="members-list">
+                  <!-- Members will be populated by JavaScript -->
+                </div>
+                <div data-wf--bracket--variant="bottom-right"
+                  class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                  <div class="bracket-svg w-embed">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                      <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                        stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div id="pending-section" class="members-section" hidden>
+                <div data-wf--bracket--variant="top-left" class="bracket">
+                  <div class="bracket-svg w-embed">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                      <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                        stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                    </svg>
+                  </div>
+                </div>
+                <h2 class="members-heading">Pending Requests</h2>
+                <div id="pending-list" class="members-list"></div>
+                <div data-wf--bracket--variant="bottom-right"
+                  class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                  <div class="bracket-svg w-embed">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                      <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                        stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div id="danger-section" class="members-section dashboard-danger" hidden>
+                <div id="danger-shell" class="danger-shell">
+                  <div data-wf--bracket--variant="top-left" class="bracket danger-shell-bracket">
+                    <div class="bracket-svg w-embed">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                        <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                          stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div id="danger-toggle-wrap" class="danger-toggle-wrap" hidden>
+                    <div class="danger-toggle-frame">
+                      <div data-wf--bracket--variant="top-left" class="bracket danger-toggle-bracket">
+                        <div class="bracket-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                            <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                              stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                          </svg>
+                        </div>
+                      </div>
+                      <button id="danger-toggle-btn" class="copy-btn danger-toggle-btn" hidden
+                        aria-expanded="false" aria-controls="danger-panel">
+                        Delete Family
+                      </button>
+                      <div data-wf--bracket--variant="bottom-right"
+                        class="bracket danger-toggle-bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                        <div class="bracket-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                            <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                              stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
                           </svg>
                         </div>
                       </div>
                     </div>
-                  </button>
-                </div>
-              </div>
-
-              <div class="register-step" data-step="child">
-                <div class="register-form">
-                  <div class="form-group">
-                    <label class="form-label" for="role-family-code-input">Family Code</label>
-                    <input type="text" id="role-family-code-input" class="form-input uppercase-input" placeholder="ABCD23"
-                      autocapitalize="characters" autocomplete="off" />
                   </div>
-                  <p class="error-message" id="role-error"></p>
-                  <button id="continue-child-btn" type="button" class="button-link w-inline-block" style="width: 100%;">
-                    <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Continue</p>
-                      <div class="button-icon">
-                        <div class="button-icon-svg w-embed">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                            <path
-                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                              fill="currentColor" stroke-width="0.155153" />
-                          </svg>
-                        </div>
-                      </div>
+                  <div id="danger-panel" class="danger-panel" hidden>
+                    <h2 class="members-heading">Danger Zone</h2>
+                    <p id="danger-copy" class="danger-copy"></p>
+                    <div id="delete-team-confirm-group" class="form-group" hidden>
+                      <label class="form-label" for="delete-team-confirm-input">Type your family name to confirm</label>
+                      <input type="text" id="delete-team-confirm-input" class="form-input" autocomplete="off" />
+                      <p id="delete-team-confirm-hint" class="danger-hint"></p>
+                      <p id="delete-team-confirm-error" class="error-message"></p>
                     </div>
-                  </button>
-                  <button id="back-to-role-btn" type="button" class="resend-link">Back</button>
-                </div>
-              </div>
-
-              <div class="register-step active" data-step="email">
-                <div class="register-form">
-                  <div class="form-group">
-                    <label id="email-label" class="form-label" for="email-input">Email</label>
-                    <input type="email" id="email-input" class="form-input" placeholder="s1234567@ed.ac.uk"
-                      autocomplete="email" />
-                    <p class="error-message" id="email-error"></p>
-                  </div>
-                  <button id="send-otp-btn" class="button-link w-inline-block" style="width: 100%;">
-                    <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Send sign-in code</p>
-                      <div class="button-icon">
-                        <div class="button-icon-svg w-embed">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                            <path
-                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                              fill="currentColor" stroke-width="0.155153" />
-                          </svg>
-                        </div>
-                      </div>
+                    <div class="danger-actions">
+                      <button id="leave-team-btn" class="copy-btn danger-btn" hidden>Leave Family</button>
                     </div>
-                  </button>
-                  <button id="back-from-parent-btn" type="button" class="resend-link">Back</button>
-                </div>
-              </div>
-
-              <div class="register-step" data-step="otp">
-                <div class="register-form">
-                  <p class="form-label" style="text-align: center; margin-bottom: 20px;">Enter the 6-digit code sent to
-                    your email</p>
-                  <div class="otp-inputs">
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]"
-                      autocomplete="one-time-code" />
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
                   </div>
-                  <p class="error-message" id="otp-error"></p>
-                  <button id="verify-otp-btn" class="button-link w-inline-block" style="width: 100%;" disabled>
-                    <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Verify</p>
-                      <div class="button-icon">
-                        <div class="button-icon-svg w-embed">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                            <path
-                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                              fill="currentColor" stroke-width="0.155153" />
-                          </svg>
-                        </div>
-                      </div>
+                  <div data-wf--bracket--variant="bottom-right"
+                    class="bracket danger-shell-bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                    <div class="bracket-svg w-embed">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                        <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                          stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                      </svg>
                     </div>
-                  </button>
-                  <button id="resend-otp-btn" class="resend-link" disabled>Resend in 30s</button>
-                </div>
-              </div>
-
-              <div class="register-step" data-step="create-team">
-                <div class="register-form">
-                  <div class="form-group">
-                    <label class="form-label" for="full-name-input">Your Name</label>
-                    <input type="text" id="full-name-input" class="form-input" placeholder="Alex Morgan"
-                      autocomplete="name" />
                   </div>
-                  <div class="form-group">
-                    <label class="form-label" for="study-year-input">Year of Study</label>
-                    <select id="study-year-input" class="form-input form-select" autocomplete="off">
-                      <option value="">Select your year</option>
-                      <option value="year_1">Year 1</option>
-                      <option value="year_2">Year 2</option>
-                      <option value="year_3">Year 3</option>
-                      <option value="year_4">Year 4</option>
-                      <option value="masters">Master's</option>
-                      <option value="phd">PhD</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="team-name-input">Family / Team Name</label>
-                    <input type="text" id="team-name-input" class="form-input" placeholder="House Lovelace"
-                      autocomplete="organization" />
-                  </div>
-                  <p class="register-subheading helper-copy">Other parents or children will use the join code from the dashboard to
-                    request access.</p>
-                  <p class="error-message" id="team-error"></p>
-                  <button id="create-team-btn" class="button-link w-inline-block" style="width: 100%;">
-                    <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Create a Family</p>
-                      <div class="button-icon">
-                        <div class="button-icon-svg w-embed">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                            <path
-                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                              fill="currentColor" stroke-width="0.155153" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              <div data-wf--bracket--variant="bottom-right"
-                class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
-                <div class="bracket-svg w-embed">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
-                    <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
-                      stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
-                  </svg>
                 </div>
               </div>
             </div>
@@ -452,8 +450,9 @@
               </div>
               <div class="footer-col">
                 <h6>Community</h6>
-                <a href="https://discord.gg/rZpUhsm7NN" target="_blank" rel="noreferrer">Discord</a>
-                <a href="https://www.instagram.com/famhack_/" target="_blank" rel="noreferrer">Instagram</a>
+                <a href="#">Discord</a>
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
               </div>
               <div class="footer-col">
                 <h6>Legal</h6>
