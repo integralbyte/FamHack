@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { isCtfPreviewOpen } from './launch.js';
 import { assertAllowedEmail } from './teams.js';
 import { getServiceClient } from './supabase.js';
 
@@ -259,12 +260,14 @@ function buildLockedViewer(user) {
 export function getCtfReleaseGate(req) {
   const releaseAt = getReleaseAt();
   const releaseAtIso = releaseAt ? releaseAt.toISOString() : null;
+  const previewOverride = isCtfPreviewOpen();
   const launchOverride = Boolean(getLaunchSecret());
   const timeReleased = Boolean(releaseAt && Date.now() >= releaseAt.getTime());
-  const launched = launchOverride || timeReleased;
+  const launched = previewOverride || launchOverride || timeReleased;
 
   return {
     granted: launched,
+    previewOverride,
     released: timeReleased,
     launchConfigured: launchOverride,
     releaseAt: releaseAtIso,

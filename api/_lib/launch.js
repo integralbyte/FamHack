@@ -13,6 +13,18 @@ export function getServerLaunchState(now = new Date()) {
   return getLaunchState(now);
 }
 
+function isTruthyEnvironmentValue(value) {
+  return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
+export function isPreviewDeployment() {
+  return String(process.env.VERCEL_ENV || '').trim().toLowerCase() === 'preview';
+}
+
+export function isCtfPreviewOpen() {
+  return isPreviewDeployment() || isTruthyEnvironmentValue(process.env.CTF_FORCE_OPEN);
+}
+
 export function isNormalParticipationOpen(now = new Date()) {
   return getServerLaunchState(now).isNormalParticipationOpen;
 }

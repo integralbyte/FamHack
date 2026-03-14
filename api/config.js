@@ -4,7 +4,7 @@ import { requireUser } from './_lib/auth.js';
 import { assertServerEnv, getPublicConfig } from './_lib/env.js';
 import { allowMethods, readJsonBody, sendError, statusFromError } from './_lib/http.js';
 import { claimSecretKeyring, getSecretKeyringStatus } from './_lib/keyring.js';
-import { getServerLaunchState, normalizePageSlug } from './_lib/launch.js';
+import { getServerLaunchState, isCtfPreviewOpen, normalizePageSlug } from './_lib/launch.js';
 import { assertAllowedEmail, getMembershipByUserId, getRegisteredRoleMessage, serializeRegistration, upsertRegistration } from './_lib/teams.js';
 
 const publicPageFiles = new Map([
@@ -129,6 +129,10 @@ function resolvePageFile(slug, launch) {
   const publicPageFile = publicPageFiles.get(slug);
   if (publicPageFile) {
     return publicPageFile;
+  }
+
+  if (slug === 'ctf' && isCtfPreviewOpen()) {
+    return 'ctf.html';
   }
 
   if (slug === 'register') {
