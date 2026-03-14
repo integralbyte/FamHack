@@ -27,12 +27,14 @@ const pageFiles = new Map([
 ]);
 
 function renderComingSoonPage(slug) {
-  const title = slug === 'join' ? 'Family setup opens on 14 March' : 'Coming soon';
-  const copy = slug === 'join'
-    ? 'Sign in, create a family, and join a family all unlock on 14 March 2026.'
-    : slug === 'about' || slug === 'tracks'
-      ? 'This page unlocks on 28 March 2026.'
-    : 'This page unlocks on 14 March 2026.';
+  const isFamilySetupPage = slug === 'join' || slug === 'dashboard';
+  const isInfoPage = slug === 'about' || slug === 'tracks';
+  const title = isFamilySetupPage ? 'Family setup opens on 20 March' : 'Coming soon';
+  const copy = isFamilySetupPage
+    ? 'Sign in, create a family, and join a family all unlock on 20 March 2026.'
+    : isInfoPage
+      ? 'This page unlocks at 11:00 AM on 28 March 2026.'
+      : 'This page unlocks on 14 March 2026.';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -137,8 +139,12 @@ function resolvePageFile(slug, launch) {
     return launch.isRegistrationOpen ? 'register-prereg.html' : 'register.html';
   }
 
-  if (slug === 'about' || slug === 'tracks') {
-    return launch.isInfoPagesOpen ? protectedPageFiles.get(slug) || null : null;
+  if ((slug === 'about' || slug === 'tracks') && !launch.isInfoPagesOpen) {
+    return null;
+  }
+
+  if ((slug === 'join' || slug === 'dashboard') && !launch.isNormalParticipationOpen) {
+    return null;
   }
 
   if (!launch.isProtectedContentOpen) {
@@ -194,7 +200,7 @@ async function handleRegistrationStatus(req, res) {
 async function handleRegistrationComplete(req, res) {
   const launch = getServerLaunchState();
   if (!launch.isRegistrationOpen) {
-    sendError(res, 403, 'Registration closed at 11:59 PM on 13 March 2026.');
+    sendError(res, 403, 'Registration closed at 11:59 PM on 28 March 2026.');
     return;
   }
 
