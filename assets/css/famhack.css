@@ -5504,7 +5504,9 @@ button.button-link:disabled {
 }
 
 .home-ctf-promo-link .button {
-  min-width: 170px;
+  min-width: 220px;
+  min-height: 58px;
+  padding: 0 28px;
 }
 
 .faq-item {
