@@ -39,6 +39,8 @@ const FamHack = {
     ctfKonamiSolved: false,
     ctfAdvanceTimer: null,
     ctfSigintModalOpen: false,
+    ctfFinalInfoModalOpen: false,
+    ctfFinalChallengeEligible: false,
     ctfSigintConsoleHintLogged: false,
     homeClockFrame: null,
     homeClockTimer: null,
@@ -1575,27 +1577,21 @@ const FamHack = {
         this.openCtfSigintModal();
         return;
       }
-
-      const finalInfoOpenButton = event.target.closest('[data-ctf-final-info-open]');
-      if (finalInfoOpenButton) {
-        this.openCtfFinalInfoModal();
-      }
     });
     sigintModal?.addEventListener('click', (event) => {
       if (event.target === sigintModal || event.target.closest('[data-ctf-sigint-close]')) {
         this.closeCtfSigintModal();
       }
     });
-    finalInfoModal?.addEventListener('click', (event) => {
-      if (event.target === finalInfoModal || event.target.closest('[data-ctf-final-info-close]')) {
-        this.closeCtfFinalInfoModal();
+    finalInfoModal?.addEventListener('submit', (event) => {
+      if (event.target.closest('[data-ctf-final-year-gate-form]')) {
+        this.handleCtfFinalYearGate(event);
       }
     });
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         this.closeCtfSigintModal();
-        this.closeCtfFinalInfoModal();
       }
       this.handleKonamiKeydown(event);
     });
@@ -2376,7 +2372,7 @@ const FamHack = {
     const modal = document.getElementById('ctf-final-info-modal');
     const card = modal?.querySelector('.ctf-sigint-card');
 
-    if (!modal || this.state.ctfFinalInfoModalOpen) {
+    if (!modal || this.state.ctfFinalInfoModalOpen || this.state.ctfFinalChallengeEligible) {
       return;
     }
 
@@ -2384,6 +2380,7 @@ const FamHack = {
     modal.hidden = false;
     modal.style.opacity = '1';
     document.body.classList.add('ctf-final-info-modal-open');
+    this.showFieldError('ctf-final-year-gate-error', '');
 
     if (typeof window.gsap !== 'undefined' && card) {
       window.gsap.fromTo(
@@ -2434,6 +2431,49 @@ const FamHack = {
       onComplete: () => {
         modal.style.opacity = '';
       },
+    });
+  },
+
+  handleCtfFinalYearGate(event) {
+    const form = event.target.closest('[data-ctf-final-year-gate-form]');
+    if (!form) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const select = form.querySelector('#ctf-final-year-gate-select');
+    const submitButton = form.querySelector('.ctf-entry-notice-confirm');
+    const studyYear = String(select?.value || '').trim().toLowerCase();
+
+    this.showFieldError('ctf-final-year-gate-error', '');
+
+    if (!studyYear) {
+      this.showFieldError('ctf-final-year-gate-error', 'Choose your year of study.');
+      select?.focus();
+      return;
+    }
+
+    if (studyYear !== 'year_1') {
+      this.state.ctfFinalChallengeEligible = false;
+      this.showFieldError('ctf-final-year-gate-error', 'You are not eligible to solve this problem.');
+      return;
+    }
+
+    this.setButtonState(submitButton, {
+      busy: true,
+      label: 'Continuing...',
+      idleLabel: 'Continue',
+    });
+
+    this.state.ctfFinalChallengeEligible = true;
+    this.closeCtfFinalInfoModal({ silent: true });
+    this.renderCtfChallenge();
+
+    this.setButtonState(submitButton, {
+      busy: false,
+      label: 'Continuing...',
+      idleLabel: 'Continue',
     });
   },
 
@@ -2756,6 +2796,7 @@ const FamHack = {
     }
 
     if (ctf.member.completed) {
+      this.state.ctfFinalChallengeEligible = false;
       this.closeCtfFinalInfoModal({ silent: true });
       shell.innerHTML = `
         <section class="ctf-challenge-card ctf-challenge-card-success">
@@ -2775,6 +2816,7 @@ const FamHack = {
 
     const gate = this.state.ctfPendingAdvanceState;
     if (gate) {
+      this.state.ctfFinalChallengeEligible = false;
       this.closeCtfFinalInfoModal({ silent: true });
       if (gate.mode === 'konami') {
         shell.innerHTML = `
@@ -2833,11 +2875,9 @@ const FamHack = {
       ? `<p class="ctf-challenge-copy">${this.escapeHtml(challenge.prompt)}</p>`
       : '';
     const isFinalChallenge = challenge.number === ctf.challengeCount;
-    const finalInfoMarkup = isFinalChallenge
-      ? '<button type="button" class="copy-btn copy-btn-secondary ctf-final-info-trigger" data-ctf-final-info-open>Important info</button>'
-      : '';
 
     if (challenge.mode === 'konami') {
+      this.state.ctfFinalChallengeEligible = false;
       this.closeCtfFinalInfoModal({ silent: true });
       const konamiClass = this.state.ctfKonamiSolved ? ' is-solved' : '';
       const konamiText = this.state.ctfKonamiSolved ? 'Konami noticed.' : challenge.prompt;
@@ -2854,6 +2894,7 @@ const FamHack = {
     }
 
     if (!isFinalChallenge) {
+      this.state.ctfFinalChallengeEligible = false;
       this.closeCtfFinalInfoModal({ silent: true });
     }
 
@@ -2864,7 +2905,6 @@ const FamHack = {
         ${promptMarkup}
         ${challenge.body ? `<p class="ctf-challenge-clue">${this.escapeHtml(challenge.body)}</p>` : ''}
         ${assetMarkup}
-        ${finalInfoMarkup}
         <div class="form-group">
           <label class="form-label" for="ctf-answer-input">${this.escapeHtml(challenge.inputLabel || 'Answer')}</label>
           <input id="ctf-answer-input" name="ctf-answer" class="form-input" type="${challenge.mode === 'password' ? 'password' : 'text'}" placeholder="${this.escapeHtml(challenge.placeholder || 'Enter your answer')}" />
@@ -2884,6 +2924,10 @@ const FamHack = {
         </button>
       </form>
     `;
+
+    if (isFinalChallenge && !this.state.ctfFinalChallengeEligible) {
+      window.setTimeout(() => this.openCtfFinalInfoModal(), 0);
+    }
   },
 
   setCtfAdvanceGate(gate) {
@@ -2948,6 +2992,12 @@ const FamHack = {
     const ctf = this.state.ctf;
     const challenge = ctf?.currentChallenge;
     if (!challenge || challenge.mode === 'konami') {
+      return;
+    }
+
+    if (challenge.number === ctf.challengeCount && !this.state.ctfFinalChallengeEligible) {
+      this.openCtfFinalInfoModal();
+      this.showFieldError('ctf-answer-error', 'Confirm your year before continuing.');
       return;
     }
 

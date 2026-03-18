@@ -16,6 +16,11 @@ const CTF_PROOF_SEED = 'famhack-ctf-seed';
 const CTF_DEFAULT_ACCESS_SECRET = 'famhack-ctf-local-dev-secret';
 const CTF_KONAMI_ITERATIONS = 6000;
 const CTF_KONAMI_CODEPOINTS = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+const CTF_SIGNAL_SIX_HEX_ANSWER = '052e233d3e385d203c2b2733';
+const CTF_SIGNAL_SIX_ACCEPTED_ANSWERS = new Set([
+  CTF_SIGNAL_SIX_HEX_ANSWER,
+  CTF_SIGNAL_SIX_HEX_ANSWER.replace(/^0/, ''),
+]);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const CTF_PRIVATE_ASSET_DIR = path.resolve(__dirname, '../../private/ctf');
@@ -90,10 +95,10 @@ const CTF_CHALLENGES = [
   {
     number: 6,
     title: 'Signal Six',
-    mode: 'password',
-    prompt: 'Go home, look for me, and then 640 me please.',
-    inputLabel: 'Password',
-    placeholder: 'Enter password',
+    mode: 'text',
+    prompt: 'Home still matters. At 1759412580, another string of my length appears where you were expected to be. Take it exactly as shown, XOR it with me byte-wise, and submit the result as hexadecimal.',
+    inputLabel: 'Answer',
+    placeholder: 'Enter hexadecimal answer',
     actionLabel: 'Submit',
     successTitle: 'Board cleared.',
     successCopy: 'Every signal is done.',
@@ -116,6 +121,10 @@ function normalizeExactAnswer(answer) {
 
 function normalizeBase64Answer(answer) {
   return normalizeExactAnswer(answer).replace(/=+$/g, '');
+}
+
+function normalizeHexAnswer(answer) {
+  return normalizeExactAnswer(answer).toLowerCase();
 }
 
 function encodeBase64Times(value, times) {
@@ -340,7 +349,7 @@ function getChallengeProofMaterial(challengeNumber) {
     case 5:
       return normalizeLooseAnswer(getHandoffPdfTitle());
     case 6:
-      return normalizeBase64Answer(encodeBase64Times(getHomeSecret(), 10));
+      return normalizeHexAnswer(CTF_SIGNAL_SIX_HEX_ANSWER);
     default:
       throw createStatusError(400, 'Unknown CTF challenge');
   }
@@ -358,6 +367,7 @@ function buildSolveProof(solvedChallengeNumbers) {
 function verifyChallengeAnswer(challengeNumber, answer, accessToken) {
   const looseAnswer = normalizeLooseAnswer(answer);
   const base64Answer = normalizeBase64Answer(answer);
+  const hexAnswer = normalizeHexAnswer(answer);
 
   switch (challengeNumber) {
     case 1:
@@ -372,7 +382,7 @@ function verifyChallengeAnswer(challengeNumber, answer, accessToken) {
       return looseAnswer === normalizeLooseAnswer(getHandoffPdfTitle())
         || looseAnswer === normalizeLooseAnswer(getHandoffPdfTitle().replace(/\.pdf$/i, ''));
     case 6:
-      return base64Answer === normalizeBase64Answer(encodeBase64Times(getHomeSecret(), 10));
+      return CTF_SIGNAL_SIX_ACCEPTED_ANSWERS.has(hexAnswer);
     default:
       return false;
   }

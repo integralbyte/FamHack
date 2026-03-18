@@ -587,16 +587,22 @@
   </div>
   <div id="ctf-final-info-modal" class="ctf-sigint-modal" hidden aria-labelledby="ctf-final-info-title" aria-modal="true" role="dialog">
     <div class="ctf-sigint-card">
-      <button type="button" class="copy-btn copy-btn-secondary ctf-sigint-close" data-ctf-final-info-close aria-label="Close challenge update popup">Close</button>
-      <p class="ctf-entry-notice-kicker">Important Info</p>
-      <h2 id="ctf-final-info-title" class="ctf-entry-notice-title">L6 Update</h2>
-      <p class="ctf-entry-notice-copy">L6 (this problem) will be replaced on 20 March 2026 at 7:00 PM.</p>
-      <p class="ctf-entry-notice-copy">If you solve it before then, you will win.</p>
-      <p class="ctf-entry-notice-copy">Be ready at that time.</p>
-      <p class="ctf-entry-notice-copy">Join the Discord server to get notified when the replacement goes live.</p>
-      <div class="ctf-sigint-links">
-        <a class="copy-btn ctf-sigint-link ctf-sigint-link-secondary" href="https://discord.gg/rZpUhsm7NN" target="_blank" rel="noreferrer">Discord</a>
-      </div>
+      <p class="ctf-entry-notice-kicker">Before You Continue</p>
+      <h2 id="ctf-final-info-title" class="ctf-entry-notice-title">Signal Six Check</h2>
+      <p class="ctf-entry-notice-copy">Which year are you in?</p>
+      <form class="ctf-final-year-gate-form" data-ctf-final-year-gate-form autocomplete="off">
+        <select id="ctf-final-year-gate-select" class="form-input form-select ctf-final-year-gate-select" name="studyYear">
+          <option value="">Select your year</option>
+          <option value="year_1">Year 1</option>
+          <option value="year_2">Year 2</option>
+          <option value="year_3">Year 3</option>
+          <option value="year_4">Year 4</option>
+          <option value="masters">Master's</option>
+          <option value="phd">PhD</option>
+        </select>
+        <button type="submit" class="copy-btn ctf-entry-notice-confirm">Continue</button>
+        <p id="ctf-final-year-gate-error" class="error-message ctf-inline-error"></p>
+      </form>
     </div>
   </div>
   </div>
