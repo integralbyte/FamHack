@@ -728,9 +728,13 @@
         timeZone: 'Europe/London',
       });
 
-      const chartLabelFormatter = new Intl.DateTimeFormat('en-GB', {
+      const chartLabelDateFormatter = new Intl.DateTimeFormat('en-GB', {
         month: 'short',
         day: 'numeric',
+        timeZone: 'Europe/London',
+      });
+
+      const chartLabelTimeFormatter = new Intl.DateTimeFormat('en-GB', {
         hour: 'numeric',
         minute: '2-digit',
         hour12: false,
@@ -889,7 +893,7 @@
       function renderChart(series) {
         const width = 920;
         const height = 320;
-        const padding = { top: 24, right: 22, bottom: 54, left: 44 };
+        const padding = { top: 24, right: 22, bottom: 72, left: 44 };
         const values = series.map((point) => point.total);
         const maxValue = Math.max(...values, 1);
         const minValue = 0;
@@ -920,7 +924,16 @@
           const y = padding.top + (plotHeight / gridLines) * index;
           return { value, y };
         });
-        const xLabelStep = Math.max(1, Math.ceil(pointCount / 6));
+        const maxXAxisLabels = Math.max(2, Math.floor(plotWidth / 170));
+        const desiredLabelCount = Math.min(pointCount, maxXAxisLabels);
+        const displayIndexes = new Set([0, pointCount - 1]);
+
+        if (desiredLabelCount > 2) {
+          for (let slot = 1; slot < desiredLabelCount - 1; slot += 1) {
+            const index = Math.round((slot * (pointCount - 1)) / (desiredLabelCount - 1));
+            displayIndexes.add(index);
+          }
+        }
 
         chartSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
         chartSvg.innerHTML = `
@@ -954,13 +967,19 @@
             <circle cx="${xForIndex(index)}" cy="${yForValue(point.total)}" r="${index === pointCount - 1 ? 5 : 3.2}" fill="${index === pointCount - 1 ? '#ffe9ce' : '#fc2f20'}"></circle>
           `).join('')}
           ${series.map((point, index) => {
-            if (index % xLabelStep !== 0 && index !== pointCount - 1) {
+            if (!displayIndexes.has(index)) {
               return '';
             }
 
-            const label = chartLabelFormatter.format(new Date(point.binStart));
+            const labelDate = chartLabelDateFormatter.format(new Date(point.binStart));
+            const labelTime = chartLabelTimeFormatter.format(new Date(point.binStart));
+            const x = xForIndex(index);
+            const anchor = index === 0 ? 'start' : index === pointCount - 1 ? 'end' : 'middle';
             return `
-              <text x="${xForIndex(index)}" y="${height - 18}" fill="rgba(255,233,206,0.58)" font-size="11" text-anchor="${index === 0 ? 'start' : index === pointCount - 1 ? 'end' : 'middle'}">${escapeHtml(label)}</text>
+              <text x="${x}" y="${height - 30}" fill="rgba(255,233,206,0.58)" font-size="10.5" text-anchor="${anchor}">
+                <tspan x="${x}" dy="0">${escapeHtml(labelDate)}</tspan>
+                <tspan x="${x}" dy="13">${escapeHtml(labelTime)}</tspan>
+              </text>
             `;
           }).join('')}
         `;
