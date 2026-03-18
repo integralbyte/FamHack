@@ -1,452 +1,278 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
-  <title>FamHack Admin</title>
+  <title>Admin Dashboard | FamHack</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@400;500;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="description" content="Protected FamHack admin dashboard for registration analytics." />
+  <link href="/assets/css/famhack.css" rel="stylesheet" type="text/css" />
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@300;400;500;600&family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="/assets/images/famhack-logo.png" rel="shortcut icon" type="image/x-icon" />
+  <link href="/assets/images/famhack-logo.png" rel="apple-touch-icon" />
   <style>
-    :root {
-      color-scheme: dark;
-      --bg: #09070a;
-      --bg-soft: #131018;
-      --panel: rgba(15, 11, 19, 0.78);
-      --panel-strong: rgba(21, 15, 27, 0.94);
-      --panel-outline: rgba(255, 255, 255, 0.08);
-      --text: #f7ebdf;
-      --muted: rgba(247, 235, 223, 0.72);
-      --muted-strong: rgba(247, 235, 223, 0.88);
-      --accent: #fc2f20;
-      --accent-soft: rgba(252, 47, 32, 0.2);
-      --accent-glow: rgba(252, 47, 32, 0.4);
-      --accent-alt: #ff8a3d;
-      --success: #54df91;
-      --warning: #ffc86d;
-      --chart-fill: rgba(252, 47, 32, 0.18);
-      --shadow: 0 28px 80px rgba(0, 0, 0, 0.48);
-      --radius-lg: 28px;
-      --radius-md: 20px;
-      --radius-sm: 14px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
     html,
     body {
       margin: 0;
       min-height: 100%;
       background:
-        radial-gradient(circle at top, rgba(252, 47, 32, 0.18), transparent 34%),
-        radial-gradient(circle at 85% 15%, rgba(255, 138, 61, 0.16), transparent 28%),
-        linear-gradient(180deg, #0a090c 0%, #09070a 100%);
-      color: var(--text);
-      font-family: 'Sora', 'Azeret Mono', ui-sans-serif, system-ui, sans-serif;
+        radial-gradient(circle at top, rgba(252, 47, 32, 0.15), transparent 32%),
+        linear-gradient(180deg, #0f0f10 0%, #090909 100%);
+      color: #ffe9ce;
     }
 
-    body::before,
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
+    [hidden] {
+      display: none !important;
+    }
+
+    .bracket {
+      position: absolute;
+      top: var(--famhack-bracket-offset, 24px);
+      left: var(--famhack-bracket-offset, 24px);
+      width: 41px;
+      height: 42px;
+      color: rgba(255, 233, 206, 0.22);
       pointer-events: none;
-      z-index: 0;
     }
 
-    body::before {
-      background:
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-      background-size: 96px 96px;
-      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.8), transparent 86%);
-      opacity: 0.42;
+    .bracket[data-wf--bracket--variant="bottom-right"] {
+      top: auto;
+      left: auto;
+      right: var(--famhack-bracket-offset, 24px);
+      bottom: var(--famhack-bracket-offset, 24px);
     }
 
-    body::after {
-      background:
-        radial-gradient(circle at 20% 20%, rgba(252, 47, 32, 0.22), transparent 32%),
-        radial-gradient(circle at 80% 0%, rgba(255, 138, 61, 0.12), transparent 30%),
-        radial-gradient(circle at center, rgba(255, 255, 255, 0.05), transparent 60%);
-      mix-blend-mode: screen;
-      opacity: 0.85;
+    .bracket-svg,
+    .w-embed {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
-    button,
-    input {
-      font: inherit;
-    }
-
-    a {
-      color: inherit;
-    }
-
-    .admin-shell {
-      position: relative;
-      z-index: 1;
+    .admin-page {
       min-height: 100vh;
-      padding: 28px;
+      background:
+        radial-gradient(circle at 82% 18%, rgba(255, 233, 206, 0.045), transparent 24%),
+        radial-gradient(circle at top, rgba(252, 47, 32, 0.11), transparent 28%);
     }
 
-    .admin-topbar {
-      width: min(100%, 1280px);
-      margin: 0 auto 28px;
+    .admin-section {
+      padding-top: 140px;
+      padding-bottom: 64px;
+    }
+
+    .admin-inner {
+      max-width: 1140px;
+    }
+
+    .admin-header {
+      margin-bottom: 28px;
+    }
+
+    .admin-header-top {
+      align-items: flex-end;
+    }
+
+    .admin-header-copy {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-      padding: 18px 22px;
-      border: 1px solid var(--panel-outline);
-      border-radius: 999px;
-      background: rgba(10, 7, 12, 0.78);
-      backdrop-filter: blur(20px);
-      box-shadow: var(--shadow);
+      flex-direction: column;
+      gap: 14px;
+      max-width: 780px;
     }
 
-    .admin-brand {
+    .admin-header-copy .dashboard-subheading,
+    .admin-header-note,
+    .admin-panel-copy,
+    .admin-summary-meta,
+    .admin-table-meta,
+    .admin-table-empty {
+      font-family: 'Azeret Mono', monospace;
+      line-height: 1.75;
+      color: rgba(255, 233, 206, 0.74);
+    }
+
+    .admin-header-note {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .admin-header-actions {
+      align-items: center;
+    }
+
+    .admin-header-link {
       display: inline-flex;
       align-items: center;
-      gap: 14px;
+      justify-content: center;
       text-decoration: none;
-      color: var(--text);
-      font-family: 'Azeret Mono', monospace;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      font-size: 0.88rem;
     }
 
-    .admin-brand-mark {
-      width: 13px;
-      height: 13px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
-      box-shadow: 0 0 18px var(--accent-glow);
-    }
-
-    .admin-topbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .admin-pill {
+    .admin-access-chip {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      padding: 11px 16px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--muted);
-      font-size: 0.82rem;
-      letter-spacing: 0.04em;
+      padding: 14px 18px;
+      border: 1px solid rgba(255, 233, 206, 0.18);
+      background: rgba(255, 233, 206, 0.045);
+      color: #ffe9ce;
+      font-family: 'Azeret Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
     }
 
-    .admin-pill::before {
+    .admin-access-chip::before {
       content: "";
       width: 8px;
       height: 8px;
       border-radius: 999px;
-      background: var(--success);
-      box-shadow: 0 0 16px rgba(84, 223, 145, 0.55);
+      background: rgba(255, 233, 206, 0.42);
+      box-shadow: 0 0 0 6px rgba(255, 233, 206, 0.05);
     }
 
-    .admin-main {
-      width: min(100%, 1280px);
-      margin: 0 auto;
+    .admin-access-chip[data-state="locked"]::before {
+      background: #fc2f20;
+      box-shadow: 0 0 0 6px rgba(252, 47, 32, 0.12);
     }
 
-    .admin-auth-wrap {
-      min-height: calc(100vh - 148px);
-      display: grid;
-      place-items: center;
+    .admin-access-chip[data-state="active"]::before {
+      background: #76d87d;
+      box-shadow: 0 0 0 6px rgba(118, 216, 125, 0.12);
     }
 
-    .admin-auth-card {
-      width: min(100%, 560px);
-      position: relative;
-      overflow: hidden;
+    .admin-login-view {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .admin-login-panel {
+      width: min(100%, 760px);
       padding: 40px;
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(255, 255, 255, 0.08);
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
-        var(--panel-strong);
-      backdrop-filter: blur(24px);
-      box-shadow: var(--shadow);
+        radial-gradient(circle at top right, rgba(252, 47, 32, 0.18), transparent 34%),
+        linear-gradient(180deg, rgba(255, 233, 206, 0.055), rgba(255, 233, 206, 0.02)),
+        #11100d;
+      border: 1px solid rgba(255, 233, 206, 0.12);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 233, 206, 0.06),
+        0 28px 80px rgba(0, 0, 0, 0.34);
     }
 
-    .admin-auth-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(120deg, rgba(252, 47, 32, 0.2), transparent 34%),
-        linear-gradient(180deg, transparent, rgba(255, 138, 61, 0.06));
-      pointer-events: none;
+    .admin-login-panel .members-heading {
+      margin-bottom: 14px;
     }
 
-    .admin-auth-header,
-    .admin-hero {
-      position: relative;
-      z-index: 1;
-    }
-
-    .admin-kicker {
-      margin: 0 0 14px;
-      color: var(--accent-alt);
-      font-family: 'Azeret Mono', monospace;
-      font-size: 0.78rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-
-    .admin-auth-title,
-    .admin-hero-title {
-      margin: 0 0 14px;
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      line-height: 0.94;
-      letter-spacing: -0.05em;
-    }
-
-    .admin-auth-copy,
-    .admin-hero-copy,
-    .admin-panel-copy {
+    .admin-login-copy {
+      max-width: 54ch;
       margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
+      font-family: 'Azeret Mono', monospace;
+      font-size: 0.95rem;
+      line-height: 1.85;
+      color: rgba(255, 233, 206, 0.78);
     }
 
-    .admin-auth-form {
-      position: relative;
-      z-index: 1;
+    .admin-login-form {
       display: grid;
-      gap: 18px;
-      margin-top: 32px;
+      gap: 14px;
+      margin-top: 26px;
     }
 
-    .admin-label {
+    .admin-password-row {
       display: grid;
-      gap: 10px;
-      color: var(--muted-strong);
-      font-size: 0.94rem;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: stretch;
     }
 
     .admin-password-input {
       width: 100%;
-      padding: 16px 18px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: var(--radius-sm);
-      background: rgba(0, 0, 0, 0.22);
-      color: var(--text);
-      outline: none;
-      transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+      min-width: 0;
     }
 
-    .admin-password-input:focus {
-      border-color: rgba(252, 47, 32, 0.5);
-      box-shadow: 0 0 0 4px rgba(252, 47, 32, 0.12);
-      transform: translateY(-1px);
+    .admin-login-button {
+      min-width: 210px;
     }
 
-    .admin-button {
-      appearance: none;
-      border: 0;
-      border-radius: 999px;
-      padding: 15px 22px;
-      cursor: pointer;
-      background: linear-gradient(135deg, #ca2316 0%, #fc2f20 52%, #ff8a3d 100%);
-      color: #fff8f0;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      box-shadow: 0 18px 38px rgba(252, 47, 32, 0.28);
-      transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+    .admin-login-error {
+      min-height: 1.2em;
     }
 
-    .admin-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 24px 44px rgba(252, 47, 32, 0.34);
-      filter: saturate(1.08);
-    }
-
-    .admin-button:active {
-      transform: translateY(0);
-    }
-
-    .admin-button.admin-button-secondary {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: none;
-    }
-
-    .admin-auth-error {
-      min-height: 1.5em;
-      margin: 0;
-      color: #ff8f86;
-      font-size: 0.92rem;
-    }
-
-    .admin-dashboard {
+    .admin-dashboard-view {
       display: grid;
       gap: 24px;
-      padding-bottom: 28px;
     }
 
-    .admin-hero {
+    .admin-dashboard-shell {
       display: grid;
-      grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
-      gap: 18px;
-      align-items: stretch;
+      gap: 24px;
     }
 
-    .admin-hero-card,
-    .admin-panel,
-    .admin-metric {
-      position: relative;
-      overflow: hidden;
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--panel-outline);
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
-        var(--panel);
-      backdrop-filter: blur(24px);
-      box-shadow: var(--shadow);
+    .admin-status-banner {
+      margin-bottom: 0;
     }
 
-    .admin-hero-card,
-    .admin-panel {
-      padding: 28px;
-    }
-
-    .admin-hero-card::before,
-    .admin-panel::before,
-    .admin-metric::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(252, 47, 32, 0.12), transparent 34%, transparent 70%, rgba(255, 138, 61, 0.08));
-      pointer-events: none;
-    }
-
-    .admin-hero-card > *,
-    .admin-panel > *,
-    .admin-metric > * {
-      position: relative;
-      z-index: 1;
-    }
-
-    .admin-hero-meta {
-      display: grid;
-      gap: 14px;
-    }
-
-    .admin-chip-stack {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 22px;
-    }
-
-    .admin-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 13px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--muted-strong);
-      font-size: 0.84rem;
-    }
-
-    .admin-chip strong {
-      color: var(--text);
-    }
-
-    .admin-meta-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-top: 28px;
-    }
-
-    .admin-meta-label {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.94rem;
-      line-height: 1.6;
-    }
-
-    .admin-metric-grid {
+    .admin-summary-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 18px;
+      gap: 20px;
     }
 
-    .admin-metric {
-      padding: 22px;
-    }
-
-    .admin-metric-label {
-      margin: 0 0 14px;
-      color: var(--muted);
-      font-size: 0.82rem;
-      font-family: 'Azeret Mono', monospace;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .admin-metric-value {
-      margin: 0;
-      font-size: clamp(1.8rem, 4vw, 3rem);
-      line-height: 0.95;
-      letter-spacing: -0.06em;
-    }
-
-    .admin-metric-meta {
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.5;
-    }
-
-    .admin-dashboard-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-      gap: 18px;
-      align-items: start;
-    }
-
-    .admin-panel-heading-row {
+    .admin-summary-card {
+      margin-bottom: 0;
+      min-height: 204px;
       display: flex;
-      align-items: flex-start;
+      flex-direction: column;
       justify-content: space-between;
       gap: 18px;
-      margin-bottom: 20px;
     }
 
-    .admin-panel-title {
-      margin: 0 0 8px;
-      font-size: clamp(1.4rem, 3vw, 2.1rem);
-      line-height: 1.02;
-      letter-spacing: -0.05em;
+    .admin-summary-value {
+      margin: 0;
+      font-family: 'Azeret Mono', monospace;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 0.92;
+      color: #ffe9ce;
+    }
+
+    .admin-summary-meta {
+      margin: 0;
+      font-size: 0.86rem;
+    }
+
+    .admin-summary-accent {
+      color: #fc2f20;
+    }
+
+    .admin-panel {
+      margin-bottom: 0;
+      background:
+        linear-gradient(180deg, rgba(255, 233, 206, 0.055), rgba(255, 233, 206, 0.018)),
+        #11100d;
+      border: 1px solid rgba(255, 233, 206, 0.12);
+      box-shadow: inset 0 1px 0 rgba(255, 233, 206, 0.04);
+    }
+
+    .admin-panel .members-heading {
+      margin-bottom: 10px;
+    }
+
+    .admin-panel-copy {
+      margin: 0 0 22px;
+      font-size: 0.9rem;
     }
 
     .admin-chart-frame {
       position: relative;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 18px 18px 20px;
+      border: 1px solid rgba(255, 233, 206, 0.1);
       background:
-        linear-gradient(180deg, rgba(252, 47, 32, 0.08), rgba(252, 47, 32, 0.01)),
-        rgba(0, 0, 0, 0.16);
-      padding: 18px;
+        radial-gradient(circle at top left, rgba(252, 47, 32, 0.1), transparent 28%),
+        linear-gradient(180deg, rgba(255, 233, 206, 0.03), rgba(255, 233, 206, 0.012)),
+        rgba(0, 0, 0, 0.22);
       overflow: hidden;
     }
 
@@ -455,26 +281,30 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-      background-size: 48px 48px;
-      opacity: 0.32;
+        linear-gradient(rgba(255, 233, 206, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 233, 206, 0.03) 1px, transparent 1px);
+      background-size: 52px 52px;
+      opacity: 0.42;
       pointer-events: none;
     }
 
     .admin-chart {
       position: relative;
+      z-index: 1;
       display: block;
       width: 100%;
-      height: 300px;
+      height: 320px;
     }
 
     .admin-chart-empty {
+      position: relative;
+      z-index: 1;
+      min-height: 240px;
       display: grid;
       place-items: center;
-      min-height: 240px;
-      color: var(--muted);
       text-align: center;
+      font-family: 'Azeret Mono', monospace;
+      color: rgba(255, 233, 206, 0.7);
     }
 
     .admin-chart-summary {
@@ -483,23 +313,25 @@
       gap: 12px;
       flex-wrap: wrap;
       margin-top: 16px;
-      color: var(--muted);
-      font-size: 0.9rem;
+      font-family: 'Azeret Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: rgba(255, 233, 206, 0.72);
     }
 
     .admin-chart-summary strong {
-      color: var(--text);
+      color: #ffe9ce;
+      font-weight: 500;
     }
 
     .admin-table-wrap {
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 233, 206, 0.1);
+      background: rgba(0, 0, 0, 0.22);
       overflow: hidden;
     }
 
     .admin-table-scroll {
-      max-height: 560px;
+      max-height: 620px;
       overflow: auto;
     }
 
@@ -512,53 +344,55 @@
       position: sticky;
       top: 0;
       z-index: 1;
-      background: rgba(14, 10, 18, 0.94);
-      color: var(--muted);
+      background: #121110;
+      color: rgba(255, 233, 206, 0.66);
       font-family: 'Azeret Mono', monospace;
-      font-size: 0.76rem;
-      letter-spacing: 0.1em;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
     }
 
     .admin-table th,
     .admin-table td {
-      padding: 16px 18px;
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255, 233, 206, 0.08);
       text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       vertical-align: top;
     }
 
     .admin-table tbody tr:hover {
-      background: rgba(255, 255, 255, 0.025);
+      background: rgba(255, 233, 206, 0.03);
+    }
+
+    .admin-table-email,
+    .admin-role-pill {
+      font-family: 'Azeret Mono', monospace;
     }
 
     .admin-table-email {
       margin: 0;
-      color: var(--text);
-      font-size: 0.96rem;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #ffe9ce;
       word-break: break-word;
     }
 
-    .admin-table-timestamp,
     .admin-table-meta {
       margin: 0;
-      color: var(--muted);
-      font-size: 0.86rem;
-      line-height: 1.55;
+      font-size: 0.78rem;
     }
 
     .admin-role-pill {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: var(--muted-strong);
-      font-size: 0.8rem;
+      border: 1px solid rgba(255, 233, 206, 0.16);
+      background: rgba(255, 233, 206, 0.04);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      color: #ffe9ce;
     }
 
     .admin-role-pill::before {
@@ -566,212 +400,233 @@
       width: 8px;
       height: 8px;
       border-radius: 999px;
-      background: var(--accent-alt);
-      box-shadow: 0 0 12px rgba(255, 138, 61, 0.5);
+      background: rgba(252, 47, 32, 0.88);
+      box-shadow: 0 0 0 6px rgba(252, 47, 32, 0.08);
     }
 
     .admin-role-pill[data-role="child"]::before {
-      background: var(--success);
-      box-shadow: 0 0 12px rgba(84, 223, 145, 0.45);
+      background: rgba(255, 233, 206, 0.84);
+      box-shadow: 0 0 0 6px rgba(255, 233, 206, 0.08);
     }
 
-    .admin-empty-table {
-      padding: 38px 22px;
+    .admin-table-empty {
+      padding: 42px 20px;
       text-align: center;
-      color: var(--muted);
+      font-size: 0.88rem;
     }
 
-    .admin-loading {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--muted);
-      font-size: 0.9rem;
+    .admin-footer-spacer {
+      margin-top: 16px;
     }
 
-    .admin-loading::before {
-      content: "";
-      width: 12px;
-      height: 12px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
-      box-shadow: 0 0 12px var(--accent-glow);
-      animation: adminPulse 1.1s ease-in-out infinite;
-    }
-
-    @keyframes adminPulse {
-      0%, 100% {
-        transform: scale(0.9);
-        opacity: 0.65;
-      }
-      50% {
-        transform: scale(1.15);
-        opacity: 1;
-      }
-    }
-
-    @media (max-width: 1100px) {
-      .admin-hero,
-      .admin-dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .admin-metric-grid {
+    @media (max-width: 991px) {
+      .admin-summary-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
-    @media (max-width: 720px) {
-      .admin-shell {
-        padding: 16px;
+    @media (max-width: 767px) {
+      .admin-section {
+        padding: 120px 20px 56px;
       }
 
-      .admin-topbar {
-        padding: 14px 16px;
-        border-radius: 22px;
-      }
-
-      .admin-topbar-actions {
-        width: 100%;
-        justify-content: flex-end;
-      }
-
-      .admin-topbar,
-      .admin-meta-row,
-      .admin-panel-heading-row {
-        flex-direction: column;
+      .admin-header-top {
         align-items: flex-start;
       }
 
-      .admin-auth-card,
-      .admin-hero-card,
-      .admin-panel,
-      .admin-metric {
-        padding: 22px;
+      .admin-login-panel,
+      .admin-panel {
+        padding: 30px;
       }
 
-      .admin-metric-grid {
+      .admin-password-row {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-login-button {
+        width: 100%;
+      }
+
+      .admin-summary-grid {
         grid-template-columns: 1fr;
       }
 
       .admin-chart {
-        height: 240px;
+        height: 260px;
+      }
+
+      .admin-table th,
+      .admin-table td {
+        padding: 16px;
       }
     }
   </style>
 </head>
-<body>
-  <div class="admin-shell">
-    <header class="admin-topbar">
-      <a class="admin-brand" href="/">
-        <span class="admin-brand-mark" aria-hidden="true"></span>
-        <span>FamHack Admin</span>
-      </a>
-      <div class="admin-topbar-actions">
-        <div class="admin-pill">Protected View</div>
-        <button id="admin-logout" class="admin-button admin-button-secondary" type="button" hidden>Log out</button>
-      </div>
-    </header>
 
-    <main class="admin-main">
-      <section id="admin-login-view" class="admin-auth-wrap">
-        <div class="admin-auth-card">
-          <div class="admin-auth-header">
-            <p class="admin-kicker">Secure Access</p>
-            <h1 class="admin-auth-title">Registration telemetry, behind one password.</h1>
-            <p class="admin-auth-copy">This view stays server-backed. The browser only gets the dashboard data after the password is accepted and the admin session cookie is issued.</p>
+<body class="admin-page">
+  <section class="dashboard-section admin-section">
+    <div class="dashboard-inner admin-inner">
+      <div class="dashboard-header admin-header">
+        <div data-wf--bracket--variant="top-left" class="bracket">
+          <div class="bracket-svg w-embed">
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+              <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+            </svg>
           </div>
+        </div>
+        <div class="dashboard-header-top admin-header-top">
+          <div class="admin-header-copy">
+            <p class="ctf-page-kicker">Protected View</p>
+            <h1 id="admin-heading" class="dashboard-heading dashboard-heading-signal" data-heading="Admin Dashboard">Admin Dashboard</h1>
+            <p class="dashboard-subheading">Server-backed registration analytics for FamHack sign-ups.</p>
+            <p class="admin-header-note">The panel stays locked until the password is accepted. Real registration data only appears after the authenticated session is active.</p>
+          </div>
+          <div class="dashboard-header-actions admin-header-actions">
+            <a href="/" class="copy-btn copy-btn-secondary admin-header-link">Back home</a>
+            <p id="admin-access-state" class="admin-access-chip" data-state="locked">Locked</p>
+            <button id="admin-logout" class="copy-btn copy-btn-secondary" type="button" hidden>Sign out</button>
+          </div>
+        </div>
+      </div>
 
-          <form id="admin-login-form" class="admin-auth-form">
-            <label class="admin-label" for="admin-password">
-              Admin password
-              <input id="admin-password" class="admin-password-input" name="password" type="password" autocomplete="current-password" spellcheck="false" required />
-            </label>
-            <p id="admin-login-error" class="admin-auth-error" aria-live="polite"></p>
-            <button id="admin-login-button" class="admin-button" type="submit">Unlock dashboard</button>
+      <section id="admin-login-view" class="admin-login-view">
+        <div class="members-section admin-login-panel">
+          <div data-wf--bracket--variant="top-left" class="bracket">
+            <div class="bracket-svg w-embed">
+              <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                  stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+              </svg>
+            </div>
+          </div>
+          <p class="ctf-page-kicker">Secure Access</p>
+          <h2 class="members-heading members-heading-primary">Unlock the registration dashboard</h2>
+          <p class="admin-login-copy">This view contains the live FamHack registration roster, timestamps, and cumulative sign-up telemetry. Nothing below will render until the password is validated server-side.</p>
+
+          <form id="admin-login-form" class="admin-login-form">
+            <div class="form-group">
+              <label class="form-label" for="admin-password">Admin password</label>
+              <div class="admin-password-row">
+                <input id="admin-password" class="form-input admin-password-input" name="password" type="password" autocomplete="current-password" spellcheck="false" required />
+                <button id="admin-login-button" class="copy-btn admin-login-button" type="submit">Unlock dashboard</button>
+              </div>
+            </div>
+            <p id="admin-login-error" class="error-message admin-login-error" aria-live="polite"></p>
           </form>
+
+          <div data-wf--bracket--variant="bottom-right" class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+            <div class="bracket-svg w-embed">
+              <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                  stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+              </svg>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="admin-dashboard-view" class="admin-dashboard" hidden>
-        <div class="admin-hero">
-          <div class="admin-hero-card">
-            <p class="admin-kicker">Live Overview</p>
-            <h1 class="admin-hero-title">Sign-up flow visibility without leaving the site.</h1>
-            <p class="admin-hero-copy">This panel is built around the registration records already in Supabase auth. It aggregates allowed FamHack users, completed sign-ups, and the registration pace across 12-hour windows.</p>
-            <div class="admin-chip-stack">
-              <div class="admin-chip"><strong id="admin-chip-rate">0%</strong> completion rate</div>
-              <div class="admin-chip"><strong id="admin-chip-latest">No signups yet</strong></div>
-            </div>
-            <div class="admin-meta-row">
-              <p class="admin-meta-label">Use this to spot registration spikes, check the latest entries, and confirm exactly who has signed up and when.</p>
-              <p class="admin-meta-label">Last refreshed: <strong id="admin-generated-at">Loading...</strong></p>
+      <section id="admin-dashboard-view" class="admin-dashboard-view" hidden>
+        <div id="admin-loading" class="dashboard-loading" hidden aria-live="polite">
+          <div class="dashboard-loading-stage">
+            <div class="dashboard-loading-orbit">
+              <span class="dashboard-loading-core">ADM</span>
+              <span class="dashboard-loading-node dashboard-loading-node-a"></span>
+              <span class="dashboard-loading-node dashboard-loading-node-b"></span>
+              <span class="dashboard-loading-node dashboard-loading-node-c"></span>
+              <span class="dashboard-loading-node dashboard-loading-node-d"></span>
             </div>
           </div>
-
-          <div class="admin-hero-card admin-hero-meta">
-            <p class="admin-kicker">Session</p>
-            <div>
-              <h2 class="admin-panel-title">Admin access is active.</h2>
-              <p class="admin-panel-copy">The session is cookie-based and server-validated, so this view does not rely on hiding anything in frontend code.</p>
-            </div>
-            <div>
-              <h2 class="admin-panel-title">Data source</h2>
-              <p class="admin-panel-copy">Allowed-domain auth users, filtered sign-ups, and registration completion timestamps.</p>
-            </div>
+          <div class="dashboard-loading-copy">
+            <p class="dashboard-loading-kicker">Secure Sync</p>
+            <h2 class="dashboard-loading-heading">Assembling the admin dashboard</h2>
+            <p class="dashboard-loading-text">Pulling sign-ups, totals, and registration momentum into place.</p>
           </div>
         </div>
 
-        <div class="admin-metric-grid">
-          <article class="admin-metric">
-            <p class="admin-metric-label">Total Users</p>
-            <p id="admin-total-users" class="admin-metric-value">0</p>
-            <p class="admin-metric-meta">Allowed-domain users visible to the dashboard.</p>
-          </article>
-          <article class="admin-metric">
-            <p class="admin-metric-label">Total Sign-Ups</p>
-            <p id="admin-total-signups" class="admin-metric-value">0</p>
-            <p class="admin-metric-meta">Users who completed the sign-up choice flow.</p>
-          </article>
-          <article class="admin-metric">
-            <p class="admin-metric-label">Parent Sign-Ups</p>
-            <p id="admin-parent-signups" class="admin-metric-value">0</p>
-            <p class="admin-metric-meta">Completed registrations tagged as Parent.</p>
-          </article>
-          <article class="admin-metric">
-            <p class="admin-metric-label">Child Sign-Ups</p>
-            <p id="admin-child-signups" class="admin-metric-value">0</p>
-            <p class="admin-metric-meta">Completed registrations tagged as Child.</p>
-          </article>
-        </div>
+        <div id="admin-dashboard-shell" class="admin-dashboard-shell" hidden>
+          <div id="admin-status-banner" class="status-banner status-banner is-success admin-status-banner" hidden></div>
 
-        <div class="admin-dashboard-grid">
-          <article class="admin-panel">
-            <div class="admin-panel-heading-row">
+          <div class="invite-grid admin-summary-grid">
+            <article class="invite-section admin-summary-card">
               <div>
-                <p class="admin-kicker">Momentum</p>
-                <h2 class="admin-panel-title">Cumulative sign-ups every 12 hours.</h2>
+                <p class="invite-label">Total Users</p>
+                <p id="admin-total-users" class="admin-summary-value">0</p>
               </div>
-              <p class="admin-panel-copy">A running total, grouped into 12-hour windows so spikes are easy to see without the chart turning noisy.</p>
+              <p class="admin-summary-meta">Allowed-domain users visible to the dashboard.</p>
+            </article>
+
+            <article class="invite-section admin-summary-card">
+              <div>
+                <p class="invite-label">Total Sign-Ups</p>
+                <p id="admin-total-signups" class="admin-summary-value">0</p>
+              </div>
+              <p class="admin-summary-meta">Users who completed the role selection flow.</p>
+            </article>
+
+            <article class="invite-section admin-summary-card">
+              <div>
+                <p class="invite-label">Parent Sign-Ups</p>
+                <p id="admin-parent-signups" class="admin-summary-value">0</p>
+              </div>
+              <p class="admin-summary-meta">Completed registrations tagged as <span class="admin-summary-accent">Parent</span>.</p>
+            </article>
+
+            <article class="invite-section admin-summary-card">
+              <div>
+                <p class="invite-label">Child Sign-Ups</p>
+                <p id="admin-child-signups" class="admin-summary-value">0</p>
+              </div>
+              <p class="admin-summary-meta">Completed registrations tagged as Child. Latest refresh: <span id="admin-generated-at">Loading...</span>.</p>
+            </article>
+          </div>
+
+          <div class="members-section admin-panel">
+            <div data-wf--bracket--variant="top-left" class="bracket">
+              <div class="bracket-svg w-embed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                  <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                    stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                </svg>
+              </div>
             </div>
+            <h2 class="members-heading members-heading-primary">Cumulative sign-ups</h2>
+            <p class="admin-panel-copy">This graph shows the running total of completed registrations, grouped into 12-hour windows so spikes are obvious without turning the chart into noise.</p>
+
             <div class="admin-chart-frame">
               <svg id="admin-chart" class="admin-chart" viewBox="0 0 920 320" preserveAspectRatio="none" aria-label="Cumulative sign-up chart"></svg>
               <div id="admin-chart-empty" class="admin-chart-empty" hidden>No completed sign-ups yet.</div>
             </div>
+
             <div class="admin-chart-summary">
               <span>Window size: <strong>12 hours</strong></span>
+              <span>Completion rate: <strong id="admin-chip-rate">0%</strong></span>
               <span>Most recent cumulative total: <strong id="admin-chart-total">0</strong></span>
+              <span id="admin-chip-latest">No signups yet</span>
             </div>
-          </article>
 
-          <article class="admin-panel">
-            <div class="admin-panel-heading-row">
-              <div>
-                <p class="admin-kicker">Raw Entries</p>
-                <h2 class="admin-panel-title">Signed-up emails and timestamps.</h2>
+            <div data-wf--bracket--variant="bottom-right" class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+              <div class="bracket-svg w-embed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                  <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                    stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                </svg>
               </div>
-              <p class="admin-panel-copy">Newest completed sign-ups first.</p>
             </div>
+          </div>
+
+          <div class="members-section admin-panel">
+            <div data-wf--bracket--variant="top-left" class="bracket">
+              <div class="bracket-svg w-embed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                  <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                    stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                </svg>
+              </div>
+            </div>
+            <h2 class="members-heading members-heading-primary">Signed-up emails and timestamps</h2>
+            <p class="admin-panel-copy">Newest completed sign-ups first, including their recorded role and the exact registration timestamp.</p>
+
             <div class="admin-table-wrap">
               <div class="admin-table-scroll">
                 <table class="admin-table">
@@ -785,20 +640,65 @@
                   <tbody id="admin-signup-table-body">
                     <tr>
                       <td colspan="3">
-                        <div class="admin-empty-table">
-                          <span class="admin-loading">Loading sign-ups</span>
-                        </div>
+                        <div class="admin-table-empty">No completed sign-ups yet.</div>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
-          </article>
+
+            <div data-wf--bracket--variant="bottom-right" class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+              <div class="bracket-svg w-embed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                  <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                    stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-    </main>
-  </div>
+    </div>
+  </section>
+
+  <footer class="footer-new admin-footer-spacer">
+    <div class="footer-container">
+      <div class="footer-top">
+        <h1 class="footer-logo">FAMHACK</h1>
+      </div>
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h6>Navigation</h6>
+          <a href="/">Home</a>
+          <a href="/about">About</a>
+          <a href="/tracks">Tracks</a>
+          <a href="/register">Register</a>
+          <a href="/dashboard">Dashboard</a>
+          <a href="/ctf">CTF</a>
+        </div>
+        <div class="footer-col">
+          <h6>Community</h6>
+          <a href="https://discord.gg/rZpUhsm7NN" target="_blank" rel="noreferrer">Discord</a>
+          <a href="https://www.instagram.com/famhack_/" target="_blank" rel="noreferrer">Instagram</a>
+        </div>
+        <div class="footer-col">
+          <h6>Legal</h6>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+        <div class="footer-col">
+          <h6>Location</h6>
+          <p style="color: #ffe9ce; font-family: 'Azeret Mono', monospace; font-size: 0.9rem; line-height: 1.6; margin: 0;">
+            University of Edinburgh<br>Edinburgh, Scotland
+          </p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 FamHack | University of Edinburgh</p>
+      </div>
+    </div>
+  </footer>
 
   <script>
     (() => {
@@ -809,6 +709,8 @@
       const apiBase = '/api/config';
       const loginView = document.getElementById('admin-login-view');
       const dashboardView = document.getElementById('admin-dashboard-view');
+      const dashboardShell = document.getElementById('admin-dashboard-shell');
+      const adminLoading = document.getElementById('admin-loading');
       const loginForm = document.getElementById('admin-login-form');
       const loginButton = document.getElementById('admin-login-button');
       const loginError = document.getElementById('admin-login-error');
@@ -816,6 +718,8 @@
       const passwordInput = document.getElementById('admin-password');
       const chartSvg = document.getElementById('admin-chart');
       const chartEmpty = document.getElementById('admin-chart-empty');
+      const accessState = document.getElementById('admin-access-state');
+      const statusBanner = document.getElementById('admin-status-banner');
 
       const dateTimeFormatter = new Intl.DateTimeFormat('en-GB', {
         dateStyle: 'medium',
@@ -864,6 +768,11 @@
         return dateTimeFormatter.format(parsed);
       }
 
+      function setAccessState(state, label) {
+        accessState.dataset.state = state;
+        accessState.textContent = label;
+      }
+
       async function request(mode, options = {}) {
         const response = await fetch(`${apiBase}?mode=${encodeURIComponent(mode)}`, {
           credentials: 'same-origin',
@@ -895,16 +804,34 @@
 
       function showLogin(message = '') {
         dashboardView.hidden = true;
+        dashboardShell.hidden = true;
+        adminLoading.hidden = true;
         loginView.hidden = false;
         logoutButton.hidden = true;
+        statusBanner.hidden = true;
+        statusBanner.textContent = '';
         loginError.textContent = message;
+        setAccessState('locked', 'Locked');
+      }
+
+      function showDashboardLoading() {
+        loginView.hidden = true;
+        dashboardView.hidden = false;
+        dashboardShell.hidden = true;
+        adminLoading.hidden = false;
+        logoutButton.hidden = true;
+        statusBanner.hidden = true;
+        setAccessState('locked', 'Loading');
       }
 
       function showDashboard() {
         loginView.hidden = true;
         dashboardView.hidden = false;
+        dashboardShell.hidden = false;
+        adminLoading.hidden = true;
         logoutButton.hidden = false;
         loginError.textContent = '';
+        setAccessState('active', 'Live');
       }
 
       function setMetricValue(id, value) {
@@ -935,7 +862,7 @@
           tableBody.innerHTML = `
             <tr>
               <td colspan="3">
-                <div class="admin-empty-table">No completed sign-ups yet.</div>
+                <div class="admin-table-empty">No completed sign-ups yet.</div>
               </td>
             </tr>
           `;
@@ -948,7 +875,7 @@
               <p class="admin-table-email">${escapeHtml(row.email)}</p>
             </td>
             <td>
-              <p class="admin-table-timestamp">${escapeHtml(formatDateTime(row.registeredAt))}</p>
+              <p class="admin-table-email">${escapeHtml(formatDateTime(row.registeredAt))}</p>
               <p class="admin-table-meta">${escapeHtml(row.registeredAt || '')}</p>
             </td>
             <td>
@@ -998,11 +925,11 @@
         chartSvg.innerHTML = `
           <defs>
             <linearGradient id="admin-chart-fill-gradient" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="rgba(252,47,32,0.42)"></stop>
-              <stop offset="100%" stop-color="rgba(252,47,32,0.02)"></stop>
+              <stop offset="0%" stop-color="rgba(252,47,32,0.36)"></stop>
+              <stop offset="100%" stop-color="rgba(252,47,32,0.03)"></stop>
             </linearGradient>
             <linearGradient id="admin-chart-line-gradient" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0%" stop-color="#ff8a3d"></stop>
+              <stop offset="0%" stop-color="#ffe9ce"></stop>
               <stop offset="100%" stop-color="#fc2f20"></stop>
             </linearGradient>
             <filter id="admin-chart-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -1015,15 +942,15 @@
           </defs>
           <g aria-hidden="true">
             ${yAxis.map((line) => `
-              <line x1="${padding.left}" y1="${line.y}" x2="${width - padding.right}" y2="${line.y}" stroke="rgba(255,255,255,0.08)" stroke-width="1"></line>
-              <text x="${padding.left - 12}" y="${line.y + 4}" fill="rgba(247,235,223,0.58)" font-size="11" text-anchor="end">${line.value}</text>
+              <line x1="${padding.left}" y1="${line.y}" x2="${width - padding.right}" y2="${line.y}" stroke="rgba(255,233,206,0.09)" stroke-width="1"></line>
+              <text x="${padding.left - 12}" y="${line.y + 4}" fill="rgba(255,233,206,0.55)" font-size="11" text-anchor="end">${line.value}</text>
             `).join('')}
           </g>
           <path d="${areaPath}" fill="url(#admin-chart-fill-gradient)"></path>
-          <path d="${linePath}" fill="none" stroke="rgba(252,47,32,0.28)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#admin-chart-glow)"></path>
+          <path d="${linePath}" fill="none" stroke="rgba(252,47,32,0.2)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#admin-chart-glow)"></path>
           <path d="${linePath}" fill="none" stroke="url(#admin-chart-line-gradient)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
           ${series.map((point, index) => `
-            <circle cx="${xForIndex(index)}" cy="${yForValue(point.total)}" r="${index === pointCount - 1 ? 5 : 3.2}" fill="${index === pointCount - 1 ? '#fff8f0' : '#ff8a3d'}"></circle>
+            <circle cx="${xForIndex(index)}" cy="${yForValue(point.total)}" r="${index === pointCount - 1 ? 5 : 3.2}" fill="${index === pointCount - 1 ? '#ffe9ce' : '#fc2f20'}"></circle>
           `).join('')}
           ${series.map((point, index) => {
             if (index % xLabelStep !== 0 && index !== pointCount - 1) {
@@ -1032,7 +959,7 @@
 
             const label = chartLabelFormatter.format(new Date(point.binStart));
             return `
-              <text x="${xForIndex(index)}" y="${height - 18}" fill="rgba(247,235,223,0.58)" font-size="11" text-anchor="${index === 0 ? 'start' : index === pointCount - 1 ? 'end' : 'middle'}">${escapeHtml(label)}</text>
+              <text x="${xForIndex(index)}" y="${height - 18}" fill="rgba(255,233,206,0.58)" font-size="11" text-anchor="${index === 0 ? 'start' : index === pointCount - 1 ? 'end' : 'middle'}">${escapeHtml(label)}</text>
             `;
           }).join('')}
         `;
@@ -1043,11 +970,18 @@
         renderMetrics(data);
         renderChart(data.cumulativeSeries || []);
         renderTable(data.signups || []);
+        statusBanner.hidden = false;
+        statusBanner.textContent = 'Authenticated. Live registration data is loaded.';
+        showDashboard();
+      }
+
+      async function loadDashboardData() {
+        return request('admin-dashboard', { method: 'GET' });
       }
 
       async function loadDashboard() {
-        const payload = await request('admin-dashboard', { method: 'GET' });
-        showDashboard();
+        showDashboardLoading();
+        const payload = await loadDashboardData();
         renderDashboard(payload);
       }
 
@@ -1107,4 +1041,5 @@
     })();
   </script>
 </body>
+
 </html>
