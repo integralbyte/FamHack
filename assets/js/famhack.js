@@ -41,6 +41,8 @@ const FamHack = {
     ctfSigintModalOpen: false,
     ctfFinalInfoModalOpen: false,
     ctfFinalChallengeEligible: false,
+    ctfFinalRevealComplete: false,
+    ctfFinalScrollCleanup: null,
     ctfSigintConsoleHintLogged: false,
     homeClockFrame: null,
     homeClockTimer: null,
@@ -2394,8 +2396,10 @@ const FamHack = {
   closeCtfFinalInfoModal(options = {}) {
     const modal = document.getElementById('ctf-final-info-modal');
     const card = modal?.querySelector('.ctf-sigint-card');
+    const onComplete = typeof options.onComplete === 'function' ? options.onComplete : null;
 
     if (!modal || (!this.state.ctfFinalInfoModalOpen && modal.hidden)) {
+      onComplete?.();
       return;
     }
 
@@ -2405,6 +2409,7 @@ const FamHack = {
     const finish = () => {
       modal.hidden = true;
       modal.style.opacity = '';
+      onComplete?.();
     };
 
     if (options.silent || typeof window.gsap === 'undefined' || !card) {
@@ -2467,14 +2472,174 @@ const FamHack = {
     });
 
     this.state.ctfFinalChallengeEligible = true;
-    this.closeCtfFinalInfoModal({ silent: true });
-    this.renderCtfChallenge();
-
-    this.setButtonState(submitButton, {
-      busy: false,
-      label: 'Continuing...',
-      idleLabel: 'Continue',
+    this.state.ctfFinalRevealComplete = false;
+    this.closeCtfFinalInfoModal({
+      onComplete: () => {
+        this.renderCtfChallenge();
+        this.setButtonState(submitButton, {
+          busy: false,
+          label: 'Continuing...',
+          idleLabel: 'Continue',
+        });
+      },
     });
+  },
+
+  cleanupCtfFinalScrollGate() {
+    if (typeof this.state.ctfFinalScrollCleanup === 'function') {
+      this.state.ctfFinalScrollCleanup();
+    }
+
+    this.state.ctfFinalScrollCleanup = null;
+  },
+
+  buildCtfChallengeFormMarkup(challenge, ctf, promptMarkup, assetMarkup) {
+    return `
+      <form class="ctf-challenge-card ctf-challenge-card-form" autocomplete="off">
+        <p class="ctf-step-kicker">Challenge ${challenge.number} / ${ctf.challengeCount}</p>
+        <h2 class="ctf-challenge-title">${this.escapeHtml(challenge.title)}</h2>
+        ${promptMarkup}
+        ${challenge.body ? `<p class="ctf-challenge-clue">${this.escapeHtml(challenge.body)}</p>` : ''}
+        ${assetMarkup}
+        <div class="form-group">
+          <label class="form-label" for="ctf-answer-input">${this.escapeHtml(challenge.inputLabel || 'Answer')}</label>
+          <input id="ctf-answer-input" name="ctf-answer" class="form-input" type="${challenge.mode === 'password' ? 'password' : 'text'}" placeholder="${this.escapeHtml(challenge.placeholder || 'Enter your answer')}" />
+          <p id="ctf-answer-error" class="error-message ctf-inline-error"></p>
+        </div>
+        <button type="submit" id="ctf-submit-btn" class="button-link ctf-submit-link w-inline-block">
+          <div class="button">
+            <p class="button-label">${this.escapeHtml(challenge.actionLabel || 'Submit Answer')}</p>
+            <div class="button-icon">
+              <div class="button-icon-svg w-embed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z" fill="currentColor" stroke-width="0.155153"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </button>
+      </form>
+    `;
+  },
+
+  setupCtfFinalScrollGate() {
+    this.cleanupCtfFinalScrollGate();
+
+    const viewport = document.getElementById('ctf-final-scrollgate-viewport');
+    const stage = viewport?.querySelector('.ctf-final-scrollgate-stage');
+    const tube = viewport?.querySelector('.ctf-final-scrollgate-tube');
+    const tubeInner = viewport?.querySelector('.ctf-final-scrollgate-tube-inner');
+    const seedLine = tubeInner?.querySelector('.ctf-final-scrollgate-line');
+    const question = document.getElementById('ctf-final-question');
+    const questionCard = question?.querySelector('.ctf-challenge-card-form');
+
+    if (!viewport || !stage || !tube || !tubeInner || !seedLine || !question || !questionCard || typeof window.gsap === 'undefined') {
+      return;
+    }
+
+    const numLines = 10;
+    const angle = 360 / numLines;
+    const gsap = window.gsap;
+    let revealed = false;
+    let radius = 0;
+    let origin = '50% 50% -120px';
+
+    while (tubeInner.children.length < numLines) {
+      const clone = seedLine.cloneNode(true);
+      tubeInner.appendChild(clone);
+    }
+
+    const lines = Array.from(tubeInner.querySelectorAll('.ctf-final-scrollgate-line'));
+    const set3D = () => {
+      const width = Math.max(viewport.clientWidth, 280);
+      const fontSizePx = Math.max(54, Math.min(width * 0.16, 116));
+      radius = (fontSizePx / 2) / Math.sin((180 / numLines) * (Math.PI / 180));
+      origin = `50% 50% -${radius}px`;
+
+      gsap.set(lines, {
+        rotationX: (index) => -angle * index,
+        z: radius,
+        transformOrigin: origin,
+      });
+    };
+
+    const updateVisuals = () => {
+      const maxScroll = Math.max(viewport.scrollHeight - viewport.clientHeight, 1);
+      const progress = Math.min(Math.max(viewport.scrollTop / maxScroll, 0), 1);
+      const rotation = progress * 1080;
+
+      lines.forEach((line, index) => {
+        const degrees = rotation - angle * index;
+        const radians = degrees * (Math.PI / 180);
+        const conversion = Math.abs(Math.cos(radians) / 2 + 0.5);
+
+        gsap.set(line, {
+          rotationX: degrees,
+          opacity: Math.min(conversion + 0.08, 1),
+          fontWeight: 200 + (600 * conversion),
+          fontStretch: `${100 + (700 * conversion)}%`,
+        });
+      });
+
+      gsap.set(tube, {
+        perspective: `${Math.max(6, 100 - (96 * progress))}vw`,
+      });
+
+      if (!revealed && progress >= 0.985) {
+        revealed = true;
+        this.state.ctfFinalRevealComplete = true;
+        viewport.classList.add('is-revealed');
+
+        const timeline = gsap.timeline();
+        timeline.to(stage, {
+          opacity: 0,
+          y: -12,
+          duration: 0.55,
+          ease: 'power2.out',
+        });
+        timeline.set(stage, { pointerEvents: 'none' }, '<');
+        timeline.to(question, {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power2.out',
+        }, '-=0.12');
+        timeline.fromTo(questionCard, {
+          opacity: 0,
+          y: 18,
+        }, {
+          opacity: 1,
+          y: 0,
+          duration: 0.72,
+          ease: 'power2.out',
+        }, '<');
+      }
+    };
+
+    const handleScroll = () => {
+      updateVisuals();
+    };
+
+    const handleResize = () => {
+      set3D();
+      updateVisuals();
+    };
+
+    question.style.opacity = '0';
+    question.style.transform = 'translateY(18px)';
+    questionCard.style.opacity = '0';
+    questionCard.style.transform = 'translateY(18px)';
+
+    set3D();
+    updateVisuals();
+
+    viewport.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+
+    this.state.ctfFinalScrollCleanup = () => {
+      viewport.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+    };
   },
 
   setCtfLoading(isLoading) {
@@ -2778,6 +2943,8 @@ const FamHack = {
       return;
     }
 
+    this.cleanupCtfFinalScrollGate();
+
     const ctf = this.state.ctf;
     if (!ctf) {
       shell.innerHTML = '';
@@ -2797,6 +2964,7 @@ const FamHack = {
 
     if (ctf.member.completed) {
       this.state.ctfFinalChallengeEligible = false;
+      this.state.ctfFinalRevealComplete = false;
       this.closeCtfFinalInfoModal({ silent: true });
       shell.innerHTML = `
         <section class="ctf-challenge-card ctf-challenge-card-success">
@@ -2817,6 +2985,7 @@ const FamHack = {
     const gate = this.state.ctfPendingAdvanceState;
     if (gate) {
       this.state.ctfFinalChallengeEligible = false;
+      this.state.ctfFinalRevealComplete = false;
       this.closeCtfFinalInfoModal({ silent: true });
       if (gate.mode === 'konami') {
         shell.innerHTML = `
@@ -2878,6 +3047,7 @@ const FamHack = {
 
     if (challenge.mode === 'konami') {
       this.state.ctfFinalChallengeEligible = false;
+      this.state.ctfFinalRevealComplete = false;
       this.closeCtfFinalInfoModal({ silent: true });
       const konamiClass = this.state.ctfKonamiSolved ? ' is-solved' : '';
       const konamiText = this.state.ctfKonamiSolved ? 'Konami noticed.' : challenge.prompt;
@@ -2895,35 +3065,37 @@ const FamHack = {
 
     if (!isFinalChallenge) {
       this.state.ctfFinalChallengeEligible = false;
+      this.state.ctfFinalRevealComplete = false;
       this.closeCtfFinalInfoModal({ silent: true });
     }
 
-    shell.innerHTML = `
-      <form class="ctf-challenge-card ctf-challenge-card-form" autocomplete="off">
-        <p class="ctf-step-kicker">Challenge ${challenge.number} / ${ctf.challengeCount}</p>
-        <h2 class="ctf-challenge-title">${this.escapeHtml(challenge.title)}</h2>
-        ${promptMarkup}
-        ${challenge.body ? `<p class="ctf-challenge-clue">${this.escapeHtml(challenge.body)}</p>` : ''}
-        ${assetMarkup}
-        <div class="form-group">
-          <label class="form-label" for="ctf-answer-input">${this.escapeHtml(challenge.inputLabel || 'Answer')}</label>
-          <input id="ctf-answer-input" name="ctf-answer" class="form-input" type="${challenge.mode === 'password' ? 'password' : 'text'}" placeholder="${this.escapeHtml(challenge.placeholder || 'Enter your answer')}" />
-          <p id="ctf-answer-error" class="error-message ctf-inline-error"></p>
-        </div>
-        <button type="submit" id="ctf-submit-btn" class="button-link ctf-submit-link w-inline-block">
-          <div class="button">
-            <p class="button-label">${this.escapeHtml(challenge.actionLabel || 'Submit Answer')}</p>
-            <div class="button-icon">
-              <div class="button-icon-svg w-embed">
-                <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                  <path d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z" fill="currentColor" stroke-width="0.155153"></path>
-                </svg>
+    const challengeFormMarkup = this.buildCtfChallengeFormMarkup(challenge, ctf, promptMarkup, assetMarkup);
+
+    if (isFinalChallenge && this.state.ctfFinalChallengeEligible && !this.state.ctfFinalRevealComplete) {
+      shell.innerHTML = `
+        <section class="ctf-challenge-card ctf-challenge-card-form ctf-final-reveal-shell">
+          <div class="ctf-final-scrollgate" id="ctf-final-scrollgate-viewport">
+            <div class="ctf-final-scrollgate-spacer">
+              <div class="ctf-final-scrollgate-stage">
+                <div class="ctf-final-scrollgate-tube">
+                  <div class="ctf-final-scrollgate-tube-inner">
+                    <h1 class="ctf-final-scrollgate-line">Signal Six</h1>
+                  </div>
+                </div>
+                <p class="ctf-final-scrollgate-copy">Scroll to the end to reveal the signal.</p>
               </div>
             </div>
           </div>
-        </button>
-      </form>
-    `;
+          <div id="ctf-final-question" class="ctf-final-question">
+            ${challengeFormMarkup}
+          </div>
+        </section>
+      `;
+      this.setupCtfFinalScrollGate();
+      return;
+    }
+
+    shell.innerHTML = challengeFormMarkup;
 
     if (isFinalChallenge && !this.state.ctfFinalChallengeEligible) {
       window.setTimeout(() => this.openCtfFinalInfoModal(), 0);
@@ -2998,6 +3170,11 @@ const FamHack = {
     if (challenge.number === ctf.challengeCount && !this.state.ctfFinalChallengeEligible) {
       this.openCtfFinalInfoModal();
       this.showFieldError('ctf-answer-error', 'Confirm your year before continuing.');
+      return;
+    }
+
+    if (challenge.number === ctf.challengeCount && !this.state.ctfFinalRevealComplete) {
+      this.showFieldError('ctf-answer-error', 'Reveal the signal before continuing.');
       return;
     }
 
