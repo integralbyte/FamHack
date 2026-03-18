@@ -2098,7 +2098,7 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
 }
 
 .ctf-final-scrollgate-spacer {
-  height: 5200px;
+  height: 9200px;
   position: relative;
 }
 
@@ -2110,6 +2110,7 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
   align-items: center;
   justify-content: center;
   visibility: visible;
+  z-index: 1;
 }
 
 .ctf-final-scrollgate-tube {
@@ -2167,6 +2168,7 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
   opacity: 0;
   transform: translateY(18px);
   pointer-events: none;
+  z-index: 2;
 }
 
 .ctf-final-question.is-visible {

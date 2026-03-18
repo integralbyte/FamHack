@@ -2596,6 +2596,9 @@ const FamHack = {
         this.state.ctfFinalRevealComplete = true;
         viewport.classList.add('is-revealed');
         viewport.style.overflowY = 'hidden';
+        viewport.scrollTop = 0;
+        renderProgress = 0;
+        targetProgress = 0;
 
         const timeline = gsap.timeline();
         timeline.to(stage, {
@@ -2640,6 +2643,18 @@ const FamHack = {
       queueRender();
     };
 
+    const handleWheel = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (revealed) {
+        return;
+      }
+
+      viewport.scrollTop += event.deltaY;
+      updateTarget();
+    };
+
     const handleResize = () => {
       set3D();
       updateTarget();
@@ -2652,10 +2667,12 @@ const FamHack = {
     updateTarget();
 
     viewport.addEventListener('scroll', updateTarget, { passive: true });
+    viewport.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('resize', handleResize);
 
     this.state.ctfFinalScrollCleanup = () => {
       viewport.removeEventListener('scroll', updateTarget);
+      viewport.removeEventListener('wheel', handleWheel);
       window.removeEventListener('resize', handleResize);
       if (rafId) {
         window.cancelAnimationFrame(rafId);
@@ -3104,7 +3121,7 @@ const FamHack = {
                     <h1 class="ctf-final-scrollgate-line">Signal Six</h1>
                   </div>
                 </div>
-                <p class="ctf-final-scrollgate-copy">Scroll to the end to reveal the signal.</p>
+                <p class="ctf-final-scrollgate-copy">Scroll to the end.</p>
               </div>
             </div>
             <div id="ctf-final-question" class="ctf-final-question">
