@@ -1552,6 +1552,7 @@ const FamHack = {
     const signOutButton = document.getElementById('ctf-sign-out-btn');
     const challengeShell = document.getElementById('ctf-challenge-shell');
     const sigintModal = document.getElementById('ctf-sigint-modal');
+    const finalInfoModal = document.getElementById('ctf-final-info-modal');
     signOutButton?.addEventListener('click', () => this.handleSignOut());
     if (signOutButton) {
       signOutButton.hidden = !this.state.session;
@@ -1572,6 +1573,12 @@ const FamHack = {
       const sigintOpenButton = event.target.closest('[data-ctf-sigint-open]');
       if (sigintOpenButton) {
         this.openCtfSigintModal();
+        return;
+      }
+
+      const finalInfoOpenButton = event.target.closest('[data-ctf-final-info-open]');
+      if (finalInfoOpenButton) {
+        this.openCtfFinalInfoModal();
       }
     });
     sigintModal?.addEventListener('click', (event) => {
@@ -1579,10 +1586,16 @@ const FamHack = {
         this.closeCtfSigintModal();
       }
     });
+    finalInfoModal?.addEventListener('click', (event) => {
+      if (event.target === finalInfoModal || event.target.closest('[data-ctf-final-info-close]')) {
+        this.closeCtfFinalInfoModal();
+      }
+    });
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         this.closeCtfSigintModal();
+        this.closeCtfFinalInfoModal();
       }
       this.handleKonamiKeydown(event);
     });
@@ -2359,6 +2372,71 @@ const FamHack = {
     });
   },
 
+  openCtfFinalInfoModal() {
+    const modal = document.getElementById('ctf-final-info-modal');
+    const card = modal?.querySelector('.ctf-sigint-card');
+
+    if (!modal || this.state.ctfFinalInfoModalOpen) {
+      return;
+    }
+
+    this.state.ctfFinalInfoModalOpen = true;
+    modal.hidden = false;
+    modal.style.opacity = '1';
+    document.body.classList.add('ctf-final-info-modal-open');
+
+    if (typeof window.gsap !== 'undefined' && card) {
+      window.gsap.fromTo(
+        card,
+        { opacity: 0, y: 24, scale: 0.986 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.32, ease: 'power2.out' },
+      );
+    }
+  },
+
+  closeCtfFinalInfoModal(options = {}) {
+    const modal = document.getElementById('ctf-final-info-modal');
+    const card = modal?.querySelector('.ctf-sigint-card');
+
+    if (!modal || (!this.state.ctfFinalInfoModalOpen && modal.hidden)) {
+      return;
+    }
+
+    this.state.ctfFinalInfoModalOpen = false;
+    document.body.classList.remove('ctf-final-info-modal-open');
+
+    const finish = () => {
+      modal.hidden = true;
+      modal.style.opacity = '';
+    };
+
+    if (options.silent || typeof window.gsap === 'undefined' || !card) {
+      finish();
+      return;
+    }
+
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    window.gsap.to(card, {
+      opacity: 0,
+      y: -10,
+      scale: 0.986,
+      duration: 0.2,
+      ease: 'power1.in',
+      onComplete: finish,
+    });
+    window.gsap.to(modal, {
+      opacity: 0,
+      duration: 0.2,
+      ease: 'power1.in',
+      onComplete: () => {
+        modal.style.opacity = '';
+      },
+    });
+  },
+
   setCtfLoading(isLoading) {
     const loader = document.getElementById('ctf-loading');
     const body = document.getElementById('ctf-body');
@@ -2678,6 +2756,7 @@ const FamHack = {
     }
 
     if (ctf.member.completed) {
+      this.closeCtfFinalInfoModal({ silent: true });
       shell.innerHTML = `
         <section class="ctf-challenge-card ctf-challenge-card-success">
           <p class="ctf-step-kicker">Run Complete</p>
@@ -2696,6 +2775,7 @@ const FamHack = {
 
     const gate = this.state.ctfPendingAdvanceState;
     if (gate) {
+      this.closeCtfFinalInfoModal({ silent: true });
       if (gate.mode === 'konami') {
         shell.innerHTML = `
           <section class="ctf-challenge-card ctf-challenge-card-konami">
@@ -2752,8 +2832,13 @@ const FamHack = {
     const promptMarkup = challenge.prompt
       ? `<p class="ctf-challenge-copy">${this.escapeHtml(challenge.prompt)}</p>`
       : '';
+    const isFinalChallenge = challenge.number === ctf.challengeCount;
+    const finalInfoMarkup = isFinalChallenge
+      ? '<button type="button" class="copy-btn copy-btn-secondary ctf-final-info-trigger" data-ctf-final-info-open>Important info</button>'
+      : '';
 
     if (challenge.mode === 'konami') {
+      this.closeCtfFinalInfoModal({ silent: true });
       const konamiClass = this.state.ctfKonamiSolved ? ' is-solved' : '';
       const konamiText = this.state.ctfKonamiSolved ? 'Konami noticed.' : challenge.prompt;
 
@@ -2768,6 +2853,10 @@ const FamHack = {
       return;
     }
 
+    if (!isFinalChallenge) {
+      this.closeCtfFinalInfoModal({ silent: true });
+    }
+
     shell.innerHTML = `
       <form class="ctf-challenge-card ctf-challenge-card-form" autocomplete="off">
         <p class="ctf-step-kicker">Challenge ${challenge.number} / ${ctf.challengeCount}</p>
@@ -2775,6 +2864,7 @@ const FamHack = {
         ${promptMarkup}
         ${challenge.body ? `<p class="ctf-challenge-clue">${this.escapeHtml(challenge.body)}</p>` : ''}
         ${assetMarkup}
+        ${finalInfoMarkup}
         <div class="form-group">
           <label class="form-label" for="ctf-answer-input">${this.escapeHtml(challenge.inputLabel || 'Answer')}</label>
           <input id="ctf-answer-input" name="ctf-answer" class="form-input" type="${challenge.mode === 'password' ? 'password' : 'text'}" placeholder="${this.escapeHtml(challenge.placeholder || 'Enter your answer')}" />

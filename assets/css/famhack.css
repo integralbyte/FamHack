@@ -1676,6 +1676,10 @@ body.ctf-sigint-modal-open {
   overflow: hidden;
 }
 
+body.ctf-final-info-modal-open {
+  overflow: hidden;
+}
+
 .dashboard-loading-stage {
   display: flex;
   justify-content: center;
@@ -2034,6 +2038,19 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
 .ctf-challenge-card-form {
   min-height: 100%;
   justify-content: center;
+}
+
+.ctf-final-info-trigger {
+  align-self: flex-start;
+  margin-top: 4px;
+  background-color: rgba(255, 233, 206, 0.06);
+  border: 1px solid rgba(252, 47, 32, 0.28);
+  color: #ffe9ce;
+}
+
+.ctf-final-info-trigger:hover {
+  background-color: rgba(252, 47, 32, 0.12);
+  border-color: rgba(252, 47, 32, 0.42);
 }
 
 .ctf-challenge-card-konami {
