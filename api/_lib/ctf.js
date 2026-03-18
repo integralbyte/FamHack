@@ -96,7 +96,7 @@ const CTF_CHALLENGES = [
     number: 6,
     title: 'Signal Six',
     mode: 'text',
-    prompt: 'Home still matters. At 1759412580, another string of my length appears where you were expected to be. Take it exactly as shown, XOR it with me byte-wise, and submit the result as hexadecimal.',
+    prompt: 'Go home, find me, then find someone of my length at 1759412580. Take it exactly as shown, XOR it with me byte-wise, and submit the result as hexadecimal.',
     inputLabel: 'Answer',
     placeholder: 'Enter hexadecimal answer',
     actionLabel: 'Submit',
