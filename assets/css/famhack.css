@@ -2066,22 +2066,23 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
 }
 
 .ctf-final-reveal-shell {
-  gap: 22px;
+  gap: 0;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
 }
 
 .ctf-final-scrollgate {
   position: relative;
   width: 100%;
-  height: min(62vh, 420px);
+  min-height: 320px;
+  height: min(68vh, 520px);
   overflow-y: auto;
   overflow-x: hidden;
-  border: 1px solid rgba(255, 233, 206, 0.1);
-  background:
-    radial-gradient(circle at 50% 20%, rgba(252, 47, 32, 0.12), transparent 34%),
-    linear-gradient(180deg, rgba(5, 5, 6, 0.94), rgba(11, 11, 12, 0.98));
+  background: transparent;
   scrollbar-width: thin;
   scrollbar-color: rgba(252, 47, 32, 0.42) rgba(255, 233, 206, 0.06);
+  -webkit-overflow-scrolling: touch;
 }
 
 .ctf-final-scrollgate::-webkit-scrollbar {
@@ -2097,14 +2098,14 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
 }
 
 .ctf-final-scrollgate-spacer {
-  height: 1600px;
+  height: 5200px;
   position: relative;
 }
 
 .ctf-final-scrollgate-stage {
   position: sticky;
   top: 0;
-  min-height: min(62vh, 420px);
+  min-height: min(68vh, 520px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2157,8 +2158,19 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
 }
 
 .ctf-final-question {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
   opacity: 0;
   transform: translateY(18px);
+  pointer-events: none;
+}
+
+.ctf-final-question.is-visible {
+  pointer-events: auto;
 }
 
 .ctf-challenge-title {

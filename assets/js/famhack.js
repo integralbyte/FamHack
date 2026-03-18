@@ -2493,31 +2493,37 @@ const FamHack = {
     this.state.ctfFinalScrollCleanup = null;
   },
 
+  buildCtfChallengeFormFieldsMarkup(challenge, ctf, promptMarkup, assetMarkup) {
+    return `
+      <p class="ctf-step-kicker">Challenge ${challenge.number} / ${ctf.challengeCount}</p>
+      <h2 class="ctf-challenge-title">${this.escapeHtml(challenge.title)}</h2>
+      ${promptMarkup}
+      ${challenge.body ? `<p class="ctf-challenge-clue">${this.escapeHtml(challenge.body)}</p>` : ''}
+      ${assetMarkup}
+      <div class="form-group">
+        <label class="form-label" for="ctf-answer-input">${this.escapeHtml(challenge.inputLabel || 'Answer')}</label>
+        <input id="ctf-answer-input" name="ctf-answer" class="form-input" type="${challenge.mode === 'password' ? 'password' : 'text'}" placeholder="${this.escapeHtml(challenge.placeholder || 'Enter your answer')}" />
+        <p id="ctf-answer-error" class="error-message ctf-inline-error"></p>
+      </div>
+      <button type="submit" id="ctf-submit-btn" class="button-link ctf-submit-link w-inline-block">
+        <div class="button">
+          <p class="button-label">${this.escapeHtml(challenge.actionLabel || 'Submit Answer')}</p>
+          <div class="button-icon">
+            <div class="button-icon-svg w-embed">
+              <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                <path d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z" fill="currentColor" stroke-width="0.155153"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </button>
+    `;
+  },
+
   buildCtfChallengeFormMarkup(challenge, ctf, promptMarkup, assetMarkup) {
     return `
       <form class="ctf-challenge-card ctf-challenge-card-form" autocomplete="off">
-        <p class="ctf-step-kicker">Challenge ${challenge.number} / ${ctf.challengeCount}</p>
-        <h2 class="ctf-challenge-title">${this.escapeHtml(challenge.title)}</h2>
-        ${promptMarkup}
-        ${challenge.body ? `<p class="ctf-challenge-clue">${this.escapeHtml(challenge.body)}</p>` : ''}
-        ${assetMarkup}
-        <div class="form-group">
-          <label class="form-label" for="ctf-answer-input">${this.escapeHtml(challenge.inputLabel || 'Answer')}</label>
-          <input id="ctf-answer-input" name="ctf-answer" class="form-input" type="${challenge.mode === 'password' ? 'password' : 'text'}" placeholder="${this.escapeHtml(challenge.placeholder || 'Enter your answer')}" />
-          <p id="ctf-answer-error" class="error-message ctf-inline-error"></p>
-        </div>
-        <button type="submit" id="ctf-submit-btn" class="button-link ctf-submit-link w-inline-block">
-          <div class="button">
-            <p class="button-label">${this.escapeHtml(challenge.actionLabel || 'Submit Answer')}</p>
-            <div class="button-icon">
-              <div class="button-icon-svg w-embed">
-                <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                  <path d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z" fill="currentColor" stroke-width="0.155153"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </button>
+        ${this.buildCtfChallengeFormFieldsMarkup(challenge, ctf, promptMarkup, assetMarkup)}
       </form>
     `;
   },
@@ -2531,9 +2537,8 @@ const FamHack = {
     const tubeInner = viewport?.querySelector('.ctf-final-scrollgate-tube-inner');
     const seedLine = tubeInner?.querySelector('.ctf-final-scrollgate-line');
     const question = document.getElementById('ctf-final-question');
-    const questionCard = question?.querySelector('.ctf-challenge-card-form');
 
-    if (!viewport || !stage || !tube || !tubeInner || !seedLine || !question || !questionCard || typeof window.gsap === 'undefined') {
+    if (!viewport || !stage || !tube || !tubeInner || !seedLine || !question || typeof window.gsap === 'undefined') {
       return;
     }
 
@@ -2543,6 +2548,9 @@ const FamHack = {
     let revealed = false;
     let radius = 0;
     let origin = '50% 50% -120px';
+    let rafId = 0;
+    let targetProgress = 0;
+    let renderProgress = 0;
 
     while (tubeInner.children.length < numLines) {
       const clone = seedLine.cloneNode(true);
@@ -2563,9 +2571,7 @@ const FamHack = {
       });
     };
 
-    const updateVisuals = () => {
-      const maxScroll = Math.max(viewport.scrollHeight - viewport.clientHeight, 1);
-      const progress = Math.min(Math.max(viewport.scrollTop / maxScroll, 0), 1);
+    const renderAt = (progress) => {
       const rotation = progress * 1080;
 
       lines.forEach((line, index) => {
@@ -2589,56 +2595,71 @@ const FamHack = {
         revealed = true;
         this.state.ctfFinalRevealComplete = true;
         viewport.classList.add('is-revealed');
+        viewport.style.overflowY = 'hidden';
 
         const timeline = gsap.timeline();
         timeline.to(stage, {
           opacity: 0,
-          y: -12,
-          duration: 0.55,
+          duration: 0.72,
           ease: 'power2.out',
         });
         timeline.set(stage, { pointerEvents: 'none' }, '<');
         timeline.to(question, {
           opacity: 1,
           y: 0,
-          duration: 0.8,
+          duration: 1,
           ease: 'power2.out',
-        }, '-=0.12');
-        timeline.fromTo(questionCard, {
-          opacity: 0,
-          y: 18,
-        }, {
-          opacity: 1,
-          y: 0,
-          duration: 0.72,
-          ease: 'power2.out',
-        }, '<');
+          onComplete: () => {
+            question.classList.add('is-visible');
+          },
+        }, '-=0.08');
       }
     };
 
-    const handleScroll = () => {
-      updateVisuals();
+    const tick = () => {
+      renderProgress += (targetProgress - renderProgress) * 0.12;
+      renderAt(renderProgress);
+
+      if (Math.abs(targetProgress - renderProgress) > 0.0006 && !revealed) {
+        rafId = window.requestAnimationFrame(tick);
+      } else {
+        rafId = 0;
+        renderAt(targetProgress);
+      }
+    };
+
+    const queueRender = () => {
+      if (!rafId) {
+        rafId = window.requestAnimationFrame(tick);
+      }
+    };
+
+    const updateTarget = () => {
+      const maxScroll = Math.max(viewport.scrollHeight - viewport.clientHeight, 1);
+      targetProgress = Math.min(Math.max(viewport.scrollTop / maxScroll, 0), 1);
+      queueRender();
     };
 
     const handleResize = () => {
       set3D();
-      updateVisuals();
+      updateTarget();
     };
 
     question.style.opacity = '0';
     question.style.transform = 'translateY(18px)';
-    questionCard.style.opacity = '0';
-    questionCard.style.transform = 'translateY(18px)';
 
     set3D();
-    updateVisuals();
+    updateTarget();
 
-    viewport.addEventListener('scroll', handleScroll, { passive: true });
+    viewport.addEventListener('scroll', updateTarget, { passive: true });
     window.addEventListener('resize', handleResize);
 
     this.state.ctfFinalScrollCleanup = () => {
-      viewport.removeEventListener('scroll', handleScroll);
+      viewport.removeEventListener('scroll', updateTarget);
       window.removeEventListener('resize', handleResize);
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
     };
   },
 
@@ -3070,10 +3091,11 @@ const FamHack = {
     }
 
     const challengeFormMarkup = this.buildCtfChallengeFormMarkup(challenge, ctf, promptMarkup, assetMarkup);
+    const challengeFieldsMarkup = this.buildCtfChallengeFormFieldsMarkup(challenge, ctf, promptMarkup, assetMarkup);
 
     if (isFinalChallenge && this.state.ctfFinalChallengeEligible && !this.state.ctfFinalRevealComplete) {
       shell.innerHTML = `
-        <section class="ctf-challenge-card ctf-challenge-card-form ctf-final-reveal-shell">
+        <form class="ctf-challenge-card ctf-challenge-card-form ctf-final-reveal-shell" autocomplete="off">
           <div class="ctf-final-scrollgate" id="ctf-final-scrollgate-viewport">
             <div class="ctf-final-scrollgate-spacer">
               <div class="ctf-final-scrollgate-stage">
@@ -3085,11 +3107,11 @@ const FamHack = {
                 <p class="ctf-final-scrollgate-copy">Scroll to the end to reveal the signal.</p>
               </div>
             </div>
+            <div id="ctf-final-question" class="ctf-final-question">
+              ${challengeFieldsMarkup}
+            </div>
           </div>
-          <div id="ctf-final-question" class="ctf-final-question">
-            ${challengeFormMarkup}
-          </div>
-        </section>
+        </form>
       `;
       this.setupCtfFinalScrollGate();
       return;
