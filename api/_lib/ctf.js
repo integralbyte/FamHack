@@ -20,6 +20,9 @@ const CTF_SIGNAL_SIX_HEX_ANSWER = '052e233d3e385d203c2b2733';
 const CTF_SIGNAL_SIX_ACCEPTED_ANSWERS = new Set([
   CTF_SIGNAL_SIX_HEX_ANSWER,
   CTF_SIGNAL_SIX_HEX_ANSWER.replace(/^0/, ''),
+  '252e233d3e385d203c2b2733',
+  '050e031d1e187d001c0b0713',
+  '50e031d1e187d001c0b0713',
 ]);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
