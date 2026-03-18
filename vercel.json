@@ -65,6 +65,14 @@
     {
       "source": "/ctf.html",
       "destination": "/api/config?mode=page&slug=ctf"
+    },
+    {
+      "source": "/admin",
+      "destination": "/api/config?mode=page&slug=admin"
+    },
+    {
+      "source": "/admin.html",
+      "destination": "/api/config?mode=page&slug=admin"
     }
   ],
   "functions": {

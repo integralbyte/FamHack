@@ -71,5 +71,21 @@ export function statusFromError(error) {
     return 409;
   }
 
+  if (message === 'Admin password required') {
+    return 400;
+  }
+
+  if (message === 'Invalid admin password' || message === 'Admin login required') {
+    return 401;
+  }
+
+  if (message === 'Invalid admin origin') {
+    return 403;
+  }
+
+  if (message === 'Admin dashboard unavailable') {
+    return 404;
+  }
+
   return 500;
 }

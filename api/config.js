@@ -1,5 +1,17 @@
 import { readFile } from 'node:fs/promises';
 
+import {
+  assertAdminConfigured,
+  assertSameOriginAdminRequest,
+  clearAdminSession,
+  createAdminSession,
+  delayAdminFailure,
+  getAdminDashboardData,
+  requireAdminSession,
+  setAdminPageSecurityHeaders,
+  setAdminSecurityHeaders,
+  verifyAdminPassword,
+} from './_lib/admin.js';
 import { requireUser } from './_lib/auth.js';
 import { assertServerEnv, getPublicConfig } from './_lib/env.js';
 import { allowMethods, readJsonBody, sendError, statusFromError } from './_lib/http.js';
@@ -8,6 +20,7 @@ import { getServerLaunchState, normalizePageSlug } from './_lib/launch.js';
 import { assertAllowedEmail, getMembershipByUserId, getRegisteredRoleMessage, serializeRegistration, upsertRegistration } from './_lib/teams.js';
 
 const publicPageFiles = new Map([
+  ['admin', 'admin.html'],
   ['easter', 'secret-keyring.html'],
   ['gaster-secret', 'gaster-secret.html'],
 ]);
@@ -161,6 +174,10 @@ async function handlePageRequest(req, res) {
     return;
   }
 
+  if (slug === 'admin') {
+    assertAdminConfigured();
+  }
+
   const launch = getServerLaunchState();
   const fileName = resolvePageFile(slug, launch);
 
@@ -173,6 +190,11 @@ async function handlePageRequest(req, res) {
   }
 
   const html = await loadLaunchPage(fileName);
+
+  if (slug === 'admin') {
+    setAdminPageSecurityHeaders(res, html);
+  }
+
   res.status(200).send(html);
 }
 
@@ -259,6 +281,47 @@ async function handleSecretKeyringClaim(req, res) {
   });
 }
 
+async function handleAdminLogin(req, res) {
+  assertSameOriginAdminRequest(req);
+  const body = readJsonBody(req);
+  setAdminSecurityHeaders(res);
+
+  try {
+    verifyAdminPassword(body.password);
+  } catch (error) {
+    await delayAdminFailure();
+    throw error;
+  }
+
+  createAdminSession(res, req);
+
+  res.status(200).json({
+    ok: true,
+  });
+}
+
+async function handleAdminLogout(req, res) {
+  assertSameOriginAdminRequest(req);
+  setAdminSecurityHeaders(res);
+  clearAdminSession(res, req);
+
+  res.status(200).json({
+    ok: true,
+  });
+}
+
+async function handleAdminDashboard(req, res) {
+  setAdminSecurityHeaders(res);
+  try {
+    requireAdminSession(req);
+  } catch (error) {
+    clearAdminSession(res, req);
+    throw error;
+  }
+
+  res.status(200).json(await getAdminDashboardData());
+}
+
 export default async function handler(req, res) {
   if (!allowMethods(req, res, ['GET', 'POST'])) {
     return;
@@ -310,6 +373,36 @@ export default async function handler(req, res) {
         return;
       }
       await handleSecretKeyringClaim(req, res);
+      return;
+    }
+
+    if (mode === 'admin-login') {
+      if (req.method !== 'POST') {
+        res.setHeader('Allow', 'POST');
+        res.status(405).json({ error: `Method ${req.method} not allowed` });
+        return;
+      }
+      await handleAdminLogin(req, res);
+      return;
+    }
+
+    if (mode === 'admin-logout') {
+      if (req.method !== 'POST') {
+        res.setHeader('Allow', 'POST');
+        res.status(405).json({ error: `Method ${req.method} not allowed` });
+        return;
+      }
+      await handleAdminLogout(req, res);
+      return;
+    }
+
+    if (mode === 'admin-dashboard') {
+      if (req.method !== 'GET') {
+        res.setHeader('Allow', 'GET');
+        res.status(405).json({ error: `Method ${req.method} not allowed` });
+        return;
+      }
+      await handleAdminDashboard(req, res);
       return;
     }
 
