@@ -5501,13 +5501,14 @@ button.button-link:disabled {
 
 .home-ctf-promo-link {
   justify-self: end;
-  width: 232px;
 }
 
 .home-ctf-promo-link .button {
-  width: 100%;
-  min-height: 58px;
-  padding: 0 28px;
+  min-width: 170px;
+}
+
+.home-ctf-promo-link .button-label {
+  font-size: 16px;
 }
 
 .faq-item {
