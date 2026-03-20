@@ -2473,16 +2473,13 @@ const FamHack = {
 
     this.state.ctfFinalChallengeEligible = true;
     this.state.ctfFinalRevealComplete = false;
-    this.closeCtfFinalInfoModal({
-      onComplete: () => {
-        this.renderCtfChallenge();
-        this.setButtonState(submitButton, {
-          busy: false,
-          label: 'Continuing...',
-          idleLabel: 'Continue',
-        });
-      },
+    this.renderCtfChallenge();
+    this.setButtonState(submitButton, {
+      busy: false,
+      label: 'Continuing...',
+      idleLabel: 'Continue',
     });
+    this.closeCtfFinalInfoModal();
   },
 
   cleanupCtfFinalScrollGate() {
@@ -2571,8 +2568,18 @@ const FamHack = {
       });
     };
 
+    const getVisualProgress = (progress) => {
+      if (progress <= 0.76) {
+        return progress * 0.88;
+      }
+
+      const latePhase = Math.min(Math.max((progress - 0.76) / 0.24, 0), 1);
+      return 0.6688 + (0.3312 * Math.pow(latePhase, 0.35));
+    };
+
     const renderAt = (progress) => {
-      const rotation = progress * 1080;
+      const visualProgress = getVisualProgress(progress);
+      const rotation = visualProgress * 1080;
 
       lines.forEach((line, index) => {
         const degrees = rotation - angle * index;
@@ -2588,34 +2595,39 @@ const FamHack = {
       });
 
       gsap.set(tube, {
-        perspective: `${Math.max(6, 100 - (96 * progress))}vw`,
+        perspective: `${Math.max(4, 100 - (97 * visualProgress))}vw`,
       });
 
-      if (!revealed && progress >= 0.985) {
+      if (!revealed && progress >= 0.997) {
         revealed = true;
         this.state.ctfFinalRevealComplete = true;
         viewport.classList.add('is-revealed');
         viewport.style.overflowY = 'hidden';
-        viewport.scrollTop = 0;
-        renderProgress = 0;
-        targetProgress = 0;
+        viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
+        targetProgress = 1;
+        renderProgress = 1;
+        if (rafId) {
+          window.cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+        renderAt(1);
 
         const timeline = gsap.timeline();
         timeline.to(stage, {
           opacity: 0,
-          duration: 0.72,
+          duration: 0.88,
           ease: 'power2.out',
         });
         timeline.set(stage, { pointerEvents: 'none' }, '<');
         timeline.to(question, {
           opacity: 1,
           y: 0,
-          duration: 1,
+          duration: 1.08,
           ease: 'power2.out',
           onComplete: () => {
             question.classList.add('is-visible');
           },
-        }, '-=0.08');
+        }, '-=0.16');
       }
     };
 
