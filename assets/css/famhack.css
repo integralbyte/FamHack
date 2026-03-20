@@ -2095,6 +2095,8 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  padding: 8px 0 0;
   visibility: visible;
   z-index: 1;
 }
@@ -2132,53 +2134,6 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
   transform: translate(-50%, -50%);
   transform-style: preserve-3d;
   white-space: nowrap;
-}
-
-.ctf-final-scrollgate-ui {
-  position: absolute;
-  left: 50%;
-  bottom: 20px;
-  transform: translateX(-50%);
-  width: min(280px, calc(100% - 56px));
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 3;
-}
-
-.ctf-final-scrollgate-progress-track {
-  position: relative;
-  width: 100%;
-  height: 6px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(255, 233, 206, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(255, 233, 206, 0.08);
-}
-
-.ctf-final-scrollgate-progress-fill {
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  transform-origin: left center;
-  transform: scaleX(0.02);
-  background: linear-gradient(90deg, rgba(252, 47, 32, 0.42), #fc2f20 58%, rgba(255, 233, 206, 0.94));
-}
-
-.ctf-final-scrollgate-copy {
-  position: static;
-  margin: 0;
-  font-family: 'Azeret Mono', monospace;
-  font-size: 0.84rem;
-  line-height: 1.7;
-  text-align: center;
-  color: rgba(255, 233, 206, 0.68);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.ctf-final-scrollgate.is-revealed .ctf-final-scrollgate-ui {
-  opacity: 0;
 }
 
 .ctf-final-question {

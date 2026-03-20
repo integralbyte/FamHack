@@ -2540,27 +2540,28 @@ const FamHack = {
     this.cleanupCtfFinalScrollGate();
 
     const viewport = document.getElementById('ctf-final-scrollgate-viewport');
+    const shell = viewport?.closest('.ctf-final-reveal-shell');
     const stage = viewport?.querySelector('.ctf-final-scrollgate-stage');
     const tube = viewport?.querySelector('.ctf-final-scrollgate-tube');
     const tubeInner = viewport?.querySelector('.ctf-final-scrollgate-tube-inner');
     const seedLine = tubeInner?.querySelector('.ctf-final-scrollgate-line');
-    const progressFill = viewport?.querySelector('[data-ctf-final-progress-fill]');
     const question = document.getElementById('ctf-final-question');
 
-    if (!viewport || !stage || !tube || !tubeInner || !seedLine || !question || typeof window.gsap === 'undefined') {
+    if (!viewport || !shell || !stage || !tube || !tubeInner || !seedLine || !question || typeof window.gsap === 'undefined') {
       return;
     }
 
-    const numLines = 12;
+    const numLines = 10;
     const angle = 360 / numLines;
     const gsap = window.gsap;
+    const expoOut = gsap.parseEase('expo.out');
     let revealed = false;
     let radius = 0;
     let origin = '50% 50% -120px';
     let rafId = 0;
     let targetProgress = 0;
     let renderProgress = 0;
-    let requiredWheelDistance = 8800;
+    let requiredWheelDistance = 9600;
 
     while (tubeInner.children.length < numLines) {
       const clone = seedLine.cloneNode(true);
@@ -2571,10 +2572,10 @@ const FamHack = {
     const set3D = () => {
       const width = Math.max(viewport.clientWidth, 280);
       const height = Math.max(viewport.clientHeight, 260);
-      const fontSizePx = Math.max(54, Math.min(width * 0.16, 116));
+      const fontSizePx = Math.max(54, Math.min(width * 0.17, 122));
       radius = (fontSizePx / 2) / Math.sin((180 / numLines) * (Math.PI / 180));
       origin = `50% 50% -${radius}px`;
-      requiredWheelDistance = Math.max(height * 18, 8800);
+      requiredWheelDistance = Math.max(height * 21, 9600);
 
       gsap.set(lines, {
         rotationX: (index) => -angle * index,
@@ -2583,18 +2584,9 @@ const FamHack = {
       });
     };
 
-    const getVisualProgress = (progress) => {
-      if (progress <= 0.68) {
-        return progress * 0.72;
-      }
-
-      const latePhase = Math.min(Math.max((progress - 0.68) / 0.32, 0), 1);
-      return 0.4896 + (0.5104 * Math.pow(latePhase, 1.9));
-    };
-
     const renderAt = (progress) => {
-      const visualProgress = getVisualProgress(progress);
-      const rotation = visualProgress * 1080;
+      const clampedProgress = Math.min(Math.max(progress, 0), 1);
+      const rotation = clampedProgress * 1080;
 
       lines.forEach((line, index) => {
         const degrees = rotation - angle * index;
@@ -2609,16 +2601,15 @@ const FamHack = {
         });
       });
 
-      gsap.set(tube, {
-        perspective: `${Math.max(4, 112 - (108 * visualProgress))}vw`,
-        scale: 1 + (visualProgress * 0.028),
-      });
+      const depthProgress = Math.min(
+        1,
+        (expoOut(clampedProgress) * 0.72) + (Math.pow(clampedProgress, 0.92) * 0.28),
+      );
 
-      if (progressFill) {
-        gsap.set(progressFill, {
-          scaleX: Math.max(progress, 0.02),
-        });
-      }
+      gsap.set(tube, {
+        perspective: `${Math.max(1, 100 - (99 * depthProgress))}vw`,
+        scale: 1 + (depthProgress * 0.018),
+      });
 
       if (!revealed && progress >= 0.999) {
         revealed = true;
@@ -2677,12 +2668,13 @@ const FamHack = {
     };
 
     const handleWheel = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
       if (revealed) {
         return;
       }
 
-      event.preventDefault();
-      event.stopPropagation();
       const delta = Math.max(-240, Math.min(event.deltaY, 240));
       setTargetProgress(targetProgress + (delta / requiredWheelDistance));
     };
@@ -2706,11 +2698,11 @@ const FamHack = {
     set3D();
     renderAt(0);
 
-    viewport.addEventListener('wheel', handleWheel, { passive: false });
+    shell.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('resize', handleResize);
 
     this.state.ctfFinalScrollCleanup = () => {
-      viewport.removeEventListener('wheel', handleWheel);
+      shell.removeEventListener('wheel', handleWheel);
       window.removeEventListener('resize', handleResize);
       if (rafId) {
         window.cancelAnimationFrame(rafId);
@@ -3157,12 +3149,6 @@ const FamHack = {
                 <div class="ctf-final-scrollgate-tube-inner">
                   <h1 class="ctf-final-scrollgate-line">Signal Six</h1>
                 </div>
-              </div>
-              <div class="ctf-final-scrollgate-ui" aria-hidden="true">
-                <div class="ctf-final-scrollgate-progress-track">
-                  <div class="ctf-final-scrollgate-progress-fill" data-ctf-final-progress-fill></div>
-                </div>
-                <p class="ctf-final-scrollgate-copy">Scroll to the end.</p>
               </div>
             </div>
           </div>
