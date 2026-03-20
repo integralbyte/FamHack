@@ -2544,13 +2544,14 @@ const FamHack = {
     const tube = viewport?.querySelector('.ctf-final-scrollgate-tube');
     const tubeInner = viewport?.querySelector('.ctf-final-scrollgate-tube-inner');
     const seedLine = tubeInner?.querySelector('.ctf-final-scrollgate-line');
+    const progressFill = viewport?.querySelector('[data-ctf-final-progress-fill]');
     const question = document.getElementById('ctf-final-question');
 
     if (!viewport || !stage || !tube || !tubeInner || !seedLine || !question || typeof window.gsap === 'undefined') {
       return;
     }
 
-    const numLines = 10;
+    const numLines = 12;
     const angle = 360 / numLines;
     const gsap = window.gsap;
     let revealed = false;
@@ -2559,6 +2560,7 @@ const FamHack = {
     let rafId = 0;
     let targetProgress = 0;
     let renderProgress = 0;
+    let requiredWheelDistance = 8800;
 
     while (tubeInner.children.length < numLines) {
       const clone = seedLine.cloneNode(true);
@@ -2568,9 +2570,11 @@ const FamHack = {
     const lines = Array.from(tubeInner.querySelectorAll('.ctf-final-scrollgate-line'));
     const set3D = () => {
       const width = Math.max(viewport.clientWidth, 280);
+      const height = Math.max(viewport.clientHeight, 260);
       const fontSizePx = Math.max(54, Math.min(width * 0.16, 116));
       radius = (fontSizePx / 2) / Math.sin((180 / numLines) * (Math.PI / 180));
       origin = `50% 50% -${radius}px`;
+      requiredWheelDistance = Math.max(height * 18, 8800);
 
       gsap.set(lines, {
         rotationX: (index) => -angle * index,
@@ -2580,12 +2584,12 @@ const FamHack = {
     };
 
     const getVisualProgress = (progress) => {
-      if (progress <= 0.76) {
-        return progress * 0.88;
+      if (progress <= 0.68) {
+        return progress * 0.72;
       }
 
-      const latePhase = Math.min(Math.max((progress - 0.76) / 0.24, 0), 1);
-      return 0.6688 + (0.3312 * Math.pow(latePhase, 0.35));
+      const latePhase = Math.min(Math.max((progress - 0.68) / 0.32, 0), 1);
+      return 0.4896 + (0.5104 * Math.pow(latePhase, 1.9));
     };
 
     const renderAt = (progress) => {
@@ -2606,15 +2610,20 @@ const FamHack = {
       });
 
       gsap.set(tube, {
-        perspective: `${Math.max(4, 100 - (97 * visualProgress))}vw`,
+        perspective: `${Math.max(4, 112 - (108 * visualProgress))}vw`,
+        scale: 1 + (visualProgress * 0.028),
       });
 
-      if (!revealed && progress >= 0.997) {
+      if (progressFill) {
+        gsap.set(progressFill, {
+          scaleX: Math.max(progress, 0.02),
+        });
+      }
+
+      if (!revealed && progress >= 0.999) {
         revealed = true;
         this.state.ctfFinalRevealComplete = true;
         viewport.classList.add('is-revealed');
-        viewport.style.overflowY = 'hidden';
-        viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
         targetProgress = 1;
         renderProgress = 1;
         if (rafId) {
@@ -2626,19 +2635,21 @@ const FamHack = {
         const timeline = gsap.timeline();
         timeline.to(stage, {
           opacity: 0,
-          duration: 0.88,
+          duration: 0.78,
+          scale: 1.018,
+          filter: 'blur(10px)',
           ease: 'power2.out',
         });
         timeline.set(stage, { pointerEvents: 'none' }, '<');
         timeline.to(question, {
           opacity: 1,
           y: 0,
-          duration: 1.08,
+          duration: 0.94,
           ease: 'power2.out',
           onComplete: () => {
             question.classList.add('is-visible');
           },
-        }, '-=0.16');
+        }, '-=0.2');
       }
     };
 
@@ -2660,41 +2671,45 @@ const FamHack = {
       }
     };
 
-    const updateTarget = () => {
-      const maxScroll = Math.max(viewport.scrollHeight - viewport.clientHeight, 1);
-      targetProgress = Math.min(Math.max(viewport.scrollTop / maxScroll, 0), 1);
+    const setTargetProgress = (nextProgress) => {
+      targetProgress = Math.min(Math.max(nextProgress, 0), 1);
       queueRender();
     };
 
     const handleWheel = (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
       if (revealed) {
         return;
       }
 
-      viewport.scrollTop += event.deltaY;
-      updateTarget();
+      event.preventDefault();
+      event.stopPropagation();
+      const delta = Math.max(-240, Math.min(event.deltaY, 240));
+      setTargetProgress(targetProgress + (delta / requiredWheelDistance));
     };
 
     const handleResize = () => {
       set3D();
-      updateTarget();
+      renderAt(renderProgress);
     };
 
     question.style.opacity = '0';
     question.style.transform = 'translateY(18px)';
+    question.classList.remove('is-visible');
+    viewport.classList.remove('is-revealed');
+    gsap.set(stage, {
+      opacity: 1,
+      scale: 1,
+      filter: 'blur(0px)',
+      pointerEvents: 'auto',
+    });
 
     set3D();
-    updateTarget();
+    renderAt(0);
 
-    viewport.addEventListener('scroll', updateTarget, { passive: true });
     viewport.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('resize', handleResize);
 
     this.state.ctfFinalScrollCleanup = () => {
-      viewport.removeEventListener('scroll', updateTarget);
       viewport.removeEventListener('wheel', handleWheel);
       window.removeEventListener('resize', handleResize);
       if (rafId) {
@@ -3137,19 +3152,22 @@ const FamHack = {
       shell.innerHTML = `
         <form class="ctf-challenge-card ctf-challenge-card-form ctf-final-reveal-shell" autocomplete="off">
           <div class="ctf-final-scrollgate" id="ctf-final-scrollgate-viewport">
-            <div class="ctf-final-scrollgate-spacer">
-              <div class="ctf-final-scrollgate-stage">
-                <div class="ctf-final-scrollgate-tube">
-                  <div class="ctf-final-scrollgate-tube-inner">
-                    <h1 class="ctf-final-scrollgate-line">Signal Six</h1>
-                  </div>
+            <div class="ctf-final-scrollgate-stage">
+              <div class="ctf-final-scrollgate-tube">
+                <div class="ctf-final-scrollgate-tube-inner">
+                  <h1 class="ctf-final-scrollgate-line">Signal Six</h1>
+                </div>
+              </div>
+              <div class="ctf-final-scrollgate-ui" aria-hidden="true">
+                <div class="ctf-final-scrollgate-progress-track">
+                  <div class="ctf-final-scrollgate-progress-fill" data-ctf-final-progress-fill></div>
                 </div>
                 <p class="ctf-final-scrollgate-copy">Scroll to the end.</p>
               </div>
             </div>
-            <div id="ctf-final-question" class="ctf-final-question">
-              ${challengeFieldsMarkup}
-            </div>
+          </div>
+          <div id="ctf-final-question" class="ctf-final-question">
+            ${challengeFieldsMarkup}
           </div>
         </form>
       `;
