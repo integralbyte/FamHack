@@ -7,7 +7,7 @@
   src: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/61488/BandeinsStrangeVariableGX.ttf') format('truetype');
   font-stretch: 100% 800%;
   font-weight: 200 800;
-  font-display: block;
+  font-display: swap;
 }
 
 /* Bracket tuning */
@@ -2067,6 +2067,7 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
 
 .ctf-final-reveal-shell {
   gap: 0;
+  min-height: 100%;
   justify-content: center;
   position: relative;
   overflow: hidden;
@@ -2075,8 +2076,9 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
 .ctf-final-scrollgate {
   position: relative;
   width: 100%;
-  min-height: 320px;
-  height: min(68vh, 520px);
+  flex: 1 1 auto;
+  min-height: 100%;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   background: transparent;
@@ -2098,14 +2100,14 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
 }
 
 .ctf-final-scrollgate-spacer {
-  height: 11200px;
+  height: 15600px;
   position: relative;
 }
 
 .ctf-final-scrollgate-stage {
   position: sticky;
   top: 0;
-  min-height: min(68vh, 520px);
+  min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2161,6 +2163,7 @@ a.copy-btn.ctf-sigint-link-secondary:hover {
 .ctf-final-question {
   position: absolute;
   inset: 0;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;

@@ -2356,13 +2356,13 @@ const FamHack = {
       opacity: 0,
       y: -10,
       scale: 0.986,
-      duration: 0.2,
+      duration: 0.12,
       ease: 'power1.in',
       onComplete: finish,
     });
     window.gsap.to(modal, {
       opacity: 0,
-      duration: 0.2,
+      duration: 0.12,
       ease: 'power1.in',
       onComplete: () => {
         modal.style.opacity = '';
@@ -2569,12 +2569,12 @@ const FamHack = {
     };
 
     const getVisualProgress = (progress) => {
-      if (progress <= 0.76) {
-        return progress * 0.88;
+      if (progress <= 0.78) {
+        return progress * 0.9;
       }
 
-      const latePhase = Math.min(Math.max((progress - 0.76) / 0.24, 0), 1);
-      return 0.6688 + (0.3312 * Math.pow(latePhase, 0.35));
+      const latePhase = Math.min(Math.max((progress - 0.78) / 0.22, 0), 1);
+      return 0.702 + (0.298 * Math.pow(latePhase, 0.55));
     };
 
     const renderAt = (progress) => {
@@ -2598,12 +2598,11 @@ const FamHack = {
         perspective: `${Math.max(4, 100 - (97 * visualProgress))}vw`,
       });
 
-      if (!revealed && progress >= 0.997) {
+      if (!revealed && progress >= 0.9994) {
         revealed = true;
         this.state.ctfFinalRevealComplete = true;
         viewport.classList.add('is-revealed');
         viewport.style.overflowY = 'hidden';
-        viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
         targetProgress = 1;
         renderProgress = 1;
         if (rafId) {
@@ -2611,6 +2610,7 @@ const FamHack = {
           rafId = 0;
         }
         renderAt(1);
+        viewport.scrollTop = 0;
 
         const timeline = gsap.timeline();
         timeline.to(stage, {
@@ -2650,6 +2650,10 @@ const FamHack = {
     };
 
     const updateTarget = () => {
+      if (revealed) {
+        return;
+      }
+
       const maxScroll = Math.max(viewport.scrollHeight - viewport.clientHeight, 1);
       targetProgress = Math.min(Math.max(viewport.scrollTop / maxScroll, 0), 1);
       queueRender();
