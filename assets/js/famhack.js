@@ -2180,7 +2180,13 @@ const FamHack = {
   },
 
   async fetchCtfState() {
-    return this.apiRequest('/api/ctf/state');
+    const searchParams = new URLSearchParams(window.location.search);
+    const previewSignalSix = searchParams.get('preview_signal_6') === '1';
+    const endpoint = previewSignalSix
+      ? '/api/ctf/state?preview_signal_6=1'
+      : '/api/ctf/state';
+
+    return this.apiRequest(endpoint);
   },
 
   hasAcknowledgedCtfEntryNotice() {
@@ -2230,6 +2236,11 @@ const FamHack = {
   },
 
   async maybeShowCtfEntryNotice() {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('preview_signal_6') === '1') {
+      return;
+    }
+
     const notice = document.getElementById('ctf-entry-notice');
     const confirmButton = document.getElementById('ctf-entry-notice-confirm');
     const noticeCard = notice?.querySelector('.ctf-entry-notice-card');
