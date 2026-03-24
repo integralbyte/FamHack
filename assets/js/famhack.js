@@ -2450,7 +2450,7 @@ const FamHack = {
     });
   },
 
-  hasCtfFinalYearGateApproval() {
+  hasStoredCtfFinalYearApproval() {
     try {
       return window.localStorage.getItem('famhack-ctf-final-year-approved') === 'year_1';
     } catch (error) {
@@ -2458,7 +2458,7 @@ const FamHack = {
     }
   },
 
-  setCtfFinalYearGateApproval(isApproved) {
+  persistCtfFinalYearApproval(isApproved) {
     try {
       if (isApproved) {
         window.localStorage.setItem('famhack-ctf-final-year-approved', 'year_1');
@@ -2492,7 +2492,7 @@ const FamHack = {
 
     if (studyYear !== 'year_1') {
       this.state.ctfFinalChallengeEligible = false;
-      this.setCtfFinalYearGateApproval(false);
+      this.persistCtfFinalYearApproval(false);
       this.showFieldError('ctf-final-year-gate-error', 'You are not eligible to solve this problem.');
       return;
     }
@@ -2505,7 +2505,7 @@ const FamHack = {
 
     this.state.ctfFinalChallengeEligible = true;
     this.state.ctfFinalRevealComplete = false;
-    this.setCtfFinalYearGateApproval(true);
+    this.persistCtfFinalYearApproval(true);
     this.renderCtfChallenge();
     this.setButtonState(submitButton, {
       busy: false,
@@ -2760,6 +2760,14 @@ const FamHack = {
       this.state.ctfKonamiRetry = false;
       this.state.ctfKonamiSolved = false;
       this.renderCtf(ctf);
+      if (
+        ctf?.currentChallenge?.number === ctf?.challengeCount &&
+        this.hasStoredCtfFinalYearApproval()
+      ) {
+        this.state.ctfFinalChallengeEligible = true;
+        this.state.ctfFinalRevealComplete = false;
+        this.renderCtfChallenge();
+      }
       await this.waitForCtfIntroLoaderGate();
       this.setCtfLoading(false);
       await this.maybeShowCtfEntryNotice();
@@ -2777,9 +2785,6 @@ const FamHack = {
 
   renderCtf(ctf) {
     this.state.ctf = ctf;
-    this.state.ctfFinalChallengeEligible = Boolean(
-      ctf?.currentChallenge?.number === ctf?.challengeCount && this.hasCtfFinalYearGateApproval(),
-    );
 
     const playerName = document.getElementById('ctf-team-name');
     const playerLevel = document.getElementById('ctf-team-level-copy');
