@@ -2385,14 +2385,6 @@ const FamHack = {
     const modal = document.getElementById('ctf-final-info-modal');
     const card = modal?.querySelector('.ctf-sigint-card');
 
-    if (this.hasCtfFinalYearGateApproval()) {
-      this.state.ctfFinalChallengeEligible = true;
-      if (!this.state.ctfFinalRevealComplete) {
-        this.renderCtfChallenge();
-      }
-      return;
-    }
-
     if (!modal || this.state.ctfFinalInfoModalOpen || this.state.ctfFinalChallengeEligible) {
       return;
     }
@@ -2466,9 +2458,9 @@ const FamHack = {
     }
   },
 
-  setCtfFinalYearGateApproval(studyYear) {
+  setCtfFinalYearGateApproval(isApproved) {
     try {
-      if (studyYear === 'year_1') {
+      if (isApproved) {
         window.localStorage.setItem('famhack-ctf-final-year-approved', 'year_1');
       } else {
         window.localStorage.removeItem('famhack-ctf-final-year-approved');
@@ -2500,7 +2492,7 @@ const FamHack = {
 
     if (studyYear !== 'year_1') {
       this.state.ctfFinalChallengeEligible = false;
-      this.setCtfFinalYearGateApproval('');
+      this.setCtfFinalYearGateApproval(false);
       this.showFieldError('ctf-final-year-gate-error', 'You are not eligible to solve this problem.');
       return;
     }
@@ -2513,7 +2505,7 @@ const FamHack = {
 
     this.state.ctfFinalChallengeEligible = true;
     this.state.ctfFinalRevealComplete = false;
-    this.setCtfFinalYearGateApproval('year_1');
+    this.setCtfFinalYearGateApproval(true);
     this.renderCtfChallenge();
     this.setButtonState(submitButton, {
       busy: false,
@@ -2785,6 +2777,9 @@ const FamHack = {
 
   renderCtf(ctf) {
     this.state.ctf = ctf;
+    this.state.ctfFinalChallengeEligible = Boolean(
+      ctf?.currentChallenge?.number === ctf?.challengeCount && this.hasCtfFinalYearGateApproval(),
+    );
 
     const playerName = document.getElementById('ctf-team-name');
     const playerLevel = document.getElementById('ctf-team-level-copy');
@@ -3142,10 +3137,6 @@ const FamHack = {
       ? `<p class="ctf-challenge-copy">${this.escapeHtml(challenge.prompt)}</p>`
       : '';
     const isFinalChallenge = challenge.number === ctf.challengeCount;
-
-    if (isFinalChallenge && this.hasCtfFinalYearGateApproval()) {
-      this.state.ctfFinalChallengeEligible = true;
-    }
 
     if (challenge.mode === 'konami') {
       this.state.ctfFinalChallengeEligible = false;
