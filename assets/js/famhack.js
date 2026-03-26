@@ -2402,6 +2402,27 @@ const FamHack = {
         { opacity: 1, y: 0, scale: 1, duration: 0.32, ease: 'power2.out' },
       );
     }
+
+    if (this.hasStoredCtfFinalYearApproval() && !this.state.ctfFinalAutoGateRunning) {
+      const form = modal.querySelector('[data-ctf-final-year-gate-form]');
+      const select = modal.querySelector('#ctf-final-year-gate-select');
+
+      this.state.ctfFinalAutoGateRunning = true;
+      modal.style.opacity = '0';
+      modal.style.visibility = 'hidden';
+      modal.style.pointerEvents = 'none';
+      if (select) {
+        select.value = 'year_1';
+      }
+
+      window.requestAnimationFrame(() => {
+        this.handleCtfFinalYearGate({
+          preventDefault() {},
+          target: form,
+        });
+        this.state.ctfFinalAutoGateRunning = false;
+      });
+    }
   },
 
   closeCtfFinalInfoModal(options = {}) {
@@ -2420,6 +2441,8 @@ const FamHack = {
     const finish = () => {
       modal.hidden = true;
       modal.style.opacity = '';
+      modal.style.visibility = '';
+      modal.style.pointerEvents = '';
       onComplete?.();
     };
 
@@ -2760,14 +2783,6 @@ const FamHack = {
       this.state.ctfKonamiRetry = false;
       this.state.ctfKonamiSolved = false;
       this.renderCtf(ctf);
-      if (
-        ctf?.currentChallenge?.number === ctf?.challengeCount &&
-        this.hasStoredCtfFinalYearApproval()
-      ) {
-        this.state.ctfFinalChallengeEligible = true;
-        this.state.ctfFinalRevealComplete = false;
-        this.renderCtfChallenge();
-      }
       await this.waitForCtfIntroLoaderGate();
       this.setCtfLoading(false);
       await this.maybeShowCtfEntryNotice();
