@@ -2403,6 +2403,8 @@ const FamHack = {
       );
     }
 
+    // This looks a bit odd, but replaying the real modal submit keeps the L6 scroll reveal
+    // matching the normal Year 1 path. Pre-setting the state directly changed the render.
     if (this.hasStoredCtfFinalYearApproval() && !this.state.ctfFinalAutoGateRunning) {
       const form = modal.querySelector('[data-ctf-final-year-gate-form]');
       const select = modal.querySelector('#ctf-final-year-gate-select');
