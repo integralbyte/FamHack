@@ -2885,19 +2885,19 @@ const FamHack = {
       signOutButton.hidden = !this.state.session;
     }
 
-      if (statusBanner) {
-        statusBanner.hidden = false;
-        if (isGuest) {
-          statusBanner.classList.remove('is-success');
-          statusBanner.textContent = 'Guest mode only. Your progress will not be saved.';
+    if (statusBanner) {
+      statusBanner.hidden = false;
+      if (isGuest) {
+        statusBanner.classList.remove('is-success');
+        statusBanner.textContent = 'Guest mode only. Your progress will not be saved.';
       } else if (ctf.completionMessage) {
         statusBanner.classList.add('is-success');
         statusBanner.textContent = ctf.completionMessage.copy;
       } else {
         statusBanner.classList.remove('is-success');
         statusBanner.textContent = ctf.leaderboard.some((row) => row.winner)
-          ? 'A Y1 winner is on the board. The CTF is still open for more clears.'
-          : 'No Y1 winners yet. The CTF is still running.';
+          ? 'A winner is on the board. The CTF is still open for more clears.'
+          : 'No winners yet. The CTF is still running.';
       }
     }
 
@@ -2985,62 +2985,6 @@ const FamHack = {
     `;
   },
 
-  getCtfPrizeYearOptions(selectedStudyYear = '') {
-    const selected = String(selectedStudyYear || '').trim().toLowerCase();
-    const options = [
-      ['year_1', 'Year 1'],
-      ['year_2', 'Year 2'],
-      ['year_3', 'Year 3'],
-      ['year_4', 'Year 4'],
-      ['masters', "Master's"],
-      ['phd', 'PhD'],
-    ];
-
-    return options.map(([value, label]) => (
-      `<option value="${value}"${selected === value ? ' selected' : ''}>${label}</option>`
-    )).join('');
-  },
-
-  getCtfPrizeClaimStatusMarkup(ctf) {
-    const claim = ctf?.prizeClaim || {};
-    if (!claim.recorded) {
-      return '<p class="ctf-prize-claim-note">Save your year for prize checking. The board stays open until a Y1 winner is confirmed.</p>';
-    }
-
-    if (claim.eligible) {
-      return ctf?.completionMessage?.winner
-        ? '<p class="ctf-prize-claim-note is-success">First through the board. You won!</p>'
-        : `<p class="ctf-prize-claim-note is-success">Recorded as ${this.escapeHtml(claim.studyYearLabel)}.</p>`;
-    }
-
-    return `<p class="ctf-prize-claim-note">Recorded as ${this.escapeHtml(claim.studyYearLabel)}. Your clear still counts, and the board stays open until a Y1 winner is confirmed.</p>`;
-  },
-
-  renderCtfPrizeClaimBlock(ctf) {
-    if (ctf.viewer?.guest) {
-      return '';
-    }
-
-    const claim = ctf.prizeClaim || {};
-    const buttonLabel = claim.recorded ? 'Update Year' : 'Save Year';
-
-    return `
-      <form class="ctf-prize-claim" data-ctf-prize-claim-form autocomplete="off">
-        <p class="ctf-step-kicker">Prize Eligibility</p>
-        <p class="ctf-challenge-copy">Which year are you in?</p>
-        <div class="ctf-prize-claim-controls">
-          <select id="ctf-prize-study-year" class="form-input form-select ctf-prize-claim-select" name="studyYear">
-            <option value="">Select your year</option>
-            ${this.getCtfPrizeYearOptions(claim.studyYear)}
-          </select>
-          <button type="submit" class="copy-btn ctf-prize-claim-submit" data-ctf-prize-claim-submit>${buttonLabel}</button>
-        </div>
-        ${this.getCtfPrizeClaimStatusMarkup(ctf)}
-        <p id="ctf-prize-claim-error" class="error-message ctf-inline-error"></p>
-      </form>
-    `;
-  },
-
   renderCtfChallenge() {
     const shell = document.getElementById('ctf-challenge-shell');
     if (!shell) {
@@ -3075,7 +3019,6 @@ const FamHack = {
           <p class="ctf-step-kicker">Run Complete</p>
           <h2 class="ctf-challenge-title">${this.escapeHtml(ctf.completionMessage?.title || 'Every signal is clear.')}</h2>
           <p class="ctf-challenge-copy">${this.escapeHtml(ctf.completionMessage?.copy || 'You finished the full FamHack CTF.')}</p>
-          ${this.renderCtfPrizeClaimBlock(ctf)}
           <div class="ctf-completion-actions">
             <button type="button" class="copy-btn ctf-sigint-trigger" data-ctf-sigint-open>Interested in more?</button>
           </div>

@@ -505,20 +505,20 @@ function getCompletionMessage(viewer, leaderboard) {
 
   const winningRow = leaderboard.find((row) => row.winner) || null;
   const viewerWon = Boolean(winningRow && winningRow.userId === viewer.id);
-  const hasYearOneWinner = Boolean(winningRow);
+  const hasWinner = Boolean(winningRow);
 
   if (viewerWon) {
     return {
       title: 'You won the FamHack CTF.',
-      copy: 'You were the first Year 1 finisher through every signal.',
+      copy: 'Congratulations. We will be in touch with you soon regarding your 20 quid prize money.',
       winner: true,
     };
   }
 
-  if (!hasYearOneWinner) {
+  if (!hasWinner) {
     return {
       title: 'You cleared the FamHack CTF.',
-      copy: 'All six signals are done. No Y1 winners yet, so the CTF is still running.',
+      copy: 'All six signals are done. No winners yet, so the CTF is still running.',
       winner: false,
     };
   }
@@ -729,8 +729,8 @@ export async function saveCtfPrizeClaimForUser(user, studyYearInput) {
   return {
     claim,
     message: claim.eligible
-      ? 'Recorded as Year 1.'
-      : 'Recorded. Your clear still counts on the board, and it stays open until a Year 1 winner is confirmed.',
+      ? 'Recorded.'
+      : 'Recorded. Your clear still counts on the board, and it stays open until a winner is confirmed.',
   };
 }
 
@@ -801,7 +801,7 @@ export async function getCtfLeaderboard() {
     });
 
   const winningUserId = rows.find(
-    (row) => row.level === CTF_CHALLENGE_COUNT && row.studyYear === 'year_1'
+    (row) => row.level === CTF_CHALLENGE_COUNT
   )?.userId || null;
 
   return rows.map((row, index) => ({
