@@ -2892,7 +2892,9 @@ const FamHack = {
         statusBanner.textContent = 'Guest mode only. Your progress will not be saved.';
       } else if (ctf.completionMessage) {
         statusBanner.classList.add('is-success');
-        statusBanner.textContent = ctf.completionMessage.copy;
+        statusBanner.textContent = ctf.completionMessage.winner
+          ? 'Congratulations. You are the winner of the FamHack CTF.'
+          : ctf.completionMessage.copy;
       } else {
         statusBanner.classList.remove('is-success');
         statusBanner.textContent = ctf.leaderboard.some((row) => row.winner)

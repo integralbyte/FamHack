@@ -510,7 +510,7 @@ function getCompletionMessage(viewer, leaderboard) {
   if (viewerWon) {
     return {
       title: 'You won the FamHack CTF.',
-      copy: 'Congratulations. We will be in touch with you soon regarding your 20 quid prize money.',
+      copy: 'Congratulations. We will be in touch with you soon regarding your £20 prize money.',
       winner: true,
     };
   }
