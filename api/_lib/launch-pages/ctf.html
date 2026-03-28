@@ -694,9 +694,8 @@
       const shards = Array.from(document.querySelectorAll('.ctf-launch-shard'));
       const searchParams = new URLSearchParams(window.location.search);
       const launchedFromQuery = searchParams.get('skipMacIntro') === '1';
-      const previewSignalSix = searchParams.get('preview_signal_6') === '1';
       const introAlreadyCompleted = hasCompletedIntro();
-      const shouldSkipIntro = launchedFromQuery || previewSignalSix || introAlreadyCompleted;
+      const shouldSkipIntro = launchedFromQuery || introAlreadyCompleted;
       const shardVectors = [
         { x: -520, y: -340, rotation: -30 },
         { x: 420, y: -300, rotation: 34 },

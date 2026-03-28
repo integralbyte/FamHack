@@ -8,15 +8,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const previewSignalSix = String(req.query?.preview_signal_6 || '').trim() === '1';
     const gate = getCtfReleaseGate(req);
     if (!gate.granted) {
       res.status(200).json(getLockedCtfState(null, req));
-      return;
-    }
-
-    if (previewSignalSix) {
-      res.status(200).json(await getGuestCtfState([1, 2, 3, 4, 5]));
       return;
     }
 
