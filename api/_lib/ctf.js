@@ -99,7 +99,7 @@ const CTF_CHALLENGES = [
     number: 6,
     title: 'Signal Six',
     mode: 'text',
-    prompt: 'Go home and find me. Then find someone of my length you were expected to see at 1759412580. XOR it with me byte-wise and submit the hex.',
+    prompt: 'Go home and find me. Then find someone of my length you were expected to see at 1759412580. XOR them with me byte-wise and submit the hex.',
     inputLabel: 'Answer',
     placeholder: 'Enter hexadecimal answer',
     actionLabel: 'Submit',
