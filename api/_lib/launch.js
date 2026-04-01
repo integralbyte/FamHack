@@ -9,8 +9,23 @@ export const PROTECTED_PAGE_SLUGS = new Set([
   'register',
 ]);
 
+const BACKUP_PREVIEW_BRANCH = 'codex/backup-preview';
+
+function isBackupPreviewNormalParticipationOverrideEnabled() {
+  return process.env.VERCEL_ENV === 'preview'
+    && String(process.env.VERCEL_GIT_COMMIT_REF || '').trim() === BACKUP_PREVIEW_BRANCH;
+}
+
 export function getServerLaunchState(now = new Date()) {
-  return getLaunchState(now);
+  const launch = getLaunchState(now);
+  if (!isBackupPreviewNormalParticipationOverrideEnabled()) {
+    return launch;
+  }
+
+  return {
+    ...launch,
+    isNormalParticipationOpen: true,
+  };
 }
 
 export function isNormalParticipationOpen(now = new Date()) {
