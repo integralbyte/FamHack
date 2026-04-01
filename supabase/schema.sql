@@ -217,6 +217,13 @@ create table if not exists public.ctf_user_solves (
   unique (user_id, challenge_number)
 );
 
+create table if not exists public.ctf_submission_attempts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  challenge_number smallint not null check (challenge_number between 1 and 6),
+  created_at timestamptz not null default timezone('utc', now())
+);
+
 alter table public.ctf_member_solves
   drop constraint if exists ctf_member_solves_challenge_number_check;
 alter table public.ctf_member_solves
@@ -235,6 +242,12 @@ alter table public.ctf_user_solves
   add constraint ctf_user_solves_challenge_number_check
   check (challenge_number between 1 and 6);
 
+alter table public.ctf_submission_attempts
+  drop constraint if exists ctf_submission_attempts_challenge_number_check;
+alter table public.ctf_submission_attempts
+  add constraint ctf_submission_attempts_challenge_number_check
+  check (challenge_number between 1 and 6);
+
 create index if not exists ctf_member_solves_team_user_idx
   on public.ctf_member_solves (team_id, user_id, challenge_number);
 create index if not exists ctf_team_checkpoints_rank_idx
@@ -243,6 +256,55 @@ create index if not exists ctf_user_solves_user_challenge_idx
   on public.ctf_user_solves (user_id, challenge_number);
 create index if not exists ctf_user_solves_rank_idx
   on public.ctf_user_solves (challenge_number desc, solved_at asc);
+create index if not exists ctf_submission_attempts_user_challenge_created_idx
+  on public.ctf_submission_attempts (user_id, challenge_number, created_at desc);
+
+create or replace function public.record_ctf_submission_attempt(
+  p_user_id uuid,
+  p_challenge_number smallint,
+  p_window_seconds integer default 60,
+  p_max_attempts integer default 5
+)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  attempt_count integer := 0;
+begin
+  if p_user_id is null then
+    raise exception 'ctf_submission_attempt_user_required';
+  end if;
+
+  if p_challenge_number is null or p_challenge_number < 1 or p_challenge_number > 6 then
+    raise exception 'ctf_submission_attempt_challenge_invalid';
+  end if;
+
+  if p_window_seconds is null or p_window_seconds <= 0 then
+    raise exception 'ctf_submission_attempt_window_invalid';
+  end if;
+
+  if p_max_attempts is null or p_max_attempts <= 0 then
+    raise exception 'ctf_submission_attempt_max_invalid';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtext(format('ctf_submission_attempt:%s:%s', p_user_id, p_challenge_number)));
+
+  select count(*)
+    into attempt_count
+  from public.ctf_submission_attempts
+  where user_id = p_user_id
+    and challenge_number = p_challenge_number
+    and created_at >= timezone('utc', now()) - make_interval(secs => p_window_seconds);
+
+  if attempt_count >= p_max_attempts then
+    raise exception 'ctf_submission_rate_limited';
+  end if;
+
+  insert into public.ctf_submission_attempts (user_id, challenge_number)
+  values (p_user_id, p_challenge_number);
+end;
+$$;
 
 insert into public.ctf_user_solves (user_id, challenge_number, solved_at)
 select distinct on (user_id, challenge_number)
@@ -256,10 +318,14 @@ on conflict (user_id, challenge_number) do nothing;
 alter table public.ctf_member_solves enable row level security;
 alter table public.ctf_team_checkpoints enable row level security;
 alter table public.ctf_user_solves enable row level security;
+alter table public.ctf_submission_attempts enable row level security;
 
 revoke all on public.ctf_member_solves from anon, authenticated;
 revoke all on public.ctf_team_checkpoints from anon, authenticated;
 revoke all on public.ctf_user_solves from anon, authenticated;
+revoke all on public.ctf_submission_attempts from anon, authenticated;
+revoke all on function public.record_ctf_submission_attempt(uuid, smallint, integer, integer) from public, anon, authenticated;
+grant execute on function public.record_ctf_submission_attempt(uuid, smallint, integer, integer) to service_role;
 
 create table if not exists public.secret_keyring_claims (
   id uuid primary key default gen_random_uuid(),

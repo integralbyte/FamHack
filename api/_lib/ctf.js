@@ -16,6 +16,8 @@ const CTF_PROOF_SEED = 'famhack-ctf-seed';
 const CTF_DEFAULT_ACCESS_SECRET = 'famhack-ctf-local-dev-secret';
 const CTF_KONAMI_ITERATIONS = 6000;
 const CTF_KONAMI_CODEPOINTS = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+const CTF_FINAL_CHALLENGE_RATE_LIMIT_WINDOW_SECONDS = 60;
+const CTF_FINAL_CHALLENGE_RATE_LIMIT_MAX_SUBMISSIONS = 5;
 const CTF_SIGNAL_SIX_HEX_ANSWER = '052e233d3e385d203c2b2733';
 const CTF_SIGNAL_SIX_ACCEPTED_ANSWERS = new Set([
   CTF_SIGNAL_SIX_HEX_ANSWER,
@@ -687,6 +689,30 @@ export async function getMemberCtfSolves(userId) {
   return data || [];
 }
 
+async function recordFinalChallengeSubmissionAttempt(userId, challengeNumber) {
+  if (Number(challengeNumber) !== CTF_CHALLENGE_COUNT) {
+    return;
+  }
+
+  const supabase = getServiceClient();
+  const { error } = await supabase.rpc('record_ctf_submission_attempt', {
+    p_user_id: userId,
+    p_challenge_number: challengeNumber,
+    p_window_seconds: CTF_FINAL_CHALLENGE_RATE_LIMIT_WINDOW_SECONDS,
+    p_max_attempts: CTF_FINAL_CHALLENGE_RATE_LIMIT_MAX_SUBMISSIONS,
+  });
+
+  if (!error) {
+    return;
+  }
+
+  if (String(error.message || '').includes('ctf_submission_rate_limited')) {
+    throw createStatusError(429, 'Too many Signal Six submissions. Wait one minute and try again.');
+  }
+
+  throw new Error(error.message);
+}
+
 export async function saveCtfPrizeClaimForUser(user, studyYearInput) {
   assertAllowedEmail(user.email);
   await ensureCtfProfile(user);
@@ -969,6 +995,8 @@ export async function submitCtfAnswerForUser(user, challengeNumber, answer, acce
     throw createStatusError(409, 'Solve your current challenge before moving on.');
   }
 
+  await recordFinalChallengeSubmissionAttempt(user.id, parsedChallengeNumber);
+
   if (!verifyChallengeAnswer(parsedChallengeNumber, answer, accessToken)) {
     throw createStatusError(400, 'That answer is not correct yet.');
   }
@@ -996,6 +1024,10 @@ export async function submitGuestCtfAnswer(challengeNumber, answer, accessToken)
 
   if (!Number.isInteger(parsedChallengeNumber) || parsedChallengeNumber < 1 || parsedChallengeNumber > CTF_CHALLENGE_COUNT) {
     throw createStatusError(400, 'Unknown CTF challenge');
+  }
+
+  if (parsedChallengeNumber === CTF_CHALLENGE_COUNT) {
+    throw createStatusError(401, 'Sign in to submit the final challenge.');
   }
 
   const { solvedChallengeNumbers, expectedChallengeNumber } = validateGuestToken(accessToken, parsedChallengeNumber);

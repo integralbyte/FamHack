@@ -3214,6 +3214,11 @@ const FamHack = {
       return;
     }
 
+    if (challenge.number === ctf.challengeCount && ctf.viewer?.guest) {
+      this.showFieldError('ctf-answer-error', 'Sign in to submit the final challenge.');
+      return;
+    }
+
     if (challenge.number === ctf.challengeCount && !this.state.ctfFinalChallengeEligible) {
       this.openCtfFinalInfoModal();
       this.showFieldError('ctf-answer-error', 'Confirm your year before continuing.');
