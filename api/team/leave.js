@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    assertNormalParticipationOpen();
+    assertNormalParticipationOpen(req);
     const user = await requireUser(req);
     assertAllowedEmail(user.email);
 

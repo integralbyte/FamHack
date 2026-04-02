@@ -178,7 +178,7 @@ async function handlePageRequest(req, res) {
     assertAdminConfigured();
   }
 
-  const launch = getServerLaunchState();
+  const launch = getServerLaunchState({ req });
   const fileName = resolvePageFile(slug, launch);
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -206,7 +206,7 @@ async function handleRegistrationStatus(req, res) {
 
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(200).json({
-    launch: getServerLaunchState(),
+    launch: getServerLaunchState({ req }),
     registration: serializeRegistration(user),
     membership: membership
       ? {
@@ -220,7 +220,7 @@ async function handleRegistrationStatus(req, res) {
 }
 
 async function handleRegistrationComplete(req, res) {
-  const launch = getServerLaunchState();
+  const launch = getServerLaunchState({ req });
   if (!launch.isRegistrationOpen) {
     sendError(res, 403, 'Registration closed at 11:59 PM on 28 March 2026.');
     return;
@@ -409,7 +409,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
     res.status(200).json({
       ...getPublicConfig(),
-      launch: getServerLaunchState(),
+      launch: getServerLaunchState({ req }),
     });
   } catch (error) {
     sendError(res, statusFromError(error), error.message);

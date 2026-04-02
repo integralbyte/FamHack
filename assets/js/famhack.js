@@ -69,6 +69,7 @@ const FamHack = {
         ...this.config,
         ...publicConfig,
       };
+      this.state.launch = publicConfig.launch || this.state.launch || getLaunchState();
 
       this.supabase = createClient(publicConfig.supabaseUrl, publicConfig.supabaseAnonKey, {
         auth: {
@@ -221,7 +222,9 @@ const FamHack = {
   },
 
   getCurrentLaunchState() {
-    this.state.launch = getLaunchState();
+    if (!this.state.launch) {
+      this.state.launch = getLaunchState();
+    }
     return this.state.launch;
   },
 
@@ -1405,7 +1408,11 @@ const FamHack = {
 
     const status = await this.fetchRegistrationStatus({ suppressMissing: true });
     if (status?.registration) {
-      this.showRegisteredConfirmation(status.registration);
+      if (status.launch?.isNormalParticipationOpen) {
+        await this.routePostLaunchRegisterUser();
+      } else {
+        this.showRegisteredConfirmation(status.registration);
+      }
       return;
     }
 
@@ -1457,7 +1464,7 @@ const FamHack = {
 
     if (registration.role === 'parent') {
       this.state.registerIntent = 'parent';
-      this.setRegisterIntro('Create a Family', 'Parents create the family first on 20 March.');
+      this.setRegisterIntro('Create a Family', 'Create your family to continue.');
       this.showStep('create-team');
       this.showPageMessage('register-page-message', 'Signed in. Create a Family to continue.');
       return;
@@ -1692,6 +1699,9 @@ const FamHack = {
     try {
       const payload = await this.apiRequest('/api/registration/status');
       this.state.registration = payload.registration || null;
+      if (payload?.launch) {
+        this.state.launch = payload.launch;
+      }
       return payload;
     } catch (error) {
       if (suppressMissing && (error.status === 401 || error.status === 404)) {
@@ -1724,9 +1734,25 @@ const FamHack = {
         },
       });
 
+      this.state.registration = payload.registration || null;
+
+      const status = await this.fetchRegistrationStatus({ suppressMissing: true });
+      if (status?.launch?.isNormalParticipationOpen) {
+        await this.routePostLaunchRegisterUser();
+        return;
+      }
+
       this.showRegisteredConfirmation(payload.registration);
     } catch (error) {
       if (error.status === 409 && error.details?.registration) {
+        this.state.registration = error.details.registration;
+
+        const status = await this.fetchRegistrationStatus({ suppressMissing: true });
+        if (status?.launch?.isNormalParticipationOpen) {
+          await this.routePostLaunchRegisterUser();
+          return;
+        }
+
         this.showRegisteredConfirmation(error.details.registration, error.message);
         return;
       }

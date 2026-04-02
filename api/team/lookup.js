@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (!isNormalParticipationOpen()) {
+  if (!isNormalParticipationOpen({ req })) {
     sendError(res, 403, 'Normal participation opens on 20 March.');
     return;
   }
