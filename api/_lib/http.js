@@ -51,6 +51,7 @@ export function statusFromError(error) {
     || message === 'Registration has closed for this account.'
     || message === 'Only accounts registered as a Parent can create a Family.'
     || message === 'Only accounts registered as a Child can join a Family.'
+    || message === 'Choose Hunter or Hacker before continuing'
     || message === 'Enter an email address to claim a key ring.'
     || message === 'Enter a valid email address.'
     || message === 'You must agree to attend and participate in FAMHack to claim a key ring.'
@@ -67,6 +68,10 @@ export function statusFromError(error) {
     message === 'That email has already claimed a key ring.'
     || message === 'All FAMHack key rings have already been claimed.'
     || message === 'All FamHack key rings have already been claimed.'
+    || message === 'That parent invite is no longer available.'
+    || message === 'That child is no longer available in the pool.'
+    || message === 'That child is already in a family.'
+    || message === 'That child already has a pending family request.'
   ) {
     return 409;
   }

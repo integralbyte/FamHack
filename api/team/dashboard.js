@@ -4,9 +4,11 @@ import { assertNormalParticipationOpen } from '../_lib/launch.js';
 import {
   assertAllowedEmail,
   getMembershipByUserId,
+  listOpenChildPoolEntries,
   getTeamById,
   getTeamMembers,
   MAX_TEAM_SIZE,
+  serializeChildPoolEntry,
   serializeMembership,
 } from '../_lib/teams.js';
 
@@ -35,6 +37,9 @@ export default async function handler(req, res) {
     const members = await getTeamMembers(team.id);
     const approvedMembers = members.filter((member) => member.status === 'approved').map(serializeMembership);
     const pendingMembers = members.filter((member) => member.status === 'pending').map(serializeMembership);
+    const childPool = membership.role === 'parent' && membership.status === 'approved'
+      ? (await listOpenChildPoolEntries()).map(serializeChildPoolEntry)
+      : [];
 
     res.status(200).json({
       viewer: {
@@ -56,6 +61,7 @@ export default async function handler(req, res) {
       },
       members: approvedMembers,
       pendingRequests: pendingMembers,
+      childPool,
     });
   } catch (error) {
     sendError(res, statusFromError(error), error.message);

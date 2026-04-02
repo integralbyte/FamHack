@@ -10,8 +10,10 @@ import {
   getTeamByCode,
   MAX_TEAM_SIZE,
   sanitizeFullName,
+  sanitizeChildFocus,
   sanitizeStudyYear,
   upsertProfile,
+  withdrawChildPoolEntryForUser,
 } from '../_lib/teams.js';
 import { getServiceClient } from '../_lib/supabase.js';
 
@@ -29,6 +31,7 @@ export default async function handler(req, res) {
     const body = readJsonBody(req);
     const fullName = sanitizeFullName(body.fullName);
     const studyYear = sanitizeStudyYear(body.studyYear);
+    const childFocus = sanitizeChildFocus(body.childFocus);
     const joinCode = String(body.joinCode || '').trim().toUpperCase();
 
     if (!fullName) {
@@ -43,6 +46,11 @@ export default async function handler(req, res) {
 
     if (!studyYear) {
       sendError(res, 400, 'Choose your year of study');
+      return;
+    }
+
+    if (!childFocus) {
+      sendError(res, 400, 'Choose Hunter or Hacker before continuing');
       return;
     }
 
@@ -80,7 +88,10 @@ export default async function handler(req, res) {
       return;
     }
 
-    await upsertProfile(user, fullName, studyYear);
+    await upsertProfile(user, fullName, studyYear, {
+      childFocus,
+    });
+    await withdrawChildPoolEntryForUser(user.id);
 
     const supabase = getServiceClient();
     const { error } = await supabase.from('team_memberships').upsert(

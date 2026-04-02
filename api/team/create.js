@@ -5,10 +5,13 @@ import {
   assertAllowedEmail,
   assertRegisteredRole,
   createUniqueJoinCode,
+  claimParentInvite,
+  getParentInviteByToken,
   getMembershipByUserId,
   sanitizeFullName,
   sanitizeStudyYear,
   sanitizeTeamName,
+  resolveChildPoolEntryForUser,
   upsertProfile,
 } from '../_lib/teams.js';
 import { getServiceClient } from '../_lib/supabase.js';
@@ -28,6 +31,7 @@ export default async function handler(req, res) {
     const fullName = sanitizeFullName(body.fullName);
     const studyYear = sanitizeStudyYear(body.studyYear);
     const teamName = sanitizeTeamName(body.teamName);
+    const parentInviteToken = String(body.parentInviteToken || '').trim();
 
     if (!fullName) {
       sendError(res, 400, 'Your name is required');
@@ -42,6 +46,31 @@ export default async function handler(req, res) {
     if (!studyYear) {
       sendError(res, 400, 'Choose your year of study');
       return;
+    }
+
+    let parentInvite = null;
+    if (parentInviteToken) {
+      parentInvite = await getParentInviteByToken(parentInviteToken);
+      if (!parentInvite || parentInvite.status !== 'pending') {
+        sendError(res, 404, 'That parent invite is no longer available.');
+        return;
+      }
+
+      if (parentInvite.parent_email !== user.email.trim().toLowerCase()) {
+        sendError(res, 403, 'That parent invite was sent to a different email address.');
+        return;
+      }
+
+      const invitedChildMembership = await getMembershipByUserId(parentInvite.child_user_id);
+      if (invitedChildMembership?.status === 'approved') {
+        sendError(res, 409, 'That child is already in a family.');
+        return;
+      }
+
+      if (invitedChildMembership?.status === 'pending') {
+        sendError(res, 409, 'That child already has a pending family request.');
+        return;
+      }
     }
 
     const existingMembership = await getMembershipByUserId(user.id);
@@ -90,6 +119,38 @@ export default async function handler(req, res) {
     if (membershipError) {
       await supabase.from('teams').delete().eq('id', team.id);
       throw new Error(membershipError.message);
+    }
+
+    if (parentInvite) {
+      try {
+        const { error: childMembershipError } = await supabase.from('team_memberships').upsert(
+          {
+            user_id: parentInvite.child_user_id,
+            team_id: team.id,
+            role: 'child',
+            status: 'approved',
+            reviewed_by: user.id,
+            reviewed_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'user_id',
+          }
+        );
+
+        if (childMembershipError) {
+          throw new Error(childMembershipError.message);
+        }
+
+        await claimParentInvite({
+          token: parentInviteToken,
+          claimedByUserId: user.id,
+          claimedTeamId: team.id,
+        });
+        await resolveChildPoolEntryForUser(parentInvite.child_user_id, team.id, user.id);
+      } catch (error) {
+        await supabase.from('teams').delete().eq('id', team.id);
+        throw error;
+      }
     }
 
     res.status(201).json({

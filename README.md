@@ -6,9 +6,11 @@ This version keeps the static site theme and adds a real registration backend:
 - Supabase Postgres stores teams, join codes, and approval state.
 - Vercel Functions handle secure team creation, join requests, and parent approvals.
 - Resend is the recommended free SMTP provider for the OTP emails.
+- Resend can also send themed parent-invite emails from the child flow.
 - Teams are capped at 15 approved members.
 - Children can cancel pending requests or leave an approved family from the dashboard.
 - Parents can transfer ownership to an approved child before leaving.
+- Children can pick `Hunter` or `Hacker`, join a child pool, or email a parent a registration link.
 - The CTF now saves progress per individual user and uses an individual leaderboard.
 
 ## Required setup
@@ -22,7 +24,7 @@ This version keeps the static site theme and adds a real registration backend:
    - configure a custom SMTP sender using the SMTP credentials from Resend
    - update the email template to show `{{ .Token }}` so users receive a 6-digit code
 5. Add the variables from `.env.example` to Vercel.
-   - Resend itself is configured inside Supabase Auth, so there are no extra Resend env vars in this repo.
+   - `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are only required for the child -> parent invite emails.
 6. Deploy the repo to Vercel.
 
 ## Local development
@@ -34,7 +36,8 @@ This version keeps the static site theme and adds a real registration backend:
 ## Flow
 
 - `register.html`: parent logs in with email OTP, creates a family/team, receives a join code.
-- `join.html`: child logs in, enters the join code, and submits a join request.
+- `join.html`: child logs in, chooses `Hunter` or `Hacker`, then joins by code, joins the child pool, or emails a parent an invite link.
 - `dashboard.html`: parent approves or declines requests; children can see pending status.
+- Parents can also browse the child pool and add a waiting child directly to their family.
 - `ctf.html`: each signed-in user has their own saved CTF run and appears on the individual leaderboard.
 - Team limits and parent transfers are enforced on the server. The frontend cannot bypass the 15-person cap.

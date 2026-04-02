@@ -17,7 +17,19 @@ import { assertServerEnv, getPublicConfig } from './_lib/env.js';
 import { allowMethods, readJsonBody, sendError, statusFromError } from './_lib/http.js';
 import { claimSecretKeyring, getSecretKeyringStatus } from './_lib/keyring.js';
 import { getServerLaunchState, normalizePageSlug } from './_lib/launch.js';
-import { assertAllowedEmail, getMembershipByUserId, getRegisteredRoleMessage, serializeRegistration, upsertRegistration } from './_lib/teams.js';
+import {
+  assertAllowedEmail,
+  formatChildFocusDescription,
+  formatChildFocusLabel,
+  getChildPoolEntryByUserId,
+  getMembershipByUserId,
+  getPendingParentInviteByChildUserId,
+  getProfileByUserId,
+  getRegisteredRoleMessage,
+  serializeChildPoolEntry,
+  serializeRegistration,
+  upsertRegistration,
+} from './_lib/teams.js';
 
 const publicPageFiles = new Map([
   ['admin', 'admin.html'],
@@ -202,18 +214,43 @@ async function handleRegistrationStatus(req, res) {
   const user = await requireUser(req);
   assertAllowedEmail(user.email);
 
+  const profile = await getProfileByUserId(user.id);
   const membership = await getMembershipByUserId(user.id);
+  const childPoolEntry = await getChildPoolEntryByUserId(user.id);
+  const parentInvite = await getPendingParentInviteByChildUserId(user.id);
 
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(200).json({
     launch: getServerLaunchState({ req }),
     registration: serializeRegistration(user),
+    profile: profile
+      ? {
+          fullName: profile.full_name || '',
+          studyYear: profile.study_year || '',
+          childFocus: profile.child_focus || '',
+          childFocusLabel: formatChildFocusLabel(profile.child_focus),
+          childFocusDescription: formatChildFocusDescription(profile.child_focus),
+        }
+      : null,
     membership: membership
       ? {
           id: membership.id,
           teamId: membership.team_id,
           role: membership.role,
           status: membership.status,
+        }
+      : null,
+    childPoolEntry: childPoolEntry?.status === 'open' ? serializeChildPoolEntry(childPoolEntry) : null,
+    parentInvite: parentInvite
+      ? {
+          id: parentInvite.id,
+          childName: parentInvite.child_name,
+          parentEmail: parentInvite.parent_email,
+          childFocus: parentInvite.child_focus,
+          childFocusLabel: formatChildFocusLabel(parentInvite.child_focus),
+          childFocusDescription: formatChildFocusDescription(parentInvite.child_focus),
+          status: parentInvite.status,
+          createdAt: parentInvite.created_at,
         }
       : null,
   });

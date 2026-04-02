@@ -41,6 +41,8 @@ alter table public.profiles
   add column if not exists registered_role public.team_role;
 alter table public.profiles
   add column if not exists registration_completed_at timestamptz;
+alter table public.profiles
+  add column if not exists child_focus text;
 
 alter table public.profiles
   drop constraint if exists profiles_study_year_check;
@@ -49,6 +51,15 @@ alter table public.profiles
   check (
     study_year is null
     or study_year in ('year_1', 'year_2', 'year_3', 'year_4', 'masters', 'phd')
+  );
+
+alter table public.profiles
+  drop constraint if exists profiles_child_focus_check;
+alter table public.profiles
+  add constraint profiles_child_focus_check
+  check (
+    child_focus is null
+    or child_focus in ('hunter', 'hacker')
   );
 
 create table if not exists public.teams (
@@ -71,6 +82,32 @@ create table if not exists public.team_memberships (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
   unique (user_id)
+);
+
+create table if not exists public.child_pool_entries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null unique references public.profiles (id) on delete cascade,
+  focus text not null check (focus in ('hunter', 'hacker')),
+  status text not null default 'open' check (status in ('open', 'matched', 'withdrawn')),
+  team_id uuid references public.teams (id) on delete set null,
+  matched_by uuid references public.profiles (id) on delete set null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.parent_registration_invites (
+  id uuid primary key default gen_random_uuid(),
+  token text not null unique,
+  child_user_id uuid not null references public.profiles (id) on delete cascade,
+  child_name text not null,
+  parent_email text not null,
+  child_focus text not null check (child_focus in ('hunter', 'hacker')),
+  status text not null default 'pending' check (status in ('pending', 'claimed', 'cancelled')),
+  claimed_by uuid references public.profiles (id) on delete set null,
+  claimed_team_id uuid references public.teams (id) on delete set null,
+  claimed_at timestamptz,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
 );
 
 create or replace function public.enforce_team_member_limit()
@@ -177,6 +214,18 @@ before update on public.team_memberships
 for each row
 execute procedure public.set_updated_at();
 
+drop trigger if exists set_child_pool_entries_updated_at on public.child_pool_entries;
+create trigger set_child_pool_entries_updated_at
+before update on public.child_pool_entries
+for each row
+execute procedure public.set_updated_at();
+
+drop trigger if exists set_parent_registration_invites_updated_at on public.parent_registration_invites;
+create trigger set_parent_registration_invites_updated_at
+before update on public.parent_registration_invites
+for each row
+execute procedure public.set_updated_at();
+
 drop trigger if exists enforce_team_member_limit on public.team_memberships;
 create trigger enforce_team_member_limit
 before insert or update on public.team_memberships
@@ -186,10 +235,17 @@ execute procedure public.enforce_team_member_limit();
 alter table public.profiles enable row level security;
 alter table public.teams enable row level security;
 alter table public.team_memberships enable row level security;
+alter table public.child_pool_entries enable row level security;
+alter table public.parent_registration_invites enable row level security;
 
 revoke all on public.profiles from anon, authenticated;
 revoke all on public.teams from anon, authenticated;
 revoke all on public.team_memberships from anon, authenticated;
+revoke all on public.child_pool_entries from anon, authenticated;
+revoke all on public.parent_registration_invites from anon, authenticated;
+
+create index if not exists child_pool_entries_status_idx on public.child_pool_entries (status, focus, created_at);
+create index if not exists parent_registration_invites_status_idx on public.parent_registration_invites (status, parent_email, created_at);
 
 create table if not exists public.ctf_member_solves (
   id uuid primary key default gen_random_uuid(),

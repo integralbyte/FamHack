@@ -1083,6 +1083,10 @@ body.home-entry-scroll-locked {
   width: 100%;
 }
 
+.register-step[data-step="child-choice"] .register-form {
+  max-width: 760px;
+}
+
 .role-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1122,6 +1126,16 @@ button.role-card {
   border-color: rgba(252, 47, 32, 0.55);
   background: rgba(252, 47, 32, 0.06);
   transform: translateY(-2px);
+}
+
+.role-card.is-selected {
+  border-color: rgba(252, 47, 32, 0.78);
+  background: rgba(252, 47, 32, 0.14);
+  box-shadow: 0 0 0 1px rgba(252, 47, 32, 0.28);
+}
+
+.role-card-full {
+  width: 100%;
 }
 
 .role-card-eyebrow {
@@ -1576,6 +1590,11 @@ button.role-card {
 
 .team-preview-static {
   margin-bottom: 4px;
+}
+
+.team-preview-focus {
+  background-color: rgba(255, 233, 206, 0.06);
+  border-color: rgba(255, 233, 206, 0.18);
 }
 
 .dashboard-header-top {

@@ -18,8 +18,10 @@ const FamHack = {
     launch: null,
     session: null,
     registration: null,
+    registrationStatus: null,
     pendingEmail: '',
     registerIntent: 'role',
+    childFocus: '',
     teamPreview: null,
     resendTimer: null,
     joinLookupTimer: null,
@@ -47,6 +49,7 @@ const FamHack = {
     homeClockFrame: null,
     homeClockTimer: null,
     homeFaq: null,
+    parentInviteToken: '',
   },
 
   async init() {
@@ -90,6 +93,7 @@ const FamHack = {
       });
 
       await this.hydrateSession();
+      this.captureParentInviteToken();
 
       if (this.state.page === 'home') {
         await this.initHomePage();
@@ -205,6 +209,29 @@ const FamHack = {
     return String(joinCode || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   },
 
+  getJoinCodeValue() {
+    return this.normalizeJoinCode(
+      document.getElementById('join-code-step-input')?.value
+      || document.getElementById('join-code-input')?.value
+      || this.state.teamPreview?.joinCode
+    );
+  },
+
+  syncJoinCodeInputs(value = '') {
+    const normalizedValue = this.normalizeJoinCode(value);
+    ['join-code-input', 'join-code-step-input'].forEach((id) => {
+      const input = document.getElementById(id);
+      if (input) {
+        input.value = normalizedValue;
+      }
+    });
+  },
+
+  showJoinCodeError(message = '') {
+    this.showFieldError('join-code-error', message);
+    this.showFieldError('join-code-step-error', message);
+  },
+
   getSelectedStudyYear() {
     return String(document.getElementById('study-year-input')?.value || '').trim().toLowerCase();
   },
@@ -311,6 +338,8 @@ const FamHack = {
     this.state.teamPreview = null;
     this.state.dashboard = null;
     this.state.registration = null;
+    this.state.registrationStatus = null;
+    this.state.childFocus = '';
     this.state.ctf = null;
     this.state.ctfPendingAdvanceState = null;
     this.state.ctfRecentKeys = [];
@@ -319,6 +348,106 @@ const FamHack = {
     this.state.ctfKonamiSolved = false;
     this.state.registerIntent = 'role';
     this.clearOTPInputs();
+  },
+
+  getStoredParentInviteToken() {
+    try {
+      return window.localStorage.getItem('famhack-parent-invite-token') || '';
+    } catch (error) {
+      return '';
+    }
+  },
+
+  storeParentInviteToken(token) {
+    try {
+      if (token) {
+        window.localStorage.setItem('famhack-parent-invite-token', token);
+      } else {
+        window.localStorage.removeItem('famhack-parent-invite-token');
+      }
+    } catch (error) {
+      // Ignore storage failures and continue without persisted invite state.
+    }
+  },
+
+  clearStoredParentInviteToken() {
+    this.state.parentInviteToken = '';
+    this.storeParentInviteToken('');
+  },
+
+  captureParentInviteToken() {
+    const params = new URLSearchParams(window.location.search);
+    const token = String(params.get('parentInvite') || params.get('invite') || '').trim();
+    if (token) {
+      this.state.parentInviteToken = token;
+      this.storeParentInviteToken(token);
+      return;
+    }
+
+    this.state.parentInviteToken = this.getStoredParentInviteToken();
+  },
+
+  setChildFocus(focus) {
+    this.state.childFocus = String(focus || '').trim().toLowerCase();
+
+    document.querySelectorAll('[data-child-focus-card]').forEach((card) => {
+      card.classList.toggle('is-selected', card.dataset.childFocusCard === this.state.childFocus);
+    });
+
+    this.updateChildFocusSummary();
+  },
+
+  getSelectedChildFocus() {
+    return String(this.state.childFocus || '').trim().toLowerCase();
+  },
+
+  getChildFocusLabel(focus = this.getSelectedChildFocus()) {
+    return focus === 'hunter' ? 'Hunter' : focus === 'hacker' ? 'Hacker' : '';
+  },
+
+  getChildFocusDescription(focus = this.getSelectedChildFocus()) {
+    return focus === 'hunter'
+      ? 'Focused on the scavenger hunt'
+      : focus === 'hacker'
+        ? 'Focused on building the best products'
+        : '';
+  },
+
+  updateChildFocusSummary() {
+    const label = this.getChildFocusLabel();
+    const description = this.getChildFocusDescription();
+    document.querySelectorAll('[data-child-focus-summary]').forEach((element) => {
+      element.textContent = label ? `${label} · ${description}` : 'Choose Hunter or Hacker first.';
+    });
+  },
+
+  ensureChildFocus(errorId = 'join-choice-error') {
+    const focus = this.getSelectedChildFocus();
+    if (focus === 'hunter' || focus === 'hacker') {
+      return focus;
+    }
+
+    this.showFieldError(errorId, 'Choose Hunter or Hacker before continuing');
+    return '';
+  },
+
+  prefillChildProfileFields(profile = {}) {
+    const fullName = String(profile?.fullName || '').trim();
+    const studyYear = String(profile?.studyYear || '').trim().toLowerCase();
+
+    ['full-name-input', 'pool-full-name-input', 'invite-child-name-input'].forEach((id) => {
+      const input = document.getElementById(id);
+      if (input && !input.value && fullName) {
+        input.value = fullName;
+      }
+    });
+
+    ['study-year-input', 'pool-study-year-input', 'invite-study-year-input'].forEach((id) => {
+      const select = document.getElementById(id);
+      if (select && !select.value && studyYear) {
+        select.value = studyYear;
+      }
+    });
   },
 
   getFriendlyOtpErrorMessage(error) {
@@ -1400,6 +1529,9 @@ const FamHack = {
     this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
     this.setRegisteredConfirmation(this.state.registration);
     this.setButtonLabel(document.getElementById('send-otp-btn'), this.state.session ? 'Continue' : 'Send verification code');
+    if (this.state.parentInviteToken) {
+      this.showPageMessage('register-page-message', 'A child asked you to register a family. Sign in as a Parent and we will add them when you create it.');
+    }
 
     if (!this.state.session) {
       this.showStep('role');
@@ -1425,6 +1557,9 @@ const FamHack = {
     this.setRegisterEmailMode('signin');
     this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
     this.setButtonLabel(document.getElementById('send-otp-btn'), this.state.session ? 'Continue' : 'Send sign-in code');
+    if (this.state.parentInviteToken) {
+      this.showPageMessage('register-page-message', 'A child asked you to register a family. Sign in as a Parent and we will add them when you create it.');
+    }
 
     const backButton = document.getElementById('back-from-parent-btn');
     if (backButton) {
@@ -1467,6 +1602,11 @@ const FamHack = {
       return;
     }
 
+    if (status?.childPoolEntry || status?.parentInvite) {
+      this.redirectToDashboard();
+      return;
+    }
+
     this.redirect('/join');
   },
 
@@ -1475,35 +1615,62 @@ const FamHack = {
     document.getElementById('verify-otp-btn')?.addEventListener('click', () => this.handleVerifyOTP());
     document.getElementById('resend-otp-btn')?.addEventListener('click', () => this.handleResendOTP());
     document.getElementById('request-join-btn')?.addEventListener('click', () => this.handleJoinRequest());
+    document.getElementById('join-pool-btn')?.addEventListener('click', () => this.handleJoinPool());
+    document.getElementById('invite-parent-btn')?.addEventListener('click', () => this.handleInviteParent());
+    document.getElementById('go-code-join-btn')?.addEventListener('click', () => this.handleChooseJoinWithCode());
+    document.getElementById('go-pool-join-btn')?.addEventListener('click', () => this.handleChooseJoinPool());
+    document.getElementById('go-parent-invite-btn')?.addEventListener('click', () => this.handleChooseInviteParent());
+    document.getElementById('back-to-choice-from-code-btn')?.addEventListener('click', () => this.showJoinChoiceStep());
+    document.getElementById('back-to-choice-from-pool-btn')?.addEventListener('click', () => this.showJoinChoiceStep());
+    document.getElementById('back-to-choice-from-invite-btn')?.addEventListener('click', () => this.showJoinChoiceStep());
+    document.querySelectorAll('[data-child-focus-card]').forEach((card) => {
+      card.addEventListener('click', () => {
+        this.setChildFocus(card.dataset.childFocusCard);
+        this.showFieldError('join-choice-error', '');
+        this.showFieldError('join-request-error', '');
+        this.showFieldError('join-pool-error', '');
+        this.showFieldError('parent-invite-error', '');
+      });
+    });
 
     const joinCodeInput = document.getElementById('join-code-input');
+    const joinCodeStepInput = document.getElementById('join-code-step-input');
     const emailInput = document.getElementById('email-input');
     const codeFromUrl = new URLSearchParams(window.location.search).get('code')
       || new URLSearchParams(window.location.search).get('t');
 
-    if (joinCodeInput && codeFromUrl) {
-      joinCodeInput.value = this.normalizeJoinCode(codeFromUrl);
-      await this.lookupTeam(joinCodeInput.value, { showErrors: false });
+    if (codeFromUrl) {
+      this.syncJoinCodeInputs(codeFromUrl);
+      await this.lookupTeam(this.getJoinCodeValue(), { showErrors: false });
     }
 
-    joinCodeInput?.addEventListener('input', () => {
-      joinCodeInput.value = this.normalizeJoinCode(joinCodeInput.value);
-      this.showFieldError('join-code-error', '');
-      clearTimeout(this.state.joinLookupTimer);
-      if (!joinCodeInput.value) {
-        this.renderTeamPreview(null);
+    const bindJoinCodeInput = (input) => {
+      if (!input) {
         return;
       }
-      this.state.joinLookupTimer = window.setTimeout(() => {
-        this.lookupTeam(joinCodeInput.value, { showErrors: false }).catch((error) => console.error(error));
-      }, 250);
-    });
 
-    joinCodeInput?.addEventListener('blur', () => {
-      if (joinCodeInput.value) {
-        this.lookupTeam(joinCodeInput.value, { showErrors: false }).catch((error) => console.error(error));
-      }
-    });
+      input.addEventListener('input', () => {
+        this.syncJoinCodeInputs(input.value);
+        this.showJoinCodeError('');
+        clearTimeout(this.state.joinLookupTimer);
+        if (!this.getJoinCodeValue()) {
+          this.renderTeamPreview(null);
+          return;
+        }
+        this.state.joinLookupTimer = window.setTimeout(() => {
+          this.lookupTeam(this.getJoinCodeValue(), { showErrors: false }).catch((error) => console.error(error));
+        }, 250);
+      });
+
+      input.addEventListener('blur', () => {
+        if (this.getJoinCodeValue()) {
+          this.lookupTeam(this.getJoinCodeValue(), { showErrors: false }).catch((error) => console.error(error));
+        }
+      });
+    };
+
+    bindJoinCodeInput(joinCodeInput);
+    bindJoinCodeInput(joinCodeStepInput);
 
     emailInput?.addEventListener('keypress', (event) => {
       if (event.key === 'Enter') {
@@ -1531,12 +1698,11 @@ const FamHack = {
 
       this.setButtonLabel(document.getElementById('send-otp-btn'), 'Continue');
 
-      if (this.state.teamPreview) {
-        this.showPageMessage('join-page-message', 'You are already signed in. Review the family below and submit your request.');
-        this.showStep('join-team');
-      } else {
-        this.showPageMessage('join-page-message', 'You are already signed in. Enter a family code to continue.');
-      }
+      this.showJoinChoiceStep(
+        this.state.teamPreview
+          ? 'You are already signed in. Choose your track and how you want to find a family.'
+          : 'You are already signed in. Choose your track and next step.'
+      );
     }
   },
 
@@ -1697,6 +1863,13 @@ const FamHack = {
     try {
       const payload = await this.apiRequest('/api/registration/status');
       this.state.registration = payload.registration || null;
+      this.state.registrationStatus = payload || null;
+      if (payload?.profile?.childFocus) {
+        this.setChildFocus(payload.profile.childFocus);
+      }
+      if (payload?.profile) {
+        this.prefillChildProfileFields(payload.profile);
+      }
       if (payload?.launch) {
         this.state.launch = payload.launch;
       }
@@ -1704,6 +1877,7 @@ const FamHack = {
     } catch (error) {
       if (suppressMissing && (error.status === 401 || error.status === 404)) {
         this.state.registration = null;
+        this.state.registrationStatus = null;
         return null;
       }
       throw error;
@@ -1769,6 +1943,56 @@ const FamHack = {
     return false;
   },
 
+  showJoinChoiceStep(message = '') {
+    this.updateChildFocusSummary();
+    this.showFieldError('join-choice-error', '');
+    this.showStep('child-choice');
+    if (message) {
+      this.showPageMessage('join-page-message', message);
+    }
+  },
+
+  handleChooseJoinWithCode() {
+    const focus = this.ensureChildFocus('join-choice-error');
+    if (!focus) {
+      return;
+    }
+
+    this.updateChildFocusSummary();
+    this.showFieldError('join-request-error', '');
+    this.showStep('join-team');
+    this.showPageMessage(
+      'join-page-message',
+      this.state.teamPreview
+        ? 'Review the family below and submit your request.'
+        : 'Enter a family code, then submit your request.'
+    );
+  },
+
+  handleChooseJoinPool() {
+    const focus = this.ensureChildFocus('join-choice-error');
+    if (!focus) {
+      return;
+    }
+
+    this.updateChildFocusSummary();
+    this.showFieldError('join-pool-error', '');
+    this.showStep('join-pool');
+    this.showPageMessage('join-page-message', 'Join the child pool and approved parents can add you directly.');
+  },
+
+  handleChooseInviteParent() {
+    const focus = this.ensureChildFocus('join-choice-error');
+    if (!focus) {
+      return;
+    }
+
+    this.updateChildFocusSummary();
+    this.showFieldError('parent-invite-error', '');
+    this.showStep('invite-parent');
+    this.showPageMessage('join-page-message', 'Enter one parent email and FamHack will send them your invite link.');
+  },
+
   async handleSendOTP() {
     const launch = this.getCurrentLaunchState();
     const sendButton = document.getElementById('send-otp-btn');
@@ -1776,24 +2000,14 @@ const FamHack = {
     const email = this.normalizeEmail(this.state.session?.user?.email || emailInput?.value);
 
     this.showFieldError('email-error', '');
-    this.showFieldError('join-code-error', '');
+    this.showJoinCodeError('');
 
     if (this.state.page === 'join') {
-      const joinCodeInput = document.getElementById('join-code-input');
-      const joinCode = this.normalizeJoinCode(joinCodeInput?.value);
-
-      if (joinCodeInput) {
-        joinCodeInput.value = joinCode;
-      }
-
+      const joinCode = this.getJoinCodeValue();
+      this.syncJoinCodeInputs(joinCode);
       if (!joinCode) {
-        this.showFieldError('join-code-error', 'Enter a valid family code');
-        return;
-      }
-
-      const team = await this.lookupTeam(joinCode, { showErrors: true });
-      if (!team) {
-        return;
+        this.renderTeamPreview(null);
+        this.showJoinCodeError('');
       }
     }
 
@@ -1805,7 +2019,7 @@ const FamHack = {
           await this.routePostLaunchRegisterUser();
         }
       } else if (this.state.page === 'join') {
-        this.showStep('join-team');
+        this.showJoinChoiceStep('Choose your focus and how you want to find a family.');
       }
       return;
     }
@@ -1898,15 +2112,15 @@ const FamHack = {
           return;
         }
 
-        const joinCode = this.normalizeJoinCode(document.getElementById('join-code-input')?.value);
-        const team = this.state.teamPreview || await this.lookupTeam(joinCode, { showErrors: true });
-        if (!team) {
-          this.showStep('email');
-          return;
+        const joinCode = this.getJoinCodeValue();
+        if (joinCode) {
+          const team = this.state.teamPreview || await this.lookupTeam(joinCode, { showErrors: false });
+          if (!team) {
+            this.showJoinCodeError('That family code was not found');
+          }
         }
 
-        this.showStep('join-team');
-        this.showPageMessage('join-page-message', 'Verified. Submit your request and an approved parent can review it.');
+        this.showJoinChoiceStep('Verified. Choose your focus and how you want to find a family.');
       }
     } catch (error) {
       console.error(error);
@@ -2013,7 +2227,7 @@ const FamHack = {
         if (response.status === 404) {
           this.renderTeamPreview(null);
           if (showErrors) {
-            this.showFieldError('join-code-error', payload.error || 'That family code was not found');
+            this.showJoinCodeError(payload.error || 'That family code was not found');
           }
           return null;
         }
@@ -2026,7 +2240,7 @@ const FamHack = {
     } catch (error) {
       console.error(error);
       if (showErrors) {
-        this.showFieldError('join-code-error', error.message || 'Unable to verify that family code');
+        this.showJoinCodeError(error.message || 'Unable to verify that family code');
       }
       return null;
     }
@@ -2036,11 +2250,16 @@ const FamHack = {
     const preview = document.getElementById('team-preview');
     const previewName = document.getElementById('team-preview-name');
     const joinTeamName = document.getElementById('join-team-id');
+    const joinTeamPreviewCard = document.getElementById('join-team-preview-card');
 
     this.state.teamPreview = team || null;
 
     if (preview) {
       preview.hidden = !team;
+    }
+
+    if (joinTeamPreviewCard) {
+      joinTeamPreviewCard.hidden = !team;
     }
 
     if (previewName) {
@@ -2088,12 +2307,20 @@ const FamHack = {
           fullName,
           studyYear,
           teamName,
+          ...(this.state.parentInviteToken ? { parentInviteToken: this.state.parentInviteToken } : {}),
         },
       });
 
+      this.clearStoredParentInviteToken();
       this.redirectToDashboard();
     } catch (error) {
       console.error(error);
+      if (
+        String(error.message || '').includes('parent invite')
+        || String(error.message || '').includes('different email address')
+      ) {
+        this.clearStoredParentInviteToken();
+      }
       this.showFieldError('team-error', error.message || 'Unable to create your family');
     } finally {
       this.setButtonState(createButton, {
@@ -2108,10 +2335,15 @@ const FamHack = {
     const joinButton = document.getElementById('request-join-btn');
     const fullName = document.getElementById('full-name-input')?.value?.trim() || '';
     const studyYear = this.getSelectedStudyYear();
-    const joinCode = this.normalizeJoinCode(document.getElementById('join-code-input')?.value || this.state.teamPreview?.joinCode);
+    const childFocus = this.ensureChildFocus('join-request-error');
+    const joinCode = this.getJoinCodeValue();
 
     this.showFieldError('join-request-error', '');
-    this.showFieldError('join-code-error', '');
+    this.showJoinCodeError('');
+
+    if (!childFocus) {
+      return;
+    }
 
     if (!fullName) {
       this.showFieldError('join-request-error', 'Your name is required');
@@ -2124,8 +2356,7 @@ const FamHack = {
     }
 
     if (!joinCode) {
-      this.showFieldError('join-code-error', 'Enter a valid family code');
-      this.showStep('email');
+      this.showJoinCodeError('Enter a valid family code');
       return;
     }
 
@@ -2150,6 +2381,7 @@ const FamHack = {
           fullName,
           studyYear,
           joinCode,
+          childFocus,
         },
       });
 
@@ -2162,6 +2394,110 @@ const FamHack = {
         busy: false,
         label: 'Submitting...',
         idleLabel: 'Request to Join',
+      });
+    }
+  },
+
+  async handleJoinPool() {
+    const joinPoolButton = document.getElementById('join-pool-btn');
+    const fullName = document.getElementById('pool-full-name-input')?.value?.trim() || '';
+    const studyYear = String(document.getElementById('pool-study-year-input')?.value || '').trim();
+    const childFocus = this.ensureChildFocus('join-pool-error');
+
+    this.showFieldError('join-pool-error', '');
+
+    if (!childFocus) {
+      return;
+    }
+
+    if (!fullName) {
+      this.showFieldError('join-pool-error', 'Your name is required');
+      return;
+    }
+
+    if (!studyYear) {
+      this.showFieldError('join-pool-error', 'Choose your year of study');
+      return;
+    }
+
+    this.setButtonState(joinPoolButton, {
+      busy: true,
+      label: 'Joining...',
+      idleLabel: 'Join the Child Pool',
+    });
+
+    try {
+      await this.apiRequest('/api/child/pool', {
+        method: 'POST',
+        body: {
+          fullName,
+          studyYear,
+          childFocus,
+        },
+      });
+
+      this.redirectToDashboard();
+    } catch (error) {
+      console.error(error);
+      this.showFieldError('join-pool-error', error.message || 'Unable to join the child pool');
+    } finally {
+      this.setButtonState(joinPoolButton, {
+        busy: false,
+        label: 'Joining...',
+        idleLabel: 'Join the Child Pool',
+      });
+    }
+  },
+
+  async handleInviteParent() {
+    const inviteButton = document.getElementById('invite-parent-btn');
+    const childName = document.getElementById('invite-child-name-input')?.value?.trim() || '';
+    const parentEmail = this.normalizeEmail(document.getElementById('parent-email-input')?.value);
+    const studyYear = String(document.getElementById('invite-study-year-input')?.value || '').trim();
+    const childFocus = this.ensureChildFocus('parent-invite-error');
+
+    this.showFieldError('parent-invite-error', '');
+
+    if (!childFocus) {
+      return;
+    }
+
+    if (!childName) {
+      this.showFieldError('parent-invite-error', 'Your name is required');
+      return;
+    }
+
+    if (!parentEmail) {
+      this.showFieldError('parent-invite-error', 'Enter a parent email address');
+      return;
+    }
+
+    this.setButtonState(inviteButton, {
+      busy: true,
+      label: 'Sending...',
+      idleLabel: 'Send Parent Invite',
+    });
+
+    try {
+      await this.apiRequest('/api/child/invite-parent', {
+        method: 'POST',
+        body: {
+          childName,
+          parentEmail,
+          studyYear,
+          childFocus,
+        },
+      });
+
+      this.redirectToDashboard();
+    } catch (error) {
+      console.error(error);
+      this.showFieldError('parent-invite-error', error.message || 'Unable to send the parent invite');
+    } finally {
+      this.setButtonState(inviteButton, {
+        busy: false,
+        label: 'Sending...',
+        idleLabel: 'Send Parent Invite',
       });
     }
   },
@@ -3506,7 +3842,7 @@ const FamHack = {
           return;
         }
 
-        this.renderDashboardOnboarding(registration);
+        this.renderDashboardOnboarding(registration, status);
         this.setDashboardLoading(false);
         return;
       }
@@ -3550,6 +3886,8 @@ const FamHack = {
     const statusBanner = document.getElementById('dashboard-status-banner');
     const pendingSection = document.getElementById('pending-section');
     const pendingList = document.getElementById('pending-list');
+    const poolSection = document.getElementById('pool-section');
+    const poolList = document.getElementById('pool-list');
     const membersList = document.getElementById('members-list');
     const onboardingShell = document.getElementById('dashboard-onboarding-shell');
     const membersShell = document.getElementById('dashboard-members-shell');
@@ -3650,12 +3988,19 @@ const FamHack = {
     if (dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved') {
       pendingSection.hidden = false;
       this.renderPendingMembers(pendingList, dashboard.pendingRequests, dashboard);
+      if (poolSection) {
+        poolSection.hidden = false;
+        this.renderChildPool(poolList, dashboard.childPool || [], dashboard);
+      }
     } else if (pendingSection) {
       pendingSection.hidden = true;
+      if (poolSection) {
+        poolSection.hidden = true;
+      }
     }
   },
 
-  renderDashboardOnboarding(registration) {
+  renderDashboardOnboarding(registration, status = null) {
     this.state.dashboard = null;
 
     const teamName = document.getElementById('dashboard-team-name');
@@ -3665,6 +4010,12 @@ const FamHack = {
     const membersShell = document.getElementById('dashboard-members-shell');
     const parentOnboarding = document.getElementById('dashboard-parent-onboarding');
     const childOnboarding = document.getElementById('dashboard-child-onboarding');
+    const parentOnboardingCopy = document.getElementById('dashboard-parent-onboarding-copy');
+    const childOnboardingCopy = document.getElementById('dashboard-child-onboarding-copy');
+    const childOnboardingStatus = document.getElementById('dashboard-child-onboarding-status');
+    const childOnboardingLink = document.getElementById('dashboard-child-onboarding-link');
+
+    this.state.registrationStatus = status || this.state.registrationStatus;
 
     if (teamName) {
       teamName.dataset.heading = 'Family Dashboard';
@@ -3696,6 +4047,34 @@ const FamHack = {
 
     if (childOnboarding) {
       childOnboarding.hidden = registration.role !== 'child';
+    }
+
+    if (parentOnboardingCopy) {
+      parentOnboardingCopy.textContent = this.state.parentInviteToken
+        ? 'A child invited you to register this family. Create it here and FamHack will add them automatically.'
+        : 'You are registered as a Parent. Create your family here to unlock the full dashboard.';
+    }
+
+    if (childOnboardingCopy) {
+      childOnboardingCopy.textContent = 'Choose whether to join by code, enter the child pool, or invite a parent to register the family.';
+    }
+
+    if (childOnboardingStatus) {
+      if (status?.childPoolEntry) {
+        childOnboardingStatus.hidden = false;
+        childOnboardingStatus.textContent = `${status.childPoolEntry.childFocusLabel || 'Child'} pool entry live. Approved parents can now add you directly.`;
+      } else if (status?.parentInvite) {
+        childOnboardingStatus.hidden = false;
+        childOnboardingStatus.textContent = `Parent invite sent to ${status.parentInvite.parentEmail}. Once they create a family, you will be added automatically.`;
+      } else {
+        childOnboardingStatus.hidden = true;
+        childOnboardingStatus.textContent = '';
+      }
+    }
+
+    if (childOnboardingLink) {
+      childOnboardingLink.href = '/join';
+      this.setButtonLabel(childOnboardingLink, status?.childPoolEntry || status?.parentInvite ? 'Open Child Options' : 'Go to Join');
     }
   },
 
@@ -3749,6 +4128,44 @@ const FamHack = {
     });
   },
 
+  renderChildPool(container, entries, dashboard) {
+    if (!container) return;
+
+    container.innerHTML = '';
+    if (!entries.length) {
+      container.innerHTML = '<p class="empty-state">No children are waiting in the pool right now.</p>';
+      return;
+    }
+
+    entries.forEach((entry) => {
+      const displayName = this.escapeHtml(entry.fullName || entry.email || 'Unknown child');
+      const email = this.escapeHtml(entry.email || '');
+      const parts = [entry.childFocusLabel, entry.childFocusDescription, entry.studyYearLabel].filter(Boolean);
+      const meta = this.escapeHtml(parts.join(' · '));
+      const addDisabled = Boolean(dashboard?.team?.isFull);
+      const buttonLabel = addDisabled ? 'Family Full' : 'Add to Family';
+
+      container.insertAdjacentHTML('beforeend', `
+        <div class="member-card">
+          <div class="member-info">
+            <p class="member-name">${displayName}</p>
+            <p class="member-email">${email}</p>
+            <p class="member-meta">${meta}</p>
+          </div>
+          <div class="member-card-actions">
+            <button class="action-btn action-approve" data-pool-add="${entry.id}" ${addDisabled ? 'disabled' : ''}>${buttonLabel}</button>
+          </div>
+        </div>
+      `);
+    });
+
+    container.querySelectorAll('[data-pool-add]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        await this.handleAddPoolChild(button, button.dataset.poolAdd);
+      });
+    });
+  },
+
   memberCardTemplate(member, options = {}) {
     const dashboard = options.dashboard || this.state.dashboard;
     const displayName = this.escapeHtml(member.fullName || member.email || 'Unknown member');
@@ -3757,7 +4174,9 @@ const FamHack = {
     const roleLabel = this.formatDashboardRole(member.role, { primary: isPrimaryParent });
     const statusLabel = member.status.charAt(0).toUpperCase() + member.status.slice(1);
     const studyYearLabel = this.escapeHtml(member.studyYearLabel || '');
-    const memberMeta = studyYearLabel ? `${roleLabel} · ${studyYearLabel}` : roleLabel;
+    const childFocusLabel = this.escapeHtml(member.childFocusLabel || '');
+    const memberMetaParts = [roleLabel, studyYearLabel, childFocusLabel].filter(Boolean);
+    const memberMeta = memberMetaParts.join(' · ');
     const canPromoteParent = dashboard?.viewer?.role === 'parent'
       && dashboard?.viewer?.status === 'approved'
       && member.role === 'child'
@@ -3777,7 +4196,7 @@ const FamHack = {
           <div class="member-info">
             <p class="member-name">${displayName}</p>
             <p class="member-email">${email}</p>
-            <p class="member-meta">${studyYearLabel ? `${studyYearLabel} · ${this.formatDashboardRole(member.role, { request: true })}` : this.formatDashboardRole(member.role, { request: true })}</p>
+            <p class="member-meta">${[studyYearLabel, childFocusLabel, this.formatDashboardRole(member.role, { request: true })].filter(Boolean).join(' · ')}</p>
           </div>
           <div class="member-card-actions">
             <button class="action-btn action-approve" data-review-membership="${member.id}" data-review-decision="approved" data-review-role="child" ${approveDisabled ? 'disabled' : ''}>${approveStudentLabel}</button>
@@ -3834,6 +4253,28 @@ const FamHack = {
     } catch (error) {
       console.error(error);
       window.alert(error.message || 'Unable to review this request');
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  },
+
+  async handleAddPoolChild(button, poolEntryId) {
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Adding...';
+
+    try {
+      await this.apiRequest('/api/team/pool-add', {
+        method: 'POST',
+        body: {
+          poolEntryId,
+        },
+      });
+
+      await this.loadDashboard();
+    } catch (error) {
+      console.error(error);
+      window.alert(error.message || 'Unable to add this child to your family');
       button.disabled = false;
       button.textContent = originalText;
     }

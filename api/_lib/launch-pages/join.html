@@ -253,15 +253,16 @@
               </div>
 
               <h1 class="join-heading">Join Your Academic Family</h1>
-              <p class="register-subheading">Use the family code from an approved family member and request approval.</p>
+              <p class="register-subheading">Sign in, choose your track, then join by code, enter the child pool, or invite a parent to start the family.</p>
               <p id="join-page-message" class="success-message page-message"></p>
 
               <div class="register-step active" data-step="email">
                 <div class="register-form">
                   <div class="form-group">
-                    <label class="form-label" for="join-code-input">Family Code</label>
+                    <label class="form-label" for="join-code-input">Family Code (Optional)</label>
                     <input type="text" id="join-code-input" class="form-input uppercase-input" placeholder="ABCD23"
                       autocapitalize="characters" autocomplete="off" />
+                    <p class="register-subheading helper-copy">Leave this blank if you want the child pool or parent-invite route.</p>
                     <p class="error-message" id="join-code-error"></p>
                   </div>
                   <div class="team-preview" id="team-preview" hidden>
@@ -323,11 +324,63 @@
                 </div>
               </div>
 
+              <div class="register-step" data-step="child-choice">
+                <div class="register-form">
+                  <div class="form-group">
+                    <p class="form-label">Choose Your Track</p>
+                    <div class="role-grid">
+                      <button type="button" class="role-card" data-child-focus-card="hunter">
+                        <p class="role-card-eyebrow">Hunter</p>
+                        <h2 class="role-card-heading">Scavenger Hunt</h2>
+                        <p class="role-card-copy">Focused on the scavenger hunt.</p>
+                      </button>
+                      <button type="button" class="role-card" data-child-focus-card="hacker">
+                        <p class="role-card-eyebrow">Hacker</p>
+                        <h2 class="role-card-heading">Build Products</h2>
+                        <p class="role-card-copy">Focused on building the best products.</p>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <p class="form-label">Choose How You Want To Find A Family</p>
+                    <div class="role-grid">
+                      <button id="go-code-join-btn" type="button" class="role-card">
+                        <p class="role-card-eyebrow">Family Code</p>
+                        <h2 class="role-card-heading">Join Through Code</h2>
+                        <p class="role-card-copy">Use an existing family code or invite link and send a request.</p>
+                      </button>
+                      <button id="go-pool-join-btn" type="button" class="role-card">
+                        <p class="role-card-eyebrow">Child Pool</p>
+                        <h2 class="role-card-heading">Join The Pool</h2>
+                        <p class="role-card-copy">Let approved parents browse and add you directly to their family.</p>
+                      </button>
+                    </div>
+                    <button id="go-parent-invite-btn" type="button" class="role-card role-card-full">
+                      <p class="role-card-eyebrow">Parent Invite</p>
+                      <h2 class="role-card-heading">Ask A Parent To Register</h2>
+                      <p class="role-card-copy">Send one parent a themed FamHack email with a link to create the family and add you automatically.</p>
+                    </button>
+                  </div>
+                  <p class="error-message" id="join-choice-error"></p>
+                </div>
+              </div>
+
               <div class="register-step" data-step="join-team">
                 <div class="register-form">
-                  <div class="team-preview team-preview-static">
+                  <div class="form-group">
+                    <label class="form-label" for="join-code-step-input">Family Code</label>
+                    <input type="text" id="join-code-step-input" class="form-input uppercase-input" placeholder="ABCD23"
+                      autocapitalize="characters" autocomplete="off" />
+                    <p class="error-message" id="join-code-step-error"></p>
+                  </div>
+                  <div id="join-team-preview-card" class="team-preview team-preview-static">
                     <p class="team-preview-label">Requesting access to</p>
                     <p class="team-preview-name" id="join-team-id"></p>
+                  </div>
+                  <div class="team-preview team-preview-static team-preview-focus">
+                    <p class="team-preview-label">Track</p>
+                    <p class="team-preview-name" data-child-focus-summary>Choose Hunter or Hacker first.</p>
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="full-name-input">Your Name</label>
@@ -363,6 +416,98 @@
                       </div>
                     </div>
                   </button>
+                  <button id="back-to-choice-from-code-btn" type="button" class="resend-link">Back</button>
+                </div>
+              </div>
+
+              <div class="register-step" data-step="join-pool">
+                <div class="register-form">
+                  <div class="team-preview team-preview-static team-preview-focus">
+                    <p class="team-preview-label">Track</p>
+                    <p class="team-preview-name" data-child-focus-summary>Choose Hunter or Hacker first.</p>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="pool-full-name-input">Your Name</label>
+                    <input type="text" id="pool-full-name-input" class="form-input" placeholder="Taylor Chen"
+                      autocomplete="name" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="pool-study-year-input">Year of Study</label>
+                    <select id="pool-study-year-input" class="form-input form-select" autocomplete="off">
+                      <option value="">Select your year</option>
+                      <option value="year_1">Year 1</option>
+                      <option value="year_2">Year 2</option>
+                      <option value="year_3">Year 3</option>
+                      <option value="year_4">Year 4</option>
+                      <option value="masters">Master's</option>
+                      <option value="phd">PhD</option>
+                    </select>
+                  </div>
+                  <p class="register-subheading helper-copy">Approved parents can browse the pool and add you directly to their family.</p>
+                  <p class="error-message" id="join-pool-error"></p>
+                  <button id="join-pool-btn" class="button-link w-inline-block" style="width: 100%;">
+                    <div class="button" style="width: 100%; justify-content: center;">
+                      <p class="button-label">Join the Child Pool</p>
+                      <div class="button-icon">
+                        <div class="button-icon-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                            <path
+                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                              fill="currentColor" stroke-width="0.155153" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                  <button id="back-to-choice-from-pool-btn" type="button" class="resend-link">Back</button>
+                </div>
+              </div>
+
+              <div class="register-step" data-step="invite-parent">
+                <div class="register-form">
+                  <div class="team-preview team-preview-static team-preview-focus">
+                    <p class="team-preview-label">Track</p>
+                    <p class="team-preview-name" data-child-focus-summary>Choose Hunter or Hacker first.</p>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="invite-child-name-input">Your Name</label>
+                    <input type="text" id="invite-child-name-input" class="form-input" placeholder="Taylor Chen"
+                      autocomplete="name" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="invite-study-year-input">Year of Study</label>
+                    <select id="invite-study-year-input" class="form-input form-select" autocomplete="off">
+                      <option value="">Select your year</option>
+                      <option value="year_1">Year 1</option>
+                      <option value="year_2">Year 2</option>
+                      <option value="year_3">Year 3</option>
+                      <option value="year_4">Year 4</option>
+                      <option value="masters">Master's</option>
+                      <option value="phd">PhD</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="parent-email-input">One Parent Email</label>
+                    <input type="email" id="parent-email-input" class="form-input" placeholder="your.parent@ed.ac.uk"
+                      autocomplete="email" />
+                  </div>
+                  <p class="register-subheading helper-copy">FamHack will send them a custom invite email with a link to create the family and add you automatically.</p>
+                  <p class="error-message" id="parent-invite-error"></p>
+                  <button id="invite-parent-btn" class="button-link w-inline-block" style="width: 100%;">
+                    <div class="button" style="width: 100%; justify-content: center;">
+                      <p class="button-label">Send Parent Invite</p>
+                      <div class="button-icon">
+                        <div class="button-icon-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                            <path
+                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                              fill="currentColor" stroke-width="0.155153" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                  <button id="back-to-choice-from-invite-btn" type="button" class="resend-link">Back</button>
                 </div>
               </div>
 
