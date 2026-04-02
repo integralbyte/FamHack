@@ -65,11 +65,21 @@ alter table public.profiles
 create table if not exists public.teams (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  team_kind text not null default 'family',
   join_code text not null unique,
   created_by uuid not null references public.profiles (id) on delete restrict,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.teams
+  add column if not exists team_kind text not null default 'family';
+
+alter table public.teams
+  drop constraint if exists teams_team_kind_check;
+alter table public.teams
+  add constraint teams_team_kind_check
+  check (team_kind in ('family', 'volunteer'));
 
 create table if not exists public.team_memberships (
   id uuid primary key default gen_random_uuid(),

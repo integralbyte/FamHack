@@ -10,6 +10,7 @@ import {
   getMembershipByUserId,
   sanitizeFullName,
   sanitizeStudyYear,
+  sanitizeTeamKind,
   sanitizeTeamName,
   resolveChildPoolEntryForUser,
   upsertProfile,
@@ -31,6 +32,7 @@ export default async function handler(req, res) {
     const fullName = sanitizeFullName(body.fullName);
     const studyYear = sanitizeStudyYear(body.studyYear);
     const teamName = sanitizeTeamName(body.teamName);
+    const teamKind = sanitizeTeamKind(body.teamKind || 'family');
     const parentInviteToken = String(body.parentInviteToken || '').trim();
 
     if (!fullName) {
@@ -40,6 +42,11 @@ export default async function handler(req, res) {
 
     if (teamName.length < 3) {
       sendError(res, 400, 'Team name must be at least 3 characters');
+      return;
+    }
+
+    if (!teamKind) {
+      sendError(res, 400, 'Choose whether you are registering your family or volunteering as a parent');
       return;
     }
 
@@ -71,6 +78,11 @@ export default async function handler(req, res) {
         sendError(res, 409, 'That child already has a pending family request.');
         return;
       }
+
+      if (teamKind !== 'family') {
+        sendError(res, 400, 'A child invite must be used to register a family, not a volunteer parent team.');
+        return;
+      }
     }
 
     const existingMembership = await getMembershipByUserId(user.id);
@@ -92,10 +104,11 @@ export default async function handler(req, res) {
       .from('teams')
       .insert({
         name: teamName,
+        team_kind: teamKind,
         join_code: joinCode,
         created_by: user.id,
       })
-      .select('id, name, join_code')
+      .select('id, name, team_kind, join_code')
       .single();
 
     if (teamError) {
@@ -157,6 +170,7 @@ export default async function handler(req, res) {
       team: {
         id: team.id,
         name: team.name,
+        teamKind: team.team_kind,
         joinCode: team.join_code,
       },
     });

@@ -34,12 +34,15 @@ function buildInviteEmail({ childName, parentInviteLink, focusLabel, focusDescri
     <div style="margin:0 auto;max-width:640px;padding:32px 20px;">
       <div style="border:1px solid rgba(255,233,206,0.18);background:linear-gradient(180deg,rgba(255,233,206,0.05),rgba(255,233,206,0.02));padding:36px 28px;">
         <p style="margin:0 0 14px;color:#fc2f20;font-size:12px;letter-spacing:0.22em;text-transform:uppercase;">FamHack Parent Invite</p>
-        <h1 style="margin:0 0 16px;font-size:34px;line-height:1.02;color:#ffe9ce;text-transform:uppercase;">${childName} wants you on their FamHack family.</h1>
+        <h1 style="margin:0 0 16px;font-size:34px;line-height:1.02;color:#ffe9ce;text-transform:uppercase;">${childName} wants the family at FamHack.</h1>
         <p style="margin:0 0 16px;font-size:14px;line-height:1.8;color:rgba(255,233,206,0.78);">
-          They picked <strong style="color:#ffe9ce;">${focusLabel}</strong> and are ${focusDescription.toLowerCase()}.
+          ${childName} wants to attend this hackathon and needs you and the family to register so it can happen.
         </p>
         <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:rgba(255,233,206,0.78);">
-          Register your family through the link below and FamHack will add them to it automatically when you create the family.
+          There will be free pizza, snacks, games, a scavenger hunt, coding, and awesome prizes for the whole family. ${childName} picked <strong style="color:#ffe9ce;">${focusLabel}</strong> and is ${focusDescription.toLowerCase()}.
+        </p>
+        <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:rgba(255,233,206,0.78);">
+          Please register for FamHack on 28 March through the link below and FamHack will add ${childName} automatically when you create the family.
         </p>
         <a href="${parentInviteLink}" style="display:inline-block;padding:14px 20px;background:#fc2f20;color:#ffe9ce;text-decoration:none;text-transform:uppercase;letter-spacing:0.1em;font-size:12px;">Register A Family</a>
         <p style="margin:24px 0 0;font-size:12px;line-height:1.8;color:rgba(255,233,206,0.55);">
@@ -105,14 +108,14 @@ export default async function handler(req, res) {
 
     await sendTransactionalEmail({
       to: invite.parent_email,
-      subject: `${invite.child_name} wants to join FamHack with you`,
+      subject: `${invite.child_name} wants the family at FamHack`,
       html: buildInviteEmail({
         childName: invite.child_name,
         parentInviteLink,
         focusLabel,
         focusDescription,
       }),
-      text: `${invite.child_name} wants to join FamHack with you.\n\nThey picked ${focusLabel} and are ${focusDescription.toLowerCase()}.\n\nRegister your family here: ${parentInviteLink}`,
+      text: `${invite.child_name} wants to attend FamHack and needs you and the family to register so it can happen.\n\nThere will be free pizza, snacks, games, a scavenger hunt, coding, and prizes for the whole family.\n\n${invite.child_name} picked ${focusLabel} and is ${focusDescription.toLowerCase()}.\n\nPlease register for FamHack on 28 March here: ${parentInviteLink}`,
     });
 
     res.status(200).json({

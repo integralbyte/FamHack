@@ -253,7 +253,7 @@
               </div>
 
               <h1 class="join-heading">Join Your Academic Family</h1>
-              <p class="register-subheading">Sign in, choose your track, then join by code, enter the child pool, or invite a parent to start the family.</p>
+              <p class="register-subheading">Sign in, choose your track, then join a family by code, ask a parent to register one, or join a random volunteer family.</p>
               <p id="join-page-message" class="success-message page-message"></p>
 
               <div class="register-step active" data-step="email">
@@ -347,19 +347,20 @@
                     <div class="role-grid">
                       <button id="go-code-join-btn" type="button" class="role-card">
                         <p class="role-card-eyebrow">Family Code</p>
-                        <h2 class="role-card-heading">Join Through Code</h2>
+                        <h2 class="role-card-heading">Join Your Family</h2>
                         <p class="role-card-copy">Use an existing family code or invite link and send a request.</p>
                       </button>
                       <button id="go-pool-join-btn" type="button" class="role-card">
-                        <p class="role-card-eyebrow">Child Pool</p>
-                        <h2 class="role-card-heading">Join The Pool</h2>
-                        <p class="role-card-copy">Let approved parents browse and add you directly to their family.</p>
+                        <p class="role-card-eyebrow">Random Family</p>
+                        <h2 class="role-card-heading">Join A Random Family</h2>
+                        <p class="role-card-copy">Let FamHack match you with a volunteer parent family.</p>
+                        <p class="role-card-note">"I don't have friends. I got family."</p>
                       </button>
                     </div>
                     <button id="go-parent-invite-btn" type="button" class="role-card role-card-full">
                       <p class="role-card-eyebrow">Parent Invite</p>
-                      <h2 class="role-card-heading">Ask A Parent To Register</h2>
-                      <p class="role-card-copy">Send one parent a themed FamHack email with a link to create the family and add you automatically.</p>
+                      <h2 class="role-card-heading">Ask Your Parent To Register</h2>
+                      <p class="role-card-copy">Send one parent a themed FamHack letter that nudges them to register the family and add you automatically.</p>
                     </button>
                   </div>
                   <p class="error-message" id="join-choice-error"></p>
@@ -443,11 +444,11 @@
                       <option value="phd">PhD</option>
                     </select>
                   </div>
-                  <p class="register-subheading helper-copy">Approved parents can browse the pool and add you directly to their family.</p>
+                  <p class="register-subheading helper-copy">FamHack will match you with a volunteer parent family that opted in to help children who need one.</p>
                   <p class="error-message" id="join-pool-error"></p>
                   <button id="join-pool-btn" class="button-link w-inline-block" style="width: 100%;">
                     <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Join the Child Pool</p>
+                      <p class="button-label">Join a Random Family</p>
                       <div class="button-icon">
                         <div class="button-icon-svg w-embed">
                           <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -491,7 +492,7 @@
                     <input type="email" id="parent-email-input" class="form-input" placeholder="your.parent@ed.ac.uk"
                       autocomplete="email" />
                   </div>
-                  <p class="register-subheading helper-copy">FamHack will send them a custom invite email with a link to create the family and add you automatically.</p>
+                  <p class="register-subheading helper-copy">FamHack will send them a custom letter about free pizza, snacks, games, the scavenger hunt, coding, and prizes for the whole family.</p>
                   <p class="error-message" id="parent-invite-error"></p>
                   <button id="invite-parent-btn" class="button-link w-inline-block" style="width: 100%;">
                     <div class="button" style="width: 100%; justify-content: center;">
@@ -563,6 +564,14 @@
           </div>
         </footer>
       </div>
+    </div>
+  </div>
+  <div id="invite-letter-modal" class="invite-letter-modal" hidden aria-labelledby="invite-letter-title" aria-modal="true" role="dialog">
+    <div class="invite-letter-card">
+      <p id="invite-letter-kicker" class="invite-letter-kicker">Invitation</p>
+      <h2 id="invite-letter-title" class="invite-letter-title">You were invited.</h2>
+      <div id="invite-letter-body" class="invite-letter-body"></div>
+      <button id="invite-letter-confirm" type="button" class="copy-btn invite-letter-confirm" data-invite-letter-close>Continue</button>
     </div>
   </div>
 

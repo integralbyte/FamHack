@@ -292,9 +292,29 @@
                       </svg>
                     </div>
                   </div>
-                  <h2 class="members-heading members-heading-primary">Create Your Family</h2>
+                  <h2 class="members-heading members-heading-primary">Create Your Team</h2>
                   <p id="dashboard-parent-onboarding-copy" class="register-subheading invite-copy">You are registered as a Parent. Create your family here to unlock the full dashboard.</p>
                   <div class="register-form">
+                    <div class="form-group">
+                      <p class="form-label">Choose Your Parent Mode</p>
+                      <div class="role-grid">
+                        <button type="button" class="role-card is-selected" data-parent-team-kind-card="family">
+                          <p class="role-card-eyebrow">Have A Family</p>
+                          <h3 class="role-card-heading">Register My Family</h3>
+                          <p class="role-card-copy">Create your own family team, invite your children, and approve requests.</p>
+                        </button>
+                        <button type="button" class="role-card" data-parent-team-kind-card="volunteer">
+                          <p class="role-card-eyebrow">Volunteer Parent</p>
+                          <h3 class="role-card-heading">Help Orphan Children</h3>
+                          <p class="role-card-copy">Create a volunteer family and adopt children who choose the random-family route.</p>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="team-preview team-preview-static team-preview-focus">
+                      <p class="team-preview-label">Selected Mode</p>
+                      <p id="parent-team-mode-title" class="team-preview-name">Your Family</p>
+                      <p id="parent-team-mode-helper" class="register-subheading helper-copy">Once your family is created, the family code, letter link, and requests will appear here.</p>
+                    </div>
                     <div class="form-group">
                       <label class="form-label" for="full-name-input">Your Name</label>
                       <input type="text" id="full-name-input" class="form-input" placeholder="Alex Morgan" autocomplete="name" />
@@ -312,10 +332,10 @@
                       </select>
                     </div>
                     <div class="form-group">
-                      <label class="form-label" for="team-name-input">Family / Team Name</label>
+                      <label id="team-name-label" class="form-label" for="team-name-input">Family / Team Name</label>
                       <input type="text" id="team-name-input" class="form-input" placeholder="House Lovelace" autocomplete="organization" />
                     </div>
-                    <p class="register-subheading helper-copy">Once your family is created, the join code, invite link, and requests will appear here.</p>
+                    <p class="register-subheading helper-copy">Once your team is created, the join code, letter link, and any pending requests will appear here.</p>
                     <p class="error-message" id="team-error"></p>
                     <button id="create-team-btn" class="button-link w-inline-block" style="width: 100%;">
                       <div class="button" style="width: 100%; justify-content: center;">
@@ -392,8 +412,8 @@
                 </div>
 
                 <div class="invite-section">
-                  <p class="invite-label">Invite Link</p>
-                  <p class="register-subheading invite-copy">Optional shortcut that prefills the family code</p>
+                  <p id="invite-link-label" class="invite-label">Child Letter Link</p>
+                  <p id="invite-link-copy" class="register-subheading invite-copy">This opens a letter that tells your child you invited them to FamHack.</p>
                   <div class="invite-link-wrapper">
                     <input type="text" id="invite-link-input" class="invite-link-input" readonly value="Loading..." />
                     <button id="copy-invite-btn" class="copy-btn">Copy</button>
@@ -477,8 +497,8 @@
                     </svg>
                   </div>
                 </div>
-                <h2 class="members-heading">Child Pool</h2>
-                <p class="register-subheading invite-copy">These children opted into the pool and can be added directly to your family.</p>
+                <h2 class="members-heading">Random Family Pool</h2>
+                <p class="register-subheading invite-copy">These children asked FamHack to find them a volunteer family.</p>
                 <div id="pool-list" class="members-list"></div>
                 <div data-wf--bracket--variant="bottom-right"
                   class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">

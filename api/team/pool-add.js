@@ -6,6 +6,7 @@ import {
   getApprovedMemberCount,
   getChildPoolEntryById,
   getMembershipByUserId,
+  getTeamById,
   getTeamLimitMessage,
   isTeamLimitError,
   matchChildPoolEntryToTeam,
@@ -26,6 +27,12 @@ export default async function handler(req, res) {
     const actingMembership = await getMembershipByUserId(user.id);
     if (!actingMembership || actingMembership.role !== 'parent' || actingMembership.status !== 'approved') {
       sendError(res, 403, 'Only approved parents can add children from the pool');
+      return;
+    }
+
+    const team = await getTeamById(actingMembership.team_id);
+    if (!team || team.team_kind !== 'volunteer') {
+      sendError(res, 403, 'Only volunteer parents can add children from the random family pool');
       return;
     }
 

@@ -266,13 +266,13 @@
                     <button id="choose-parent-btn" type="button" class="role-card">
                       <p class="role-card-eyebrow">Parent</p>
                       <h2 class="role-card-heading">Register as Parent</h2>
-                      <p class="role-card-copy">Save your place now. Family setup opens on 20 March.</p>
+                      <p class="role-card-copy">Save your place now. After sign-in you can register your family or volunteer to parent children who need one.</p>
                     </button>
 
                     <button id="choose-child-btn" type="button" class="role-card">
                       <p class="role-card-eyebrow">Child</p>
                       <h2 class="role-card-heading">Register as Child</h2>
-                      <p class="role-card-copy">Save your place now. After sign-in you can pick Hunter or Hacker, then join by code, the child pool, or a parent invite.</p>
+                      <p class="role-card-copy">Save your place now. After sign-in you can pick Hunter or Hacker, then join your family, ask a parent to register one, or join a random volunteer family.</p>
                     </button>
                   </div>
                   <p class="error-message" id="role-error"></p>
@@ -395,6 +395,14 @@
           </div>
         </footer>
       </div>
+    </div>
+  </div>
+  <div id="invite-letter-modal" class="invite-letter-modal" hidden aria-labelledby="invite-letter-title" aria-modal="true" role="dialog">
+    <div class="invite-letter-card">
+      <p id="invite-letter-kicker" class="invite-letter-kicker">Invitation</p>
+      <h2 id="invite-letter-title" class="invite-letter-title">Your child needs you.</h2>
+      <div id="invite-letter-body" class="invite-letter-body"></div>
+      <button id="invite-letter-confirm" type="button" class="copy-btn invite-letter-confirm" data-invite-letter-close>Continue</button>
     </div>
   </div>
 

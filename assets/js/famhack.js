@@ -22,6 +22,7 @@ const FamHack = {
     pendingEmail: '',
     registerIntent: 'role',
     childFocus: '',
+    parentTeamKind: 'family',
     teamPreview: null,
     resendTimer: null,
     joinLookupTimer: null,
@@ -50,6 +51,8 @@ const FamHack = {
     homeClockTimer: null,
     homeFaq: null,
     parentInviteToken: '',
+    familyInviteActive: false,
+    inviteLetterOpen: false,
   },
 
   async init() {
@@ -94,6 +97,7 @@ const FamHack = {
 
       await this.hydrateSession();
       this.captureParentInviteToken();
+      this.captureFamilyInviteFlag();
 
       if (this.state.page === 'home') {
         await this.initHomePage();
@@ -340,6 +344,7 @@ const FamHack = {
     this.state.registration = null;
     this.state.registrationStatus = null;
     this.state.childFocus = '';
+    this.state.parentTeamKind = 'family';
     this.state.ctf = null;
     this.state.ctfPendingAdvanceState = null;
     this.state.ctfRecentKeys = [];
@@ -347,6 +352,8 @@ const FamHack = {
     this.state.ctfKonamiRetry = false;
     this.state.ctfKonamiSolved = false;
     this.state.registerIntent = 'role';
+    this.state.familyInviteActive = false;
+    this.state.inviteLetterOpen = false;
     this.clearOTPInputs();
   },
 
@@ -377,7 +384,7 @@ const FamHack = {
 
   captureParentInviteToken() {
     const params = new URLSearchParams(window.location.search);
-    const token = String(params.get('parentInvite') || params.get('invite') || '').trim();
+    const token = String(params.get('parentInvite') || '').trim();
     if (token) {
       this.state.parentInviteToken = token;
       this.storeParentInviteToken(token);
@@ -385,6 +392,11 @@ const FamHack = {
     }
 
     this.state.parentInviteToken = this.getStoredParentInviteToken();
+  },
+
+  captureFamilyInviteFlag() {
+    const params = new URLSearchParams(window.location.search);
+    this.state.familyInviteActive = params.get('familyInvite') === '1';
   },
 
   setChildFocus(focus) {
@@ -411,6 +423,46 @@ const FamHack = {
       : focus === 'hacker'
         ? 'Focused on building the best products'
         : '';
+  },
+
+  setParentTeamKind(teamKind) {
+    this.state.parentTeamKind = teamKind === 'volunteer' ? 'volunteer' : 'family';
+
+    document.querySelectorAll('[data-parent-team-kind-card]').forEach((card) => {
+      card.classList.toggle('is-selected', card.dataset.parentTeamKindCard === this.state.parentTeamKind);
+    });
+
+    const title = document.getElementById('parent-team-mode-title');
+    const helper = document.getElementById('parent-team-mode-helper');
+    const teamNameLabel = document.getElementById('team-name-label');
+    const teamNameInput = document.getElementById('team-name-input');
+    const createButton = document.getElementById('create-team-btn');
+
+    if (title) {
+      title.textContent = this.state.parentTeamKind === 'volunteer' ? 'Volunteer Parent Team' : 'Your Family';
+    }
+
+    if (helper) {
+      helper.textContent = this.state.parentTeamKind === 'volunteer'
+        ? 'Volunteer parents are matched with children who choose the random-family route.'
+        : 'Once your family is created, the family code, letter link, and requests will appear here.';
+    }
+
+    if (teamNameLabel) {
+      teamNameLabel.textContent = this.state.parentTeamKind === 'volunteer' ? 'Volunteer Team Name' : 'Family / Team Name';
+    }
+
+    if (teamNameInput) {
+      teamNameInput.placeholder = this.state.parentTeamKind === 'volunteer' ? 'Volunteer House Toretto' : 'House Lovelace';
+    }
+
+    if (createButton) {
+      this.setButtonLabel(createButton, this.state.parentTeamKind === 'volunteer' ? 'Become a Volunteer Parent' : 'Create a Family');
+    }
+  },
+
+  getParentTeamKind() {
+    return this.state.parentTeamKind === 'volunteer' ? 'volunteer' : 'family';
   },
 
   updateChildFocusSummary() {
@@ -447,6 +499,163 @@ const FamHack = {
       if (select && !select.value && studyYear) {
         select.value = studyYear;
       }
+    });
+  },
+
+  openInviteLetter({ kicker = 'Invitation', title = '', paragraphs = [], confirmLabel = 'Continue' } = {}) {
+    const modal = document.getElementById('invite-letter-modal');
+    const kickerEl = document.getElementById('invite-letter-kicker');
+    const titleEl = document.getElementById('invite-letter-title');
+    const bodyEl = document.getElementById('invite-letter-body');
+    const confirmButton = document.getElementById('invite-letter-confirm');
+
+    if (!modal || this.state.inviteLetterOpen) {
+      return;
+    }
+
+    this.state.inviteLetterOpen = true;
+
+    if (kickerEl) {
+      kickerEl.textContent = kicker;
+    }
+
+    if (titleEl) {
+      titleEl.textContent = title;
+    }
+
+    if (bodyEl) {
+      bodyEl.innerHTML = paragraphs
+        .filter(Boolean)
+        .map((paragraph) => `<p class="invite-letter-copy">${this.escapeHtml(paragraph)}</p>`)
+        .join('');
+    }
+
+    if (confirmButton) {
+      confirmButton.textContent = confirmLabel;
+    }
+
+    modal.hidden = false;
+    modal.style.opacity = '1';
+    document.body.classList.add('invite-letter-modal-open');
+
+    const card = modal.querySelector('.invite-letter-card');
+    if (typeof window.gsap !== 'undefined' && card) {
+      window.gsap.fromTo(
+        card,
+        { opacity: 0, y: 22, scale: 0.986 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.34, ease: 'power2.out' },
+      );
+    }
+  },
+
+  closeInviteLetter(options = {}) {
+    const modal = document.getElementById('invite-letter-modal');
+    const card = modal?.querySelector('.invite-letter-card');
+
+    if (!modal || (!this.state.inviteLetterOpen && modal.hidden)) {
+      return;
+    }
+
+    this.state.inviteLetterOpen = false;
+    document.body.classList.remove('invite-letter-modal-open');
+
+    const finish = () => {
+      modal.hidden = true;
+      modal.style.opacity = '';
+    };
+
+    if (options.silent || typeof window.gsap === 'undefined' || !card) {
+      finish();
+      return;
+    }
+
+    window.gsap.to(card, {
+      opacity: 0,
+      y: -10,
+      scale: 0.986,
+      duration: 0.2,
+      ease: 'power1.in',
+      onComplete: finish,
+    });
+    window.gsap.to(modal, {
+      opacity: 0,
+      duration: 0.2,
+      ease: 'power1.in',
+      onComplete: () => {
+        modal.style.opacity = '';
+      },
+    });
+  },
+
+  bindInviteLetterModal() {
+    const modal = document.getElementById('invite-letter-modal');
+    if (!modal || modal.dataset.bound === 'true') {
+      return;
+    }
+
+    modal.dataset.bound = 'true';
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal || event.target.closest('[data-invite-letter-close]')) {
+        this.closeInviteLetter();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && this.state.inviteLetterOpen) {
+        this.closeInviteLetter();
+      }
+    });
+  },
+
+  async maybeShowRegisterInviteLetter() {
+    if (this.state.page !== 'register' || !this.state.parentInviteToken) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/invite/preview?parentInvite=${encodeURIComponent(this.state.parentInviteToken)}`);
+      const payload = await response.json();
+      const invite = payload?.invite || null;
+      const childName = invite?.childName || 'Your child';
+      const focusLabel = invite?.childFocusLabel || 'their track';
+
+      this.openInviteLetter({
+        kicker: 'From Your Child',
+        title: `${childName} wants the whole family at FamHack.`,
+        paragraphs: [
+          `${childName} wants to attend FamHack and needs you to register the family so it can happen.`,
+          `There will be free pizza, snacks, games, a scavenger hunt, coding, and prizes for the whole family.`,
+          `Register on 28 March, pick your family mode, and FamHack will attach ${childName} automatically. ${focusLabel ? `${childName} is aiming for ${focusLabel}.` : ''}`.trim(),
+        ],
+        confirmLabel: 'Register The Family',
+      });
+    } catch (error) {
+      this.openInviteLetter({
+        kicker: 'From Your Child',
+        title: 'Your child wants the whole family at FamHack.',
+        paragraphs: [
+          'They need you to register so the family can take part together.',
+          'There will be free pizza, snacks, games, a scavenger hunt, coding, and prizes for the whole family.',
+        ],
+        confirmLabel: 'Register The Family',
+      });
+    }
+  },
+
+  maybeShowJoinInviteLetter() {
+    if (this.state.page !== 'join' || !this.state.familyInviteActive) {
+      return;
+    }
+
+    const familyName = this.state.teamPreview?.name || 'your family';
+    this.openInviteLetter({
+      kicker: 'From Your Parent',
+      title: 'Your parent invited you to FamHack.',
+      paragraphs: [
+        `Your parent has invited you to take part in FamHack with them through ${familyName}.`,
+        'Enter your email, confirm it, choose Hunter or Hacker, and you can join the family with less friction.',
+      ],
+      confirmLabel: 'Join The Family',
     });
   },
 
@@ -1481,6 +1690,7 @@ const FamHack = {
   },
 
   async initRegisterPage() {
+    this.bindInviteLetterModal();
     document.getElementById('choose-parent-btn')?.addEventListener('click', () => this.handleChooseParent());
     document.getElementById('choose-child-btn')?.addEventListener('click', () => this.handleChooseChildRole());
     document.getElementById('choose-student-btn')?.addEventListener('click', () => this.handleChooseChildRole());
@@ -1515,10 +1725,12 @@ const FamHack = {
     });
 
     if (this.getCurrentLaunchState().isRegistrationOpen) {
+      await this.maybeShowRegisterInviteLetter();
       await this.initPrelaunchRegisterPage();
       return;
     }
 
+    await this.maybeShowRegisterInviteLetter();
     await this.initPostLaunchRegisterPage();
   },
 
@@ -1611,6 +1823,7 @@ const FamHack = {
   },
 
   async initJoinPage() {
+    this.bindInviteLetterModal();
     document.getElementById('send-otp-btn')?.addEventListener('click', () => this.handleSendOTP());
     document.getElementById('verify-otp-btn')?.addEventListener('click', () => this.handleVerifyOTP());
     document.getElementById('resend-otp-btn')?.addEventListener('click', () => this.handleResendOTP());
@@ -1643,6 +1856,8 @@ const FamHack = {
       this.syncJoinCodeInputs(codeFromUrl);
       await this.lookupTeam(this.getJoinCodeValue(), { showErrors: false });
     }
+
+    this.maybeShowJoinInviteLetter();
 
     const bindJoinCodeInput = (input) => {
       if (!input) {
@@ -1713,6 +1928,14 @@ const FamHack = {
     document.getElementById('leave-team-btn')?.addEventListener('click', () => this.handleLeaveTeam());
     document.getElementById('danger-toggle-btn')?.addEventListener('click', () => this.toggleDangerPanel());
     document.getElementById('create-team-btn')?.addEventListener('click', () => this.handleCreateTeam());
+    document.querySelectorAll('[data-parent-team-kind-card]').forEach((card) => {
+      card.addEventListener('click', () => {
+        if (this.state.parentInviteToken && card.dataset.parentTeamKindCard === 'volunteer') {
+          return;
+        }
+        this.setParentTeamKind(card.dataset.parentTeamKindCard);
+      });
+    });
 
     if (!this.state.session) {
       this.redirect('/register');
@@ -1978,7 +2201,7 @@ const FamHack = {
     this.updateChildFocusSummary();
     this.showFieldError('join-pool-error', '');
     this.showStep('join-pool');
-    this.showPageMessage('join-page-message', 'Join the child pool and approved parents can add you directly.');
+    this.showPageMessage('join-page-message', 'Join the random family pool and FamHack can match you with a volunteer parent family.');
   },
 
   handleChooseInviteParent() {
@@ -2276,6 +2499,7 @@ const FamHack = {
     const fullName = document.getElementById('full-name-input')?.value?.trim() || '';
     const studyYear = this.getSelectedStudyYear();
     const teamName = document.getElementById('team-name-input')?.value?.trim() || '';
+    const teamKind = this.getParentTeamKind();
 
     this.showFieldError('team-error', '');
 
@@ -2297,7 +2521,7 @@ const FamHack = {
     this.setButtonState(createButton, {
       busy: true,
       label: 'Creating...',
-      idleLabel: 'Create a Family',
+      idleLabel: teamKind === 'volunteer' ? 'Become a Volunteer Parent' : 'Create a Family',
     });
 
     try {
@@ -2307,6 +2531,7 @@ const FamHack = {
           fullName,
           studyYear,
           teamName,
+          teamKind,
           ...(this.state.parentInviteToken ? { parentInviteToken: this.state.parentInviteToken } : {}),
         },
       });
@@ -2326,7 +2551,7 @@ const FamHack = {
       this.setButtonState(createButton, {
         busy: false,
         label: 'Creating...',
-        idleLabel: 'Create a Family',
+        idleLabel: teamKind === 'volunteer' ? 'Become a Volunteer Parent' : 'Create a Family',
       });
     }
   },
@@ -2423,7 +2648,7 @@ const FamHack = {
     this.setButtonState(joinPoolButton, {
       busy: true,
       label: 'Joining...',
-      idleLabel: 'Join the Child Pool',
+      idleLabel: 'Join a Random Family',
     });
 
     try {
@@ -2444,7 +2669,7 @@ const FamHack = {
       this.setButtonState(joinPoolButton, {
         busy: false,
         label: 'Joining...',
-        idleLabel: 'Join the Child Pool',
+        idleLabel: 'Join a Random Family',
       });
     }
   },
@@ -3871,6 +4096,8 @@ const FamHack = {
     const joinCodeDisplay = document.getElementById('join-code-display');
     const inviteLinkInput = document.getElementById('invite-link-input');
     const inviteGrid = document.getElementById('invite-grid');
+    const inviteLinkCopy = document.getElementById('invite-link-copy');
+    const inviteLinkLabel = document.getElementById('invite-link-label');
     const dangerSection = document.getElementById('danger-section');
     const dangerToggleWrap = document.getElementById('danger-toggle-wrap');
     const dangerToggleButton = document.getElementById('danger-toggle-btn');
@@ -3954,7 +4181,17 @@ const FamHack = {
     }
 
     if (inviteLinkInput) {
-      inviteLinkInput.value = `${window.location.origin}/join?code=${encodeURIComponent(dashboard.team.joinCode)}`;
+      inviteLinkInput.value = `${window.location.origin}/join?code=${encodeURIComponent(dashboard.team.joinCode)}&familyInvite=1`;
+    }
+
+    if (inviteLinkLabel) {
+      inviteLinkLabel.textContent = 'Child Letter Link';
+    }
+
+    if (inviteLinkCopy) {
+      inviteLinkCopy.textContent = dashboard.team.kind === 'volunteer'
+        ? 'This opens a letter that invites a child to join your volunteer family.'
+        : 'This opens a letter that tells your child you invited them to FamHack.';
     }
 
     if (inviteGrid) {
@@ -3979,7 +4216,9 @@ const FamHack = {
         statusBanner.textContent = `This family is full at ${dashboard.team.approvedCount}/${dashboard.team.maxMembers}. Pending requests can be declined, but no further approvals can go through until someone leaves.`;
       } else {
         statusBanner.hidden = !(dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved');
-        statusBanner.textContent = 'Share the family code or the invite link below with other parents and children.';
+        statusBanner.textContent = dashboard.team.kind === 'volunteer'
+          ? 'Volunteer parents can invite children directly or add them from the random family pool below.'
+          : 'Share the family code or the child letter link below with other parents and children.';
       }
     }
 
@@ -4052,12 +4291,25 @@ const FamHack = {
     if (parentOnboardingCopy) {
       parentOnboardingCopy.textContent = this.state.parentInviteToken
         ? 'A child invited you to register this family. Create it here and FamHack will add them automatically.'
-        : 'You are registered as a Parent. Create your family here to unlock the full dashboard.';
+        : 'You are registered as a Parent. Choose whether you are registering your own family or volunteering to parent children who need one.';
     }
 
     if (childOnboardingCopy) {
-      childOnboardingCopy.textContent = 'Choose whether to join by code, enter the child pool, or invite a parent to register the family.';
+      childOnboardingCopy.textContent = 'Choose whether to join an existing family, ask a parent to register one, or join a random volunteer family.';
     }
+
+    this.setParentTeamKind(this.state.parentInviteToken ? 'family' : this.getParentTeamKind());
+
+    document.querySelectorAll('[data-parent-team-kind-card]').forEach((card) => {
+      const isVolunteer = card.dataset.parentTeamKindCard === 'volunteer';
+      if (this.state.parentInviteToken && isVolunteer) {
+        card.classList.add('is-disabled');
+        card.setAttribute('aria-disabled', 'true');
+      } else {
+        card.classList.remove('is-disabled');
+        card.removeAttribute('aria-disabled');
+      }
+    });
 
     if (childOnboardingStatus) {
       if (status?.childPoolEntry) {
@@ -4133,7 +4385,7 @@ const FamHack = {
 
     container.innerHTML = '';
     if (!entries.length) {
-      container.innerHTML = '<p class="empty-state">No children are waiting in the pool right now.</p>';
+      container.innerHTML = '<p class="empty-state">No children are waiting for a volunteer family right now.</p>';
       return;
     }
 

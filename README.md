@@ -11,6 +11,7 @@ This version keeps the static site theme and adds a real registration backend:
 - Children can cancel pending requests or leave an approved family from the dashboard.
 - Parents can transfer ownership to an approved child before leaving.
 - Children can pick `Hunter` or `Hacker`, join a child pool, or email a parent a registration link.
+- Parents can choose between registering their own family or becoming a volunteer parent for children who need a random family.
 - The CTF now saves progress per individual user and uses an individual leaderboard.
 
 ## Required setup
@@ -36,8 +37,8 @@ This version keeps the static site theme and adds a real registration backend:
 ## Flow
 
 - `register.html`: parent logs in with email OTP, creates a family/team, receives a join code.
-- `join.html`: child logs in, chooses `Hunter` or `Hacker`, then joins by code, joins the child pool, or emails a parent an invite link.
-- `dashboard.html`: parent approves or declines requests; children can see pending status.
-- Parents can also browse the child pool and add a waiting child directly to their family.
+- `join.html`: child logs in, chooses `Hunter` or `Hacker`, then joins a family by code, joins a random volunteer family, or emails a parent an invite link.
+- `dashboard.html`: parents choose `family` or `volunteer parent` when creating their team. Volunteer parents can browse the random-family pool and add a waiting child directly.
+- Parent-to-child invite links now open a themed invite letter instead of just dropping the child on the page.
 - `ctf.html`: each signed-in user has their own saved CTF run and appears on the individual leaderboard.
 - Team limits and parent transfers are enforced on the server. The frontend cannot bypass the 15-person cap.

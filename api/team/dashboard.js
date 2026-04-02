@@ -3,6 +3,7 @@ import { allowMethods, sendError, statusFromError } from '../_lib/http.js';
 import { assertNormalParticipationOpen } from '../_lib/launch.js';
 import {
   assertAllowedEmail,
+  formatTeamKindLabel,
   getMembershipByUserId,
   listOpenChildPoolEntries,
   getTeamById,
@@ -37,7 +38,7 @@ export default async function handler(req, res) {
     const members = await getTeamMembers(team.id);
     const approvedMembers = members.filter((member) => member.status === 'approved').map(serializeMembership);
     const pendingMembers = members.filter((member) => member.status === 'pending').map(serializeMembership);
-    const childPool = membership.role === 'parent' && membership.status === 'approved'
+    const childPool = membership.role === 'parent' && membership.status === 'approved' && team.team_kind === 'volunteer'
       ? (await listOpenChildPoolEntries()).map(serializeChildPoolEntry)
       : [];
 
@@ -51,6 +52,8 @@ export default async function handler(req, res) {
       team: {
         id: team.id,
         name: team.name,
+        kind: team.team_kind,
+        kindLabel: formatTeamKindLabel(team.team_kind),
         ownerId: team.created_by,
         joinCode: team.join_code,
         createdAt: team.created_at,

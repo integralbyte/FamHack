@@ -40,12 +40,12 @@ export default async function handler(req, res) {
     }
 
     if (existingMembership?.status === 'approved') {
-      sendError(res, 409, 'Leave your current family before joining the child pool');
+      sendError(res, 409, 'Leave your current family before joining the random family pool');
       return;
     }
 
     if (existingMembership?.status === 'pending') {
-      sendError(res, 409, 'Cancel your current join request before joining the child pool');
+      sendError(res, 409, 'Cancel your current join request before joining the random family pool');
       return;
     }
 

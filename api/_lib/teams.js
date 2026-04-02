@@ -9,6 +9,7 @@ export const PARENT_TRANSFER_ERROR_CODE = 'parent_transfer_failed';
 export const STUDY_YEAR_OPTIONS = ['year_1', 'year_2', 'year_3', 'year_4', 'masters', 'phd'];
 export const JOIN_ROLE_OPTIONS = ['parent', 'child'];
 export const CHILD_FOCUS_OPTIONS = ['hunter', 'hacker'];
+export const TEAM_KIND_OPTIONS = ['family', 'volunteer'];
 
 export function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -47,6 +48,11 @@ export function sanitizeJoinRole(role) {
 export function sanitizeChildFocus(focus) {
   const normalizedFocus = String(focus || '').trim().toLowerCase();
   return CHILD_FOCUS_OPTIONS.includes(normalizedFocus) ? normalizedFocus : '';
+}
+
+export function sanitizeTeamKind(teamKind) {
+  const normalizedTeamKind = String(teamKind || '').trim().toLowerCase();
+  return TEAM_KIND_OPTIONS.includes(normalizedTeamKind) ? normalizedTeamKind : '';
 }
 
 export function formatStudyYearLabel(studyYear) {
@@ -93,6 +99,17 @@ export function formatChildFocusDescription(focus) {
       return 'Focused on the scavenger hunt';
     case 'hacker':
       return 'Focused on building the best products';
+    default:
+      return '';
+  }
+}
+
+export function formatTeamKindLabel(teamKind) {
+  switch (sanitizeTeamKind(teamKind)) {
+    case 'family':
+      return 'Family';
+    case 'volunteer':
+      return 'Volunteer Parent';
     default:
       return '';
   }
@@ -266,7 +283,7 @@ export async function getTeamById(teamId) {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from('teams')
-    .select('id, name, join_code, created_by, created_at')
+    .select('id, name, team_kind, join_code, created_by, created_at')
     .eq('id', teamId)
     .maybeSingle();
 
@@ -281,7 +298,7 @@ export async function getTeamByCode(joinCode) {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from('teams')
-    .select('id, name, join_code, created_by, created_at')
+    .select('id, name, team_kind, join_code, created_by, created_at')
     .eq('join_code', String(joinCode || '').trim().toUpperCase())
     .maybeSingle();
 
