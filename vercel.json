@@ -11,6 +11,22 @@
       "destination": "/api/config?mode=registration-complete"
     },
     {
+      "source": "/api/invite/preview",
+      "destination": "/api/config?mode=invite-preview"
+    },
+    {
+      "source": "/api/child/pool",
+      "destination": "/api/config?mode=child-pool"
+    },
+    {
+      "source": "/api/child/invite-parent",
+      "destination": "/api/config?mode=child-invite-parent"
+    },
+    {
+      "source": "/api/team/pool-add",
+      "destination": "/api/config?mode=team-pool-add"
+    },
+    {
       "source": "/R2FzdGVy==",
       "destination": "/api/config?mode=page&slug=easter"
     },
