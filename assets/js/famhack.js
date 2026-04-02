@@ -1463,10 +1463,7 @@ const FamHack = {
     }
 
     if (registration.role === 'parent') {
-      this.state.registerIntent = 'parent';
-      this.setRegisterIntro('Create a Family', 'Create your family to continue.');
-      this.showStep('create-team');
-      this.showPageMessage('register-page-message', 'Signed in. Create a Family to continue.');
+      this.redirectToDashboard();
       return;
     }
 
@@ -1549,6 +1546,7 @@ const FamHack = {
     document.getElementById('sign-out-btn')?.addEventListener('click', () => this.handleSignOut());
     document.getElementById('leave-team-btn')?.addEventListener('click', () => this.handleLeaveTeam());
     document.getElementById('danger-toggle-btn')?.addEventListener('click', () => this.toggleDangerPanel());
+    document.getElementById('create-team-btn')?.addEventListener('click', () => this.handleCreateTeam());
 
     if (!this.state.session) {
       this.redirect('/register');
@@ -3500,7 +3498,16 @@ const FamHack = {
       this.setDashboardLoading(true);
       const dashboard = await this.fetchDashboard({ suppressMissing: true });
       if (!dashboard) {
-        this.redirect('/register');
+        const status = await this.fetchRegistrationStatus({ suppressMissing: true });
+        const registration = status?.registration || null;
+
+        if (!registration?.role) {
+          this.redirect('/register');
+          return;
+        }
+
+        this.renderDashboardOnboarding(registration);
+        this.setDashboardLoading(false);
         return;
       }
 
@@ -3544,6 +3551,16 @@ const FamHack = {
     const pendingSection = document.getElementById('pending-section');
     const pendingList = document.getElementById('pending-list');
     const membersList = document.getElementById('members-list');
+    const onboardingShell = document.getElementById('dashboard-onboarding-shell');
+    const membersShell = document.getElementById('dashboard-members-shell');
+
+    if (onboardingShell) {
+      onboardingShell.hidden = true;
+    }
+
+    if (membersShell) {
+      membersShell.hidden = false;
+    }
 
     if (teamName) {
       teamName.dataset.heading = dashboard.team.name;
@@ -3635,6 +3652,50 @@ const FamHack = {
       this.renderPendingMembers(pendingList, dashboard.pendingRequests, dashboard);
     } else if (pendingSection) {
       pendingSection.hidden = true;
+    }
+  },
+
+  renderDashboardOnboarding(registration) {
+    this.state.dashboard = null;
+
+    const teamName = document.getElementById('dashboard-team-name');
+    const capacityCopy = document.getElementById('dashboard-capacity-copy');
+    const statusBanner = document.getElementById('dashboard-status-banner');
+    const onboardingShell = document.getElementById('dashboard-onboarding-shell');
+    const membersShell = document.getElementById('dashboard-members-shell');
+    const parentOnboarding = document.getElementById('dashboard-parent-onboarding');
+    const childOnboarding = document.getElementById('dashboard-child-onboarding');
+
+    if (teamName) {
+      teamName.dataset.heading = 'Family Dashboard';
+      teamName.textContent = 'Family Dashboard';
+    }
+
+    if (capacityCopy) {
+      capacityCopy.textContent = registration.role === 'parent'
+        ? 'Create your family to unlock join codes, invite links, and approvals.'
+        : 'Join a family to unlock your member dashboard.';
+    }
+
+    if (statusBanner) {
+      statusBanner.hidden = true;
+      statusBanner.textContent = '';
+    }
+
+    if (onboardingShell) {
+      onboardingShell.hidden = false;
+    }
+
+    if (membersShell) {
+      membersShell.hidden = true;
+    }
+
+    if (parentOnboarding) {
+      parentOnboarding.hidden = registration.role !== 'parent';
+    }
+
+    if (childOnboarding) {
+      childOnboarding.hidden = registration.role !== 'child';
     }
   },
 

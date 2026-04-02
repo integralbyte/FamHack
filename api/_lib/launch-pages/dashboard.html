@@ -282,6 +282,104 @@
             <div id="dashboard-body" hidden>
               <div id="dashboard-status-banner" class="status-banner" hidden></div>
 
+              <div id="dashboard-onboarding-shell" hidden>
+                <div id="dashboard-parent-onboarding" class="members-section members-section-primary" hidden>
+                  <div data-wf--bracket--variant="top-left" class="bracket">
+                    <div class="bracket-svg w-embed">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                        <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                          stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                      </svg>
+                    </div>
+                  </div>
+                  <h2 class="members-heading members-heading-primary">Create Your Family</h2>
+                  <p class="register-subheading invite-copy">You are registered as a Parent. Create your family here to unlock the full dashboard.</p>
+                  <div class="register-form">
+                    <div class="form-group">
+                      <label class="form-label" for="full-name-input">Your Name</label>
+                      <input type="text" id="full-name-input" class="form-input" placeholder="Alex Morgan" autocomplete="name" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="study-year-input">Year of Study</label>
+                      <select id="study-year-input" class="form-input form-select" autocomplete="off">
+                        <option value="">Select your year</option>
+                        <option value="year_1">Year 1</option>
+                        <option value="year_2">Year 2</option>
+                        <option value="year_3">Year 3</option>
+                        <option value="year_4">Year 4</option>
+                        <option value="masters">Master's</option>
+                        <option value="phd">PhD</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="team-name-input">Family / Team Name</label>
+                      <input type="text" id="team-name-input" class="form-input" placeholder="House Lovelace" autocomplete="organization" />
+                    </div>
+                    <p class="register-subheading helper-copy">Once your family is created, the join code, invite link, and requests will appear here.</p>
+                    <p class="error-message" id="team-error"></p>
+                    <button id="create-team-btn" class="button-link w-inline-block" style="width: 100%;">
+                      <div class="button" style="width: 100%; justify-content: center;">
+                        <p class="button-label">Create a Family</p>
+                        <div class="button-icon">
+                          <div class="button-icon-svg w-embed">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                              <path d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                                fill="currentColor" stroke-width="0.155153" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                  <div data-wf--bracket--variant="bottom-right"
+                    class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                    <div class="bracket-svg w-embed">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                        <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                          stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="dashboard-child-onboarding" class="members-section members-section-primary" hidden>
+                  <div data-wf--bracket--variant="top-left" class="bracket">
+                    <div class="bracket-svg w-embed">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                        <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                          stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                      </svg>
+                    </div>
+                  </div>
+                  <h2 class="members-heading members-heading-primary">Join a Family</h2>
+                  <p class="register-subheading invite-copy">You are registered as a Child. Join a family to unlock your dashboard.</p>
+                  <a href="/join" class="button-link w-inline-block">
+                    <div class="button">
+                      <p class="button-label">Go to Join</p>
+                      <div class="button-icon">
+                        <div class="button-icon-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                            <path d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                              fill="currentColor" stroke-width="0.155153" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                  <div data-wf--bracket--variant="bottom-right"
+                    class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
+                    <div class="bracket-svg w-embed">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 41 42" fill="none">
+                        <path d="M1 41.1613L1 6.16602C1 3.40459 3.23858 1.16602 6 1.16602L40.9952 1.16602"
+                          stroke="currentColor" stroke-width="1.2" stroke-miterlimit="10" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="dashboard-members-shell">
+
               <div id="invite-grid" class="invite-grid">
                 <div class="invite-section">
                   <p class="invite-label">Family Code</p>
@@ -427,6 +525,7 @@
                     </div>
                   </div>
                 </div>
+              </div>
               </div>
             </div>
           </div>
