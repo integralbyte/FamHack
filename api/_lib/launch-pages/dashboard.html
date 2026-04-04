@@ -371,11 +371,22 @@
                       </svg>
                     </div>
                   </div>
-                  <h2 class="members-heading members-heading-primary">Join a Family</h2>
-                  <p id="dashboard-child-onboarding-copy" class="register-subheading invite-copy">You are registered as a Child. Join a family to unlock your dashboard.</p>
-                  <p id="dashboard-child-onboarding-status" class="register-subheading helper-copy" hidden></p>
-                  <a id="dashboard-child-onboarding-link" href="/join" class="button-link w-inline-block">
-                    <div class="button">
+                  <h2 id="dashboard-child-onboarding-heading" class="members-heading members-heading-primary">Join FamHack</h2>
+                  <p id="dashboard-child-onboarding-copy" class="register-subheading invite-copy">Choose your track and how you want to join.</p>
+                  <div class="register-form">
+                    <div id="dashboard-child-track-card" class="team-preview team-preview-static" hidden>
+                      <p class="team-preview-label">Selected Track</p>
+                      <p id="dashboard-child-track-title" class="team-preview-name"></p>
+                      <p id="dashboard-child-track-helper" class="register-subheading helper-copy"></p>
+                    </div>
+                    <div id="dashboard-child-route-card" class="team-preview team-preview-static team-preview-focus" hidden>
+                      <p class="team-preview-label">Current Path</p>
+                      <p id="dashboard-child-route-title" class="team-preview-name"></p>
+                      <p id="dashboard-child-route-helper" class="register-subheading helper-copy"></p>
+                    </div>
+                    <p id="dashboard-child-onboarding-status" class="register-subheading helper-copy" hidden></p>
+                    <a id="dashboard-child-onboarding-link" href="/join" class="button-link w-inline-block" style="width: 100%;">
+                    <div class="button" style="width: 100%; justify-content: center;">
                       <p class="button-label">Go to Join</p>
                       <div class="button-icon">
                         <div class="button-icon-svg w-embed">
@@ -386,7 +397,8 @@
                         </div>
                       </div>
                     </div>
-                  </a>
+                    </a>
+                  </div>
                   <div data-wf--bracket--variant="bottom-right"
                     class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">
                     <div class="bracket-svg w-embed">

@@ -23,6 +23,7 @@ import { getServiceClient } from './_lib/supabase.js';
 import {
   assertAllowedEmail,
   assertRegisteredRole,
+  cancelPendingParentInvitesForUser,
   createParentInvite,
   formatChildFocusDescription,
   formatChildFocusLabel,
@@ -46,6 +47,7 @@ import {
   upsertChildPoolEntry,
   upsertProfile,
   upsertRegistration,
+  withdrawChildPoolEntryForUser,
 } from './_lib/teams.js';
 
 const publicPageFiles = new Map([
@@ -413,6 +415,11 @@ async function handleChildPool(req, res) {
   });
 
   const poolEntry = await upsertChildPoolEntry(user.id, childFocus);
+  try {
+    await cancelPendingParentInvitesForUser(user.id);
+  } catch (cleanupError) {
+    console.error(cleanupError);
+  }
 
   res.status(200).json({
     poolEntry: serializeChildPoolEntry(poolEntry),
@@ -460,6 +467,11 @@ async function handleChildInviteParent(req, res) {
     childFocus,
     token,
   });
+  try {
+    await withdrawChildPoolEntryForUser(user.id);
+  } catch (cleanupError) {
+    console.error(cleanupError);
+  }
 
   const origin = getRequestOrigin(req);
   const parentInviteLink = `${origin}/register?parentInvite=${encodeURIComponent(invite.token)}`;

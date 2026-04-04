@@ -618,6 +618,21 @@ export async function getParentInviteByToken(token) {
   return data;
 }
 
+export async function cancelPendingParentInvitesForUser(userId) {
+  const supabase = getServiceClient();
+  const { error } = await supabase
+    .from('parent_registration_invites')
+    .update({
+      status: 'cancelled',
+    })
+    .eq('child_user_id', userId)
+    .eq('status', 'pending');
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function createParentInvite({ childUserId, childName, parentEmail, childFocus, token }) {
   const normalizedFocus = sanitizeChildFocus(childFocus);
   const normalizedParentEmail = normalizeEmail(parentEmail);

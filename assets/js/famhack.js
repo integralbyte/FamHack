@@ -399,6 +399,33 @@ const FamHack = {
     this.state.familyInviteActive = params.get('familyInvite') === '1';
   },
 
+  getJoinModeParam() {
+    const params = new URLSearchParams(window.location.search);
+    const mode = String(params.get('mode') || '').trim().toLowerCase();
+    return ['code', 'pool', 'invite'].includes(mode) ? mode : '';
+  },
+
+  getActiveChildRoute(status = this.state.registrationStatus) {
+    const poolEntry = status?.childPoolEntry || null;
+    const parentInvite = status?.parentInvite || null;
+
+    if (poolEntry && parentInvite) {
+      const poolCreatedAt = Date.parse(poolEntry.createdAt || '') || 0;
+      const inviteCreatedAt = Date.parse(parentInvite.createdAt || '') || 0;
+      return inviteCreatedAt > poolCreatedAt ? 'invite' : 'pool';
+    }
+
+    if (poolEntry) {
+      return 'pool';
+    }
+
+    if (parentInvite) {
+      return 'invite';
+    }
+
+    return '';
+  },
+
   setChildFocus(focus) {
     this.state.childFocus = String(focus || '').trim().toLowerCase();
 
@@ -500,6 +527,15 @@ const FamHack = {
         select.value = studyYear;
       }
     });
+  },
+
+  prefillParentInviteEmail(parentInvite = {}) {
+    const input = document.getElementById('parent-email-input');
+    const parentEmail = this.normalizeEmail(parentInvite?.parentEmail);
+
+    if (input && !input.value && parentEmail) {
+      input.value = parentEmail;
+    }
   },
 
   openInviteLetter({ kicker = 'Invitation', title = '', paragraphs = [], confirmLabel = 'Continue' } = {}) {
@@ -1912,12 +1948,7 @@ const FamHack = {
       }
 
       this.setButtonLabel(document.getElementById('send-otp-btn'), 'Continue');
-
-      this.showJoinChoiceStep(
-        this.state.teamPreview
-          ? 'You are already signed in. Choose your track and how you want to find a family.'
-          : 'You are already signed in. Choose your track and next step.'
-      );
+      await this.resumeJoinFlow();
     }
   },
 
@@ -2093,6 +2124,9 @@ const FamHack = {
       if (payload?.profile) {
         this.prefillChildProfileFields(payload.profile);
       }
+      if (payload?.parentInvite) {
+        this.prefillParentInviteEmail(payload.parentInvite);
+      }
       if (payload?.launch) {
         this.state.launch = payload.launch;
       }
@@ -2170,50 +2204,109 @@ const FamHack = {
     this.updateChildFocusSummary();
     this.showFieldError('join-choice-error', '');
     this.showStep('child-choice');
-    if (message) {
-      this.showPageMessage('join-page-message', message);
-    }
+    this.showPageMessage('join-page-message', message);
   },
 
-  handleChooseJoinWithCode() {
-    const focus = this.ensureChildFocus('join-choice-error');
-    if (!focus) {
-      return;
+  showJoinModeStep(mode, { message = '', skipFocusCheck = false } = {}) {
+    const focus = skipFocusCheck ? this.getSelectedChildFocus() : this.ensureChildFocus('join-choice-error');
+    if (!skipFocusCheck && !focus) {
+      return false;
     }
 
     this.updateChildFocusSummary();
+    this.showFieldError('join-choice-error', '');
     this.showFieldError('join-request-error', '');
-    this.showStep('join-team');
-    this.showPageMessage(
-      'join-page-message',
+    this.showFieldError('join-pool-error', '');
+    this.showFieldError('parent-invite-error', '');
+
+    if (mode === 'code') {
+      this.showStep('join-team');
+    } else if (mode === 'pool') {
+      this.showStep('join-pool');
+    } else if (mode === 'invite') {
+      this.prefillParentInviteEmail(this.state.registrationStatus?.parentInvite);
+      this.showStep('invite-parent');
+    } else {
+      return false;
+    }
+
+    this.showPageMessage('join-page-message', message);
+    return true;
+  },
+
+  async resumeJoinFlow({ justVerified = false } = {}) {
+    const status = this.state.registrationStatus || await this.fetchRegistrationStatus({ suppressMissing: true });
+    const joinMode = this.getJoinModeParam();
+    const activeRoute = this.getActiveChildRoute(status);
+    const hasJoinCode = Boolean(this.getJoinCodeValue());
+    const currentFocus = this.getSelectedChildFocus();
+
+    if (status?.parentInvite) {
+      this.prefillParentInviteEmail(status.parentInvite);
+    }
+
+    const canOpenDirectStep = Boolean(currentFocus);
+    const directMode = hasJoinCode ? '' : (joinMode || activeRoute);
+
+    if (directMode === 'pool') {
+      const isExistingPoolEntry = activeRoute === 'pool';
+      const focusLabel = status?.childPoolEntry?.childFocusLabel || this.getChildFocusLabel();
+      const message = isExistingPoolEntry
+        ? `You are already in the random-family pool${focusLabel ? ` as ${focusLabel}` : ''}. Update your details below or switch to a different path.`
+        : 'Enter the random-family pool and wait for a volunteer family to pick you up.';
+      if (this.showJoinModeStep('pool', { message, skipFocusCheck: !canOpenDirectStep })) {
+        return;
+      }
+    }
+
+    if (directMode === 'invite') {
+      const isExistingInvite = activeRoute === 'invite';
+      const parentEmail = status?.parentInvite?.parentEmail || '';
+      const message = isExistingInvite
+        ? `Your parent invite is live${parentEmail ? ` for ${parentEmail}` : ''}. Update it below or switch to a different path.`
+        : 'Enter one parent email and FamHack will send them your invite link.';
+      if (this.showJoinModeStep('invite', { message, skipFocusCheck: !canOpenDirectStep })) {
+        return;
+      }
+    }
+
+    if (joinMode === 'code' && this.state.teamPreview && canOpenDirectStep) {
+      this.showJoinModeStep('code', {
+        message: `Review ${this.state.teamPreview.name} and submit your request.`,
+        skipFocusCheck: true,
+      });
+      return;
+    }
+
+    this.showJoinChoiceStep(
       this.state.teamPreview
-        ? 'Review the family below and submit your request.'
-        : 'Enter a family code, then submit your request.'
+        ? (justVerified
+          ? `Verified. Choose your track, then decide how you want to join ${this.state.teamPreview.name}.`
+          : `Choose your track, then decide how you want to join ${this.state.teamPreview.name}.`)
+        : (justVerified
+          ? 'Verified. Choose your track and how you want to join.'
+          : 'Choose your track and how you want to join.')
     );
   },
 
-  handleChooseJoinPool() {
-    const focus = this.ensureChildFocus('join-choice-error');
-    if (!focus) {
-      return;
-    }
+  handleChooseJoinWithCode() {
+    this.showJoinModeStep('code', {
+      message: this.state.teamPreview
+        ? 'Review the family below and submit your request.'
+        : 'Enter a family code, then submit your request.',
+    });
+  },
 
-    this.updateChildFocusSummary();
-    this.showFieldError('join-pool-error', '');
-    this.showStep('join-pool');
-    this.showPageMessage('join-page-message', 'Join the random family pool and FamHack can match you with a volunteer parent family.');
+  handleChooseJoinPool() {
+    this.showJoinModeStep('pool', {
+      message: 'Enter the random-family pool and wait for a volunteer family to pick you up.',
+    });
   },
 
   handleChooseInviteParent() {
-    const focus = this.ensureChildFocus('join-choice-error');
-    if (!focus) {
-      return;
-    }
-
-    this.updateChildFocusSummary();
-    this.showFieldError('parent-invite-error', '');
-    this.showStep('invite-parent');
-    this.showPageMessage('join-page-message', 'Enter one parent email and FamHack will send them your invite link.');
+    this.showJoinModeStep('invite', {
+      message: 'Enter one parent email and FamHack will send them your invite link.',
+    });
   },
 
   async handleSendOTP() {
@@ -2343,7 +2436,7 @@ const FamHack = {
           }
         }
 
-        this.showJoinChoiceStep('Verified. Choose your focus and how you want to find a family.');
+        await this.resumeJoinFlow({ justVerified: true });
       }
     } catch (error) {
       console.error(error);
@@ -2588,7 +2681,10 @@ const FamHack = {
     if (!this.state.teamPreview) {
       const team = await this.lookupTeam(joinCode, { showErrors: true });
       if (!team) {
-        this.showStep('email');
+        this.showJoinModeStep('code', {
+          message: 'Enter a valid family code to continue.',
+          skipFocusCheck: true,
+        });
         return;
       }
     }
@@ -2648,7 +2744,7 @@ const FamHack = {
     this.setButtonState(joinPoolButton, {
       busy: true,
       label: 'Joining...',
-      idleLabel: 'Join a Random Family',
+      idleLabel: 'Enter Random Family Pool',
     });
 
     try {
@@ -2669,7 +2765,7 @@ const FamHack = {
       this.setButtonState(joinPoolButton, {
         busy: false,
         label: 'Joining...',
-        idleLabel: 'Join a Random Family',
+        idleLabel: 'Enter Random Family Pool',
       });
     }
   },
@@ -4239,6 +4335,92 @@ const FamHack = {
     }
   },
 
+  renderChildOnboardingState(status = null) {
+    const childOnboardingHeading = document.getElementById('dashboard-child-onboarding-heading');
+    const childOnboardingCopy = document.getElementById('dashboard-child-onboarding-copy');
+    const childOnboardingStatus = document.getElementById('dashboard-child-onboarding-status');
+    const childOnboardingLink = document.getElementById('dashboard-child-onboarding-link');
+    const trackCard = document.getElementById('dashboard-child-track-card');
+    const trackTitle = document.getElementById('dashboard-child-track-title');
+    const trackHelper = document.getElementById('dashboard-child-track-helper');
+    const routeCard = document.getElementById('dashboard-child-route-card');
+    const routeTitle = document.getElementById('dashboard-child-route-title');
+    const routeHelper = document.getElementById('dashboard-child-route-helper');
+    const activeRoute = this.getActiveChildRoute(status);
+    const profile = status?.profile || null;
+    const routeSource = activeRoute === 'pool'
+      ? status?.childPoolEntry
+      : activeRoute === 'invite'
+        ? status?.parentInvite
+        : null;
+    const trackLabel = routeSource?.childFocusLabel || profile?.childFocusLabel || '';
+    const trackDescription = routeSource?.childFocusDescription || profile?.childFocusDescription || '';
+    let heading = 'Join FamHack';
+    let copy = trackLabel
+      ? 'Your track is saved. Choose how you want to join next.'
+      : 'Choose your track and how you want to join.';
+    let statusCopy = '';
+    let linkHref = '/join';
+    let linkLabel = trackLabel ? 'Finish Join Setup' : 'Choose My Path';
+    let routeTitleText = '';
+    let routeHelperText = '';
+
+    if (trackCard && trackTitle && trackHelper) {
+      trackCard.hidden = !trackLabel;
+      trackTitle.textContent = trackLabel;
+      trackHelper.textContent = trackDescription || '';
+    }
+
+    if (activeRoute === 'pool') {
+      heading = 'Random Family Pool';
+      copy = 'You are in the matching pool. A volunteer family can pick you up from their dashboard.';
+      statusCopy = 'Waiting for a volunteer family to accept you.';
+      linkHref = '/join?mode=pool';
+      linkLabel = 'Change My Preferences';
+      routeTitleText = 'Random Family Pool';
+      routeHelperText = 'Your details are saved here until you switch routes or get matched.';
+    } else if (activeRoute === 'invite') {
+      const parentEmail = status?.parentInvite?.parentEmail || '';
+      heading = 'Parent Invite Sent';
+      copy = parentEmail
+        ? `We emailed ${parentEmail}. When they register a family, you will be added automatically.`
+        : 'Your parent invite is out. When they register a family, you will be added automatically.';
+      statusCopy = parentEmail
+        ? `Invite sent to ${parentEmail}.`
+        : 'Waiting for your parent to register.';
+      linkHref = '/join?mode=invite';
+      linkLabel = 'Change My Preferences';
+      routeTitleText = 'Parent Invite';
+      routeHelperText = parentEmail
+        ? `Currently addressed to ${parentEmail}.`
+        : 'FamHack will add you automatically when they register.';
+    }
+
+    if (childOnboardingHeading) {
+      childOnboardingHeading.textContent = heading;
+    }
+
+    if (childOnboardingCopy) {
+      childOnboardingCopy.textContent = copy;
+    }
+
+    if (routeCard && routeTitle && routeHelper) {
+      routeCard.hidden = !routeTitleText;
+      routeTitle.textContent = routeTitleText;
+      routeHelper.textContent = routeHelperText;
+    }
+
+    if (childOnboardingStatus) {
+      childOnboardingStatus.hidden = !statusCopy;
+      childOnboardingStatus.textContent = statusCopy;
+    }
+
+    if (childOnboardingLink) {
+      childOnboardingLink.href = linkHref;
+      this.setButtonLabel(childOnboardingLink, linkLabel);
+    }
+  },
+
   renderDashboardOnboarding(registration, status = null) {
     this.state.dashboard = null;
 
@@ -4250,9 +4432,6 @@ const FamHack = {
     const parentOnboarding = document.getElementById('dashboard-parent-onboarding');
     const childOnboarding = document.getElementById('dashboard-child-onboarding');
     const parentOnboardingCopy = document.getElementById('dashboard-parent-onboarding-copy');
-    const childOnboardingCopy = document.getElementById('dashboard-child-onboarding-copy');
-    const childOnboardingStatus = document.getElementById('dashboard-child-onboarding-status');
-    const childOnboardingLink = document.getElementById('dashboard-child-onboarding-link');
 
     this.state.registrationStatus = status || this.state.registrationStatus;
 
@@ -4294,10 +4473,6 @@ const FamHack = {
         : 'You are registered as a Parent. Choose whether you are registering your own family or volunteering to parent children who need one.';
     }
 
-    if (childOnboardingCopy) {
-      childOnboardingCopy.textContent = 'Choose whether to join an existing family, ask a parent to register one, or join a random volunteer family.';
-    }
-
     this.setParentTeamKind(this.state.parentInviteToken ? 'family' : this.getParentTeamKind());
 
     document.querySelectorAll('[data-parent-team-kind-card]').forEach((card) => {
@@ -4311,23 +4486,7 @@ const FamHack = {
       }
     });
 
-    if (childOnboardingStatus) {
-      if (status?.childPoolEntry) {
-        childOnboardingStatus.hidden = false;
-        childOnboardingStatus.textContent = `${status.childPoolEntry.childFocusLabel || 'Child'} pool entry live. Approved parents can now add you directly.`;
-      } else if (status?.parentInvite) {
-        childOnboardingStatus.hidden = false;
-        childOnboardingStatus.textContent = `Parent invite sent to ${status.parentInvite.parentEmail}. Once they create a family, you will be added automatically.`;
-      } else {
-        childOnboardingStatus.hidden = true;
-        childOnboardingStatus.textContent = '';
-      }
-    }
-
-    if (childOnboardingLink) {
-      childOnboardingLink.href = '/join';
-      this.setButtonLabel(childOnboardingLink, status?.childPoolEntry || status?.parentInvite ? 'Open Child Options' : 'Go to Join');
-    }
+    this.renderChildOnboardingState(status);
   },
 
   renderApprovedMembers(container, members, dashboard) {

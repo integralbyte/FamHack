@@ -1164,6 +1164,7 @@ button.role-card {
   font-family: 'Azeret Mono', monospace;
   font-size: 1.3rem;
   font-weight: 600;
+  line-height: 1.28;
   color: #ffe9ce;
 }
 
@@ -1598,6 +1599,7 @@ button.role-card {
   color: #ffe9ce;
   font-family: 'Azeret Mono', monospace;
   font-size: 1rem;
+  line-height: 1.38;
 }
 
 .team-preview-static {

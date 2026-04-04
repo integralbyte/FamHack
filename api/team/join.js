@@ -4,6 +4,7 @@ import { assertNormalParticipationOpen } from '../_lib/launch.js';
 import {
   assertAllowedEmail,
   assertRegisteredRole,
+  cancelPendingParentInvitesForUser,
   getApprovedMemberCount,
   getMembershipByUserId,
   getTeamLimitMessage,
@@ -91,7 +92,6 @@ export default async function handler(req, res) {
     await upsertProfile(user, fullName, studyYear, {
       childFocus,
     });
-    await withdrawChildPoolEntryForUser(user.id);
 
     const supabase = getServiceClient();
     const { error } = await supabase.from('team_memberships').upsert(
@@ -110,6 +110,13 @@ export default async function handler(req, res) {
 
     if (error) {
       throw new Error(error.message);
+    }
+
+    try {
+      await withdrawChildPoolEntryForUser(user.id);
+      await cancelPendingParentInvitesForUser(user.id);
+    } catch (cleanupError) {
+      console.error(cleanupError);
     }
 
     res.status(200).json({
