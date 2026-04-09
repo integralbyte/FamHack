@@ -22,6 +22,7 @@ const FamHack = {
     pendingEmail: '',
     registerIntent: 'role',
     childFocus: '',
+    childJoinMode: '',
     parentTeamKind: 'family',
     teamPreview: null,
     resendTimer: null,
@@ -344,6 +345,7 @@ const FamHack = {
     this.state.registration = null;
     this.state.registrationStatus = null;
     this.state.childFocus = '';
+    this.state.childJoinMode = '';
     this.state.parentTeamKind = 'family';
     this.state.ctf = null;
     this.state.ctfPendingAdvanceState = null;
@@ -436,6 +438,22 @@ const FamHack = {
     this.updateChildFocusSummary();
   },
 
+  setChildJoinMode(mode) {
+    const normalizedMode = ['code', 'pool', 'invite'].includes(String(mode || '').trim().toLowerCase())
+      ? String(mode || '').trim().toLowerCase()
+      : '';
+
+    this.state.childJoinMode = normalizedMode;
+
+    document.querySelectorAll('[data-child-join-mode-card]').forEach((card) => {
+      card.classList.toggle('is-selected', card.dataset.childJoinModeCard === normalizedMode);
+    });
+  },
+
+  getSelectedChildJoinMode() {
+    return String(this.state.childJoinMode || '').trim().toLowerCase();
+  },
+
   getSelectedChildFocus() {
     return String(this.state.childFocus || '').trim().toLowerCase();
   },
@@ -471,7 +489,7 @@ const FamHack = {
 
     if (helper) {
       helper.textContent = this.state.parentTeamKind === 'volunteer'
-        ? 'Volunteer parents are matched with children who choose the random-family route.'
+        ? 'Volunteer families are saved for later FamHack assignment.'
         : 'Once your family is created, the family code, letter link, and requests will appear here.';
     }
 
@@ -1872,6 +1890,9 @@ const FamHack = {
     document.getElementById('back-to-choice-from-code-btn')?.addEventListener('click', () => this.showJoinChoiceStep());
     document.getElementById('back-to-choice-from-pool-btn')?.addEventListener('click', () => this.showJoinChoiceStep());
     document.getElementById('back-to-choice-from-invite-btn')?.addEventListener('click', () => this.showJoinChoiceStep());
+    document.querySelectorAll('[data-child-join-mode-card]').forEach((card) => {
+      card.addEventListener('click', () => this.setChildJoinMode(card.dataset.childJoinModeCard));
+    });
     document.querySelectorAll('[data-child-focus-card]').forEach((card) => {
       card.addEventListener('click', () => {
         this.setChildFocus(card.dataset.childFocusCard);
@@ -2213,6 +2234,7 @@ const FamHack = {
       return false;
     }
 
+    this.setChildJoinMode(mode);
     this.updateChildFocusSummary();
     this.showFieldError('join-choice-error', '');
     this.showFieldError('join-request-error', '');
@@ -2240,41 +2262,56 @@ const FamHack = {
     const activeRoute = this.getActiveChildRoute(status);
     const hasJoinCode = Boolean(this.getJoinCodeValue());
     const currentFocus = this.getSelectedChildFocus();
+    const explicitMode = joinMode || '';
+    const savedMode = activeRoute || (hasJoinCode ? 'code' : '');
 
     if (status?.parentInvite) {
       this.prefillParentInviteEmail(status.parentInvite);
     }
 
-    const canOpenDirectStep = Boolean(currentFocus);
-    const directMode = hasJoinCode ? '' : (joinMode || activeRoute);
-
-    if (directMode === 'pool') {
-      const isExistingPoolEntry = activeRoute === 'pool';
-      const focusLabel = status?.childPoolEntry?.childFocusLabel || this.getChildFocusLabel();
-      const message = isExistingPoolEntry
-        ? `You are already in the random-family pool${focusLabel ? ` as ${focusLabel}` : ''}. Update your details below or switch to a different path.`
-        : 'Enter the random-family pool and wait for a volunteer family to pick you up.';
-      if (this.showJoinModeStep('pool', { message, skipFocusCheck: !canOpenDirectStep })) {
-        return;
-      }
+    if (savedMode) {
+      this.setChildJoinMode(savedMode);
     }
 
-    if (directMode === 'invite') {
-      const isExistingInvite = activeRoute === 'invite';
-      const parentEmail = status?.parentInvite?.parentEmail || '';
-      const message = isExistingInvite
-        ? `Your parent invite is live${parentEmail ? ` for ${parentEmail}` : ''}. Update it below or switch to a different path.`
-        : 'Enter one parent email and FamHack will send them your invite link.';
-      if (this.showJoinModeStep('invite', { message, skipFocusCheck: !canOpenDirectStep })) {
-        return;
-      }
+    if (explicitMode === 'pool' && currentFocus) {
+      this.showJoinModeStep('pool', {
+        message: 'Update your pool details below or switch to a different path.',
+        skipFocusCheck: true,
+      });
+      return;
     }
 
-    if (joinMode === 'code' && this.state.teamPreview && canOpenDirectStep) {
+    if (explicitMode === 'invite' && currentFocus) {
+      this.showJoinModeStep('invite', {
+        message: 'Update the parent invite below or switch to a different path.',
+        skipFocusCheck: true,
+      });
+      return;
+    }
+
+    if (explicitMode === 'code' && this.state.teamPreview && currentFocus) {
       this.showJoinModeStep('code', {
         message: `Review ${this.state.teamPreview.name} and submit your request.`,
         skipFocusCheck: true,
       });
+      return;
+    }
+
+    if (activeRoute === 'pool') {
+      const focusLabel = status?.childPoolEntry?.childFocusLabel || this.getChildFocusLabel();
+      this.showJoinChoiceStep(
+        `You are already in the random-family pool${focusLabel ? ` as ${focusLabel}` : ''}. Your saved path is selected below.`
+      );
+      return;
+    }
+
+    if (activeRoute === 'invite') {
+      const parentEmail = status?.parentInvite?.parentEmail || '';
+      this.showJoinChoiceStep(
+        parentEmail
+          ? `Your parent invite to ${parentEmail} is active. Your saved path is selected below.`
+          : 'Your parent invite is active. Your saved path is selected below.'
+      );
       return;
     }
 
@@ -2299,7 +2336,7 @@ const FamHack = {
 
   handleChooseJoinPool() {
     this.showJoinModeStep('pool', {
-      message: 'Enter the random-family pool and wait for a volunteer family to pick you up.',
+      message: 'Enter the random-family pool and FamHack will assign you to a family later.',
     });
   },
 
@@ -4291,7 +4328,7 @@ const FamHack = {
     }
 
     if (inviteGrid) {
-      inviteGrid.hidden = !(dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved');
+      inviteGrid.hidden = !(dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved' && dashboard.team.kind !== 'volunteer');
     }
 
     if (ctfLaunchTitle && ctfLaunchCopy && ctfLaunchLink) {
@@ -4313,7 +4350,7 @@ const FamHack = {
       } else {
         statusBanner.hidden = !(dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved');
         statusBanner.textContent = dashboard.team.kind === 'volunteer'
-          ? 'Volunteer parents can invite children directly or add them from the random family pool below.'
+          ? 'Volunteer families are saved for later FamHack assignment.'
           : 'Share the family code or the child letter link below with other parents and children.';
       }
     }
@@ -4324,8 +4361,7 @@ const FamHack = {
       pendingSection.hidden = false;
       this.renderPendingMembers(pendingList, dashboard.pendingRequests, dashboard);
       if (poolSection) {
-        poolSection.hidden = false;
-        this.renderChildPool(poolList, dashboard.childPool || [], dashboard);
+        poolSection.hidden = true;
       }
     } else if (pendingSection) {
       pendingSection.hidden = true;
@@ -4373,12 +4409,12 @@ const FamHack = {
 
     if (activeRoute === 'pool') {
       heading = 'Random Family Pool';
-      copy = 'You are in the matching pool. A volunteer family can pick you up from their dashboard.';
-      statusCopy = 'Waiting for a volunteer family to accept you.';
-      linkHref = '/join?mode=pool';
+      copy = 'You are in the random-family pool. FamHack will assign you to a family later.';
+      statusCopy = 'Waiting for FamHack to assign you to a family.';
+      linkHref = '/join';
       linkLabel = 'Change My Preferences';
       routeTitleText = 'Random Family Pool';
-      routeHelperText = 'Your details are saved here until you switch routes or get matched.';
+      routeHelperText = 'Your details stay saved here until you switch paths or FamHack assigns you.';
     } else if (activeRoute === 'invite') {
       const parentEmail = status?.parentInvite?.parentEmail || '';
       heading = 'Parent Invite Sent';
@@ -4388,7 +4424,7 @@ const FamHack = {
       statusCopy = parentEmail
         ? `Invite sent to ${parentEmail}.`
         : 'Waiting for your parent to register.';
-      linkHref = '/join?mode=invite';
+      linkHref = '/join';
       linkLabel = 'Change My Preferences';
       routeTitleText = 'Parent Invite';
       routeHelperText = parentEmail
