@@ -707,7 +707,7 @@ const FamHack = {
       title: 'Your parent invited you to FamHack.',
       paragraphs: [
         `Your parent has invited you to take part in FamHack with them through ${familyName}.`,
-        'Enter your email, confirm it, choose Hunter or Hacker, and you can join the family with less friction.',
+        'Sign in, pick your track, and join the family.',
       ],
       confirmLabel: 'Join The Family',
     });
@@ -2275,7 +2275,7 @@ const FamHack = {
 
     if (explicitMode === 'pool' && currentFocus) {
       this.showJoinModeStep('pool', {
-        message: 'Update your pool details below or switch to a different path.',
+        message: 'Update your pool entry.',
         skipFocusCheck: true,
       });
       return;
@@ -2283,7 +2283,7 @@ const FamHack = {
 
     if (explicitMode === 'invite' && currentFocus) {
       this.showJoinModeStep('invite', {
-        message: 'Update the parent invite below or switch to a different path.',
+        message: 'Update your parent invite.',
         skipFocusCheck: true,
       });
       return;
@@ -2300,7 +2300,7 @@ const FamHack = {
     if (activeRoute === 'pool') {
       const focusLabel = status?.childPoolEntry?.childFocusLabel || this.getChildFocusLabel();
       this.showJoinChoiceStep(
-        `You are already in the random-family pool${focusLabel ? ` as ${focusLabel}` : ''}. Your saved path is selected below.`
+        `You are already in the random-family pool${focusLabel ? ` as ${focusLabel}` : ''}.`
       );
       return;
     }
@@ -2309,8 +2309,8 @@ const FamHack = {
       const parentEmail = status?.parentInvite?.parentEmail || '';
       this.showJoinChoiceStep(
         parentEmail
-          ? `Your parent invite to ${parentEmail} is active. Your saved path is selected below.`
-          : 'Your parent invite is active. Your saved path is selected below.'
+          ? `Your parent invite to ${parentEmail} is active.`
+          : 'Your parent invite is active.'
       );
       return;
     }
@@ -2336,7 +2336,7 @@ const FamHack = {
 
   handleChooseJoinPool() {
     this.showJoinModeStep('pool', {
-      message: 'Enter the random-family pool and FamHack will assign you to a family later.',
+      message: 'Enter the random-family pool.',
     });
   },
 
@@ -4393,8 +4393,8 @@ const FamHack = {
     const trackDescription = routeSource?.childFocusDescription || profile?.childFocusDescription || '';
     let heading = 'Join FamHack';
     let copy = trackLabel
-      ? 'Your track is saved. Choose how you want to join next.'
-      : 'Choose your track and how you want to join.';
+      ? 'Track selected.'
+      : 'Choose your track.';
     let statusCopy = '';
     let linkHref = '/join';
     let linkLabel = trackLabel ? 'Finish Join Setup' : 'Choose My Path';
@@ -4409,27 +4409,27 @@ const FamHack = {
 
     if (activeRoute === 'pool') {
       heading = 'Random Family Pool';
-      copy = 'You are in the random-family pool. FamHack will assign you to a family later.';
-      statusCopy = 'Waiting for FamHack to assign you to a family.';
+      copy = 'You are in the random-family pool.';
+      statusCopy = 'Assignment pending.';
       linkHref = '/join';
       linkLabel = 'Change My Preferences';
       routeTitleText = 'Random Family Pool';
-      routeHelperText = 'Your details stay saved here until you switch paths or FamHack assigns you.';
+      routeHelperText = 'FamHack will assign you later.';
     } else if (activeRoute === 'invite') {
       const parentEmail = status?.parentInvite?.parentEmail || '';
       heading = 'Parent Invite Sent';
       copy = parentEmail
-        ? `We emailed ${parentEmail}. When they register a family, you will be added automatically.`
-        : 'Your parent invite is out. When they register a family, you will be added automatically.';
-      statusCopy = parentEmail
         ? `Invite sent to ${parentEmail}.`
-        : 'Waiting for your parent to register.';
+        : 'Parent invite sent.';
+      statusCopy = parentEmail
+        ? `Waiting for ${parentEmail}.`
+        : 'Waiting for your parent.';
       linkHref = '/join';
       linkLabel = 'Change My Preferences';
       routeTitleText = 'Parent Invite';
       routeHelperText = parentEmail
-        ? `Currently addressed to ${parentEmail}.`
-        : 'FamHack will add you automatically when they register.';
+        ? parentEmail
+        : 'You will be added when they register.';
     }
 
     if (childOnboardingHeading) {
