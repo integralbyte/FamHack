@@ -412,6 +412,10 @@
               </div>
 
               <div id="dashboard-members-shell">
+              <section id="dashboard-roadmap" class="dashboard-roadmap" hidden>
+                <p class="dashboard-roadmap-kicker">Next Steps</p>
+                <div id="dashboard-roadmap-list" class="dashboard-roadmap-list"></div>
+              </section>
 
               <div id="invite-grid" class="invite-grid">
                 <div class="invite-section">
@@ -430,6 +434,12 @@
                     <input type="text" id="invite-link-input" class="invite-link-input" readonly value="Loading..." />
                     <button id="copy-invite-btn" class="copy-btn">Copy</button>
                   </div>
+                </div>
+
+                <div class="invite-section invite-section-action">
+                  <p class="invite-label">Ready-To-Send Email</p>
+                  <p class="register-subheading invite-copy">Open your mail app with the family name, code, and child letter link already filled in.</p>
+                  <button id="email-invite-btn" class="copy-btn copy-btn-secondary email-invite-btn">Email Invite</button>
                 </div>
               </div>
 
@@ -487,7 +497,7 @@
                     </svg>
                   </div>
                 </div>
-                <h2 class="members-heading">Pending Requests</h2>
+                <h2 class="members-heading">Approve Requests</h2>
                 <div id="pending-list" class="members-list"></div>
                 <div data-wf--bracket--variant="bottom-right"
                   class="bracket w-variant-c41bfea2-0a75-2fc3-2617-7b4a4375ac19">

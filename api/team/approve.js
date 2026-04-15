@@ -5,6 +5,7 @@ import {
   assertAllowedEmail,
   getApprovedMemberCount,
   getMembershipByUserId,
+  getProfileByUserId,
   getTeamLimitMessage,
   isTeamLimitError,
   MAX_TEAM_SIZE,
@@ -31,22 +32,17 @@ export default async function handler(req, res) {
     const body = readJsonBody(req);
     const membershipId = String(body.membershipId || '').trim();
     const decision = body.decision === 'declined' ? 'declined' : body.decision === 'approved' ? 'approved' : null;
-    const approvedRole = sanitizeJoinRole(body.role);
+    const requestedOverrideRole = sanitizeJoinRole(body.role);
 
     if (!membershipId || !decision) {
       sendError(res, 400, 'A membership id and valid decision are required');
       return;
     }
 
-    if (decision === 'approved' && !approvedRole) {
-      sendError(res, 400, 'Choose whether this person is joining as a Parent or Child');
-      return;
-    }
-
     const supabase = getServiceClient();
     const { data: targetMembership, error: targetError } = await supabase
       .from('team_memberships')
-      .select('id, team_id, role, status')
+      .select('id, team_id, user_id, role, status')
       .eq('id', membershipId)
       .maybeSingle();
 
@@ -71,6 +67,13 @@ export default async function handler(req, res) {
         return;
       }
     }
+
+    const targetProfile = decision === 'approved'
+      ? await getProfileByUserId(targetMembership.user_id)
+      : null;
+    const approvedRole = decision === 'approved'
+      ? requestedOverrideRole || sanitizeJoinRole(targetProfile?.registered_role) || targetMembership.role
+      : null;
 
     const { error } = await supabase
       .from('team_memberships')

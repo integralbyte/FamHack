@@ -255,91 +255,156 @@
                   </svg>
                 </div>
               </div>
+              <div class="flow-shell">
+                <aside class="flow-sidebar">
+                  <p class="flow-kicker">Guided Registration</p>
+                  <h1 id="register-heading" class="register-heading flow-heading">Join FamHack in 4 steps</h1>
+                  <p id="register-subheading" class="register-subheading flow-subheading">Choose your role, verify your university email, then continue to family setup.</p>
 
-              <h1 id="register-heading" class="register-heading">Register</h1>
-              <p id="register-subheading" class="register-subheading">Choose whether you are joining as a Parent or Child.</p>
-              <p id="register-page-message" class="success-message page-message"></p>
-
-              <div class="register-step active" data-step="role">
-                <div class="register-form">
-                  <div class="role-grid">
-                    <button id="choose-parent-btn" type="button" class="role-card">
-                      <p class="role-card-eyebrow">Parent</p>
-                      <h2 class="role-card-heading">Register as Parent</h2>
-                      <p class="role-card-copy">Save your place now. Create your family or volunteer to help another one.</p>
-                    </button>
-
-                    <button id="choose-child-btn" type="button" class="role-card">
-                      <p class="role-card-eyebrow">Child</p>
-                      <h2 class="role-card-heading">Register as Child</h2>
-                      <p class="role-card-copy">Save your place now. Pick a track, then join a family or ask a parent to register one.</p>
-                    </button>
-                  </div>
-                  <p class="error-message" id="role-error"></p>
-                </div>
-              </div>
-
-              <div class="register-step" data-step="email">
-                <div class="register-form">
-                  <div class="form-group">
-                    <label id="email-label" class="form-label" for="email-input">Email</label>
-                    <input type="email" id="email-input" class="form-input" placeholder="s1234567@ed.ac.uk"
-                      autocomplete="email" />
-                    <p class="error-message" id="email-error"></p>
-                  </div>
-                  <button id="send-otp-btn" class="button-link w-inline-block" style="width: 100%;">
-                    <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Send verification code</p>
-                      <div class="button-icon">
-                        <div class="button-icon-svg w-embed">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                            <path
-                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                              fill="currentColor" stroke-width="0.155153" />
-                          </svg>
-                        </div>
+                  <div class="flow-progress" aria-label="Registration progress">
+                    <div class="flow-progress-step is-current" data-flow-step="role">
+                      <span class="flow-progress-number">1</span>
+                      <div>
+                        <p class="flow-progress-label">Choose role</p>
+                        <p class="flow-progress-copy">Parent or Child</p>
                       </div>
                     </div>
-                  </button>
-                  <button id="back-from-parent-btn" type="button" class="resend-link">Back</button>
-                </div>
-              </div>
-
-              <div class="register-step" data-step="otp">
-                <div class="register-form">
-                  <p class="form-label" style="text-align: center; margin-bottom: 20px;">Enter the 6-digit code sent to your email</p>
-                  <div class="otp-inputs">
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]"
-                      autocomplete="one-time-code" />
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
-                    <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
-                  </div>
-                  <p class="error-message" id="otp-error"></p>
-                  <button id="verify-otp-btn" class="button-link w-inline-block" style="width: 100%;" disabled>
-                    <div class="button" style="width: 100%; justify-content: center;">
-                      <p class="button-label">Verify</p>
-                      <div class="button-icon">
-                        <div class="button-icon-svg w-embed">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
-                            <path
-                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
-                              fill="currentColor" stroke-width="0.155153" />
-                          </svg>
-                        </div>
+                    <div class="flow-progress-step" data-flow-step="email">
+                      <span class="flow-progress-number">2</span>
+                      <div>
+                        <p class="flow-progress-label">Verify email</p>
+                        <p class="flow-progress-copy">Use your university inbox</p>
                       </div>
                     </div>
-                  </button>
-                  <button id="resend-otp-btn" class="resend-link" disabled>Resend in 30s</button>
-                </div>
-              </div>
+                    <div class="flow-progress-step" data-flow-step="otp">
+                      <span class="flow-progress-number">3</span>
+                      <div>
+                        <p class="flow-progress-label">Confirm code</p>
+                        <p class="flow-progress-copy">Enter the 6-digit code</p>
+                      </div>
+                    </div>
+                    <div class="flow-progress-step" data-flow-step="registered">
+                      <span class="flow-progress-number">4</span>
+                      <div>
+                        <p class="flow-progress-label">Continue</p>
+                        <p class="flow-progress-copy">Head to family setup</p>
+                      </div>
+                    </div>
+                  </div>
 
-              <div class="register-step" data-step="registered">
-                <div class="register-form">
-                  <p id="registered-role" class="success-message" style="text-align: center; margin-top: 4px;"></p>
-                  <a href="/" class="resend-link" style="display: inline-block; margin-top: 20px;">Back home</a>
+                  <div class="flow-aside-card">
+                    <p class="flow-aside-label">Current path</p>
+                    <p id="register-role-summary" class="flow-aside-value">Choose Parent or Child to begin.</p>
+                    <p id="register-side-copy" class="flow-aside-copy">Pick the role you want to use on your family team. You can decide whether to create or join a family after verification.</p>
+                  </div>
+                </aside>
+
+                <div class="flow-panel">
+                  <p id="register-page-message" class="success-message page-message"></p>
+
+                  <div class="register-step active" data-step="role">
+                    <div class="register-form register-step-card">
+                      <div class="step-header">
+                        <p class="step-kicker">Step 1</p>
+                        <h2 class="step-heading">Choose how you are joining</h2>
+                        <p class="step-copy">This sets your role on the family team. You can still decide whether to create or join a family after you verify.</p>
+                      </div>
+                      <div class="role-grid">
+                        <button id="choose-parent-btn" type="button" class="role-card">
+                          <p class="role-card-eyebrow">Parent</p>
+                          <h2 class="role-card-heading">Create or join a family</h2>
+                          <p class="role-card-copy">Use this if you want to lead a family or join one as a parent later.</p>
+                        </button>
+
+                        <button id="choose-child-btn" type="button" class="role-card">
+                          <p class="role-card-eyebrow">Child</p>
+                          <h2 class="role-card-heading">Join an existing family</h2>
+                          <p class="role-card-copy">Use this if someone in your family will share a code or invite link with you.</p>
+                        </button>
+                      </div>
+                      <p class="error-message" id="role-error"></p>
+                    </div>
+                  </div>
+
+                  <div class="register-step" data-step="email">
+                    <div class="register-form register-step-card">
+                      <div class="step-header">
+                        <p class="step-pill" data-register-role-chip hidden></p>
+                        <p class="step-kicker">Step 2</p>
+                        <h2 class="step-heading">Verify your university email</h2>
+                        <p class="step-copy">We will send a one-time code to your inbox.</p>
+                      </div>
+                      <div class="form-group">
+                        <label id="email-label" class="form-label" for="email-input">Email</label>
+                        <input type="email" id="email-input" class="form-input" placeholder="s1234567@ed.ac.uk"
+                          autocomplete="email" />
+                        <p class="error-message" id="email-error"></p>
+                      </div>
+                      <button id="send-otp-btn" class="button-link w-inline-block" style="width: 100%;">
+                        <div class="button" style="width: 100%; justify-content: center;">
+                          <p class="button-label">Send verification code</p>
+                          <div class="button-icon">
+                            <div class="button-icon-svg w-embed">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                                <path
+                                  d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                                  fill="currentColor" stroke-width="0.155153" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                      <button id="back-from-parent-btn" type="button" class="resend-link">Back</button>
+                    </div>
+                  </div>
+
+                  <div class="register-step" data-step="otp">
+                    <div class="register-form register-step-card">
+                      <div class="step-header">
+                        <p class="step-pill" data-register-role-chip hidden></p>
+                        <p class="step-kicker">Step 3</p>
+                        <h2 class="step-heading">Enter the 6-digit code</h2>
+                        <p class="step-copy">Use the latest code from your email.</p>
+                      </div>
+                      <div class="otp-inputs">
+                        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]"
+                          autocomplete="one-time-code" />
+                        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
+                        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
+                        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
+                        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
+                        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]" />
+                      </div>
+                      <p class="error-message" id="otp-error"></p>
+                      <button id="verify-otp-btn" class="button-link w-inline-block" style="width: 100%;" disabled>
+                        <div class="button" style="width: 100%; justify-content: center;">
+                          <p class="button-label">Verify</p>
+                          <div class="button-icon">
+                            <div class="button-icon-svg w-embed">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                                <path
+                                  d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                                  fill="currentColor" stroke-width="0.155153" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                      <button id="resend-otp-btn" class="resend-link" disabled>Resend in 30s</button>
+                    </div>
+                  </div>
+
+                  <div class="register-step" data-step="registered">
+                    <div class="register-form register-step-card">
+                      <div class="step-header">
+                        <p class="step-kicker">Done</p>
+                        <h2 class="step-heading">You are registered</h2>
+                        <p class="step-copy">We will send you to the right family setup flow when it is available.</p>
+                      </div>
+                      <p id="registered-role" class="success-message" style="text-align: center; margin-top: 4px;"></p>
+                      <a href="/" class="resend-link" style="display: inline-block; margin-top: 20px;">Back home</a>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -395,14 +460,6 @@
           </div>
         </footer>
       </div>
-    </div>
-  </div>
-  <div id="invite-letter-modal" class="invite-letter-modal" hidden aria-labelledby="invite-letter-title" aria-modal="true" role="dialog">
-    <div class="invite-letter-card">
-      <p id="invite-letter-kicker" class="invite-letter-kicker">Invitation</p>
-      <h2 id="invite-letter-title" class="invite-letter-title">Your child needs you.</h2>
-      <div id="invite-letter-body" class="invite-letter-body"></div>
-      <button id="invite-letter-confirm" type="button" class="copy-btn invite-letter-confirm" data-invite-letter-close>Continue</button>
     </div>
   </div>
 

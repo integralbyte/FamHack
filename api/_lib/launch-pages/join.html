@@ -252,12 +252,22 @@
                 </div>
               </div>
 
-              <h1 class="join-heading">Join FamHack</h1>
-              <p class="register-subheading">Choose your track, then join with a family code, send a parent invite, or enter the random-family pool.</p>
+              <h1 id="join-heading" class="join-heading">Join FamHack</h1>
+              <p id="join-subheading" class="register-subheading">Verify your email, choose your track, then follow one clear path into a family.</p>
               <p id="join-page-message" class="success-message page-message"></p>
+              <div class="team-preview team-preview-static team-preview-focus">
+                <p class="team-preview-label">Your FamHack Role</p>
+                <p id="join-role-summary" class="team-preview-name">We will use your registered FamHack role after you sign in.</p>
+                <p id="join-side-copy" class="register-subheading helper-copy">Start by verifying your university email. The next steps adapt to your registered role.</p>
+              </div>
 
               <div class="register-step active" data-step="email">
-                <div class="register-form">
+                <div class="register-form register-step-card">
+                  <div class="step-header">
+                    <p class="step-kicker">Step 1</p>
+                    <h2 class="step-heading">Start here</h2>
+                    <p class="step-copy">Enter a family code if you already have one, then verify your university email.</p>
+                  </div>
                   <div class="form-group">
                     <label class="form-label" for="join-code-input">Family Code (Optional)</label>
                     <input type="text" id="join-code-input" class="form-input uppercase-input" placeholder="ABCD23"
@@ -293,9 +303,12 @@
               </div>
 
               <div class="register-step" data-step="otp">
-                <div class="register-form">
-                  <p class="form-label" style="text-align: center; margin-bottom: 20px;">Enter the 6-digit code sent to
-                    your email</p>
+                <div class="register-form register-step-card">
+                  <div class="step-header">
+                    <p class="step-kicker">Step 2</p>
+                    <h2 class="step-heading">Enter the 6-digit code</h2>
+                    <p class="step-copy">Use the latest code from your email.</p>
+                  </div>
                   <div class="otp-inputs">
                     <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]"
                       autocomplete="one-time-code" />
@@ -325,7 +338,12 @@
               </div>
 
               <div class="register-step" data-step="child-choice">
-                <div class="register-form">
+                <div class="register-form register-step-card">
+                  <div class="step-header">
+                    <p class="step-kicker">Step 3</p>
+                    <h2 class="step-heading">Choose your track</h2>
+                    <p class="step-copy">Pick the FamHack track you want to join with. You can change this before you submit.</p>
+                  </div>
                   <div class="form-group">
                     <p class="form-label">Choose Your Track</p>
                     <div class="role-grid">
@@ -341,9 +359,37 @@
                       </button>
                     </div>
                   </div>
+                  <p class="error-message" id="join-choice-error"></p>
+                  <button id="continue-from-focus-btn" class="button-link w-inline-block" style="width: 100%;">
+                    <div class="button" style="width: 100%; justify-content: center;">
+                      <p class="button-label">Continue</p>
+                      <div class="button-icon">
+                        <div class="button-icon-svg w-embed">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+                            <path
+                              d="M7.37744 0.0888672V6.43945H6.65967V1.31348L1.10303 6.86035L1.04834 6.91504L0.55127 6.41797L0.605957 6.36328L6.15186 0.806641H1.02686V0.0888672H7.37744Z"
+                              fill="currentColor" stroke-width="0.155153" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                  <button id="back-to-email-from-choice-btn" type="button" class="resend-link">Back</button>
+                </div>
+              </div>
 
+              <div class="register-step" data-step="child-route">
+                <div class="register-form register-step-card">
+                  <div class="step-header">
+                    <p class="step-kicker">Step 4</p>
+                    <h2 class="step-heading">Choose how to join</h2>
+                    <p class="step-copy">Now pick the path that matches your situation.</p>
+                  </div>
+                  <div class="team-preview team-preview-static team-preview-focus">
+                    <p class="team-preview-label">Selected Track</p>
+                    <p class="team-preview-name" data-child-focus-summary>Choose Hunter or Hacker first.</p>
+                  </div>
                   <div class="form-group">
-                    <p class="form-label">How Do You Want To Join?</p>
                     <div class="role-grid">
                       <button id="go-code-join-btn" type="button" class="role-card" data-child-join-mode-card="code">
                         <p class="role-card-eyebrow">Family Code</p>
@@ -362,12 +408,19 @@
                       <p class="role-card-copy">Send one parent an invite and get added automatically when they register.</p>
                     </button>
                   </div>
-                  <p class="error-message" id="join-choice-error"></p>
+                  <p class="error-message" id="join-route-error"></p>
+                  <button id="back-to-choice-from-route-btn" type="button" class="resend-link">Back</button>
                 </div>
               </div>
 
               <div class="register-step" data-step="join-team">
-                <div class="register-form">
+                <div class="register-form register-step-card">
+                  <div class="step-header">
+                    <p class="step-pill" data-join-role-chip hidden></p>
+                    <p class="step-kicker">Final step</p>
+                    <h2 id="join-team-title" class="step-heading">Send your join request</h2>
+                    <p id="join-team-copy" class="step-copy">A parent in the family will review this request.</p>
+                  </div>
                   <div class="form-group">
                     <label class="form-label" for="join-code-step-input">Family Code</label>
                     <input type="text" id="join-code-step-input" class="form-input uppercase-input" placeholder="ABCD23"
@@ -378,7 +431,7 @@
                     <p class="team-preview-label">Requesting access to</p>
                     <p class="team-preview-name" id="join-team-id"></p>
                   </div>
-                  <div class="team-preview team-preview-static team-preview-focus">
+                  <div id="join-team-focus-card" class="team-preview team-preview-static team-preview-focus">
                     <p class="team-preview-label">Track</p>
                     <p class="team-preview-name" data-child-focus-summary>Choose Hunter or Hacker first.</p>
                   </div>
@@ -399,8 +452,7 @@
                       <option value="phd">PhD</option>
                     </select>
                   </div>
-                  <p class="register-subheading helper-copy">An approved parent will review this request before adding you to the family.
-                  </p>
+                  <p id="join-request-helper" class="register-subheading helper-copy">Your request keeps the Child role you registered with.</p>
                   <p class="error-message" id="join-request-error"></p>
                   <button id="request-join-btn" class="button-link w-inline-block" style="width: 100%;">
                     <div class="button" style="width: 100%; justify-content: center;">
@@ -416,12 +468,17 @@
                       </div>
                     </div>
                   </button>
-                  <button id="back-to-choice-from-code-btn" type="button" class="resend-link">Back</button>
+                  <button id="back-to-route-from-code-btn" type="button" class="resend-link">Back</button>
                 </div>
               </div>
 
               <div class="register-step" data-step="join-pool">
-                <div class="register-form">
+                <div class="register-form register-step-card">
+                  <div class="step-header">
+                    <p class="step-kicker">Final step</p>
+                    <h2 class="step-heading">Enter the random-family pool</h2>
+                    <p class="step-copy">FamHack will keep your details visible to volunteer families.</p>
+                  </div>
                   <div class="team-preview team-preview-static team-preview-focus">
                     <p class="team-preview-label">Track</p>
                     <p class="team-preview-name" data-child-focus-summary>Choose Hunter or Hacker first.</p>
@@ -459,12 +516,17 @@
                       </div>
                     </div>
                   </button>
-                  <button id="back-to-choice-from-pool-btn" type="button" class="resend-link">Back</button>
+                  <button id="back-to-route-from-pool-btn" type="button" class="resend-link">Back</button>
                 </div>
               </div>
 
               <div class="register-step" data-step="invite-parent">
-                <div class="register-form">
+                <div class="register-form register-step-card">
+                  <div class="step-header">
+                    <p class="step-kicker">Final step</p>
+                    <h2 class="step-heading">Invite a parent</h2>
+                    <p class="step-copy">FamHack will email one parent a direct family-registration link for you.</p>
+                  </div>
                   <div class="team-preview team-preview-static team-preview-focus">
                     <p class="team-preview-label">Track</p>
                     <p class="team-preview-name" data-child-focus-summary>Choose Hunter or Hacker first.</p>
@@ -508,7 +570,7 @@
                       </div>
                     </div>
                   </button>
-                  <button id="back-to-choice-from-invite-btn" type="button" class="resend-link">Back</button>
+                  <button id="back-to-route-from-invite-btn" type="button" class="resend-link">Back</button>
                 </div>
               </div>
 

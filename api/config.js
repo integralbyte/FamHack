@@ -237,11 +237,12 @@ async function handleRegistrationStatus(req, res) {
   const membership = await getMembershipByUserId(user.id);
   const childPoolEntry = await getChildPoolEntryByUserId(user.id);
   const parentInvite = await getPendingParentInviteByChildUserId(user.id);
+  const registration = serializeRegistration(user) || serializeRegistration(profile);
 
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(200).json({
     launch: getServerLaunchState({ req }),
-    registration: serializeRegistration(user),
+    registration,
     profile: profile
       ? {
           fullName: profile.full_name || '',
@@ -441,7 +442,7 @@ async function handleChildInviteParent(req, res) {
   const body = readJsonBody(req);
   const childName = String(body.childName || '');
   const parentEmail = String(body.parentEmail || '');
-  const studyYear = String(body.studyYear || '');
+  const studyYear = sanitizeStudyYear(body.studyYear);
   const childFocus = body.childFocus;
   const existingMembership = await getMembershipByUserId(user.id);
 
@@ -452,6 +453,11 @@ async function handleChildInviteParent(req, res) {
 
   if (existingMembership?.status === 'pending') {
     sendError(res, 409, 'Cancel your current join request before inviting a parent');
+    return;
+  }
+
+  if (!studyYear) {
+    sendError(res, 400, 'Choose your year of study');
     return;
   }
 

@@ -141,10 +141,16 @@ async function upsertProfileFields(user, fields = {}) {
 }
 
 export async function upsertProfile(user, fullName, studyYear = '', options = {}) {
+  const registration = options.registration || serializeRegistration(user);
   const payload = {
     full_name: sanitizeFullName(fullName) || null,
     study_year: sanitizeStudyYear(studyYear) || null,
   };
+
+  if (registration?.role) {
+    payload.registered_role = registration.role;
+    payload.registration_completed_at = registration.registeredAt || null;
+  }
 
   if (options.childFocus !== undefined) {
     payload.child_focus = sanitizeChildFocus(options.childFocus) || null;
@@ -166,6 +172,16 @@ export async function upsertChildFocus(user, childFocus) {
 
 export function getRegisteredRoleMessage(role) {
   return `You already have an account registered as a ${role === 'parent' ? 'Parent' : 'Child'}.`;
+}
+
+export function requireRegistration(user, fallbackSource = null) {
+  const registration = serializeRegistration(user) || serializeRegistration(fallbackSource);
+
+  if (!registration?.role) {
+    throw new Error('Registration has closed for this account.');
+  }
+
+  return registration;
 }
 
 export function serializeRegistration(source) {
@@ -191,11 +207,8 @@ export function serializeRegistration(source) {
 }
 
 export async function assertRegisteredRole(user, expectedRole) {
-  const registration = serializeRegistration(user);
-
-  if (!registration?.role) {
-    throw new Error('Registration has closed for this account.');
-  }
+  const profile = user?.id ? await getProfileByUserId(user.id) : null;
+  const registration = requireRegistration(user, profile);
 
   if (registration.role !== expectedRole) {
     throw new Error(
@@ -212,7 +225,7 @@ export async function getProfileByUserId(userId) {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, full_name, study_year, child_focus')
+    .select('id, email, full_name, study_year, child_focus, registered_role, registration_completed_at')
     .eq('id', userId)
     .maybeSingle();
 
@@ -328,7 +341,7 @@ export async function getTeamMembers(teamId) {
   const profileIds = memberships.map((membership) => membership.user_id);
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
-    .select('id, email, full_name, study_year, child_focus')
+    .select('id, email, full_name, study_year, child_focus, registered_role, registration_completed_at')
     .in('id', profileIds);
 
   if (profilesError) {
@@ -725,6 +738,8 @@ export function serializeMembership(member) {
     childFocus: member.profile?.child_focus || '',
     childFocusLabel: formatChildFocusLabel(member.profile?.child_focus),
     childFocusDescription: formatChildFocusDescription(member.profile?.child_focus),
+    registeredRole: sanitizeJoinRole(member.profile?.registered_role),
+    registeredRoleLabel: formatMemberRoleLabel(sanitizeJoinRole(member.profile?.registered_role)),
   };
 }
 

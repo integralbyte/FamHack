@@ -62,6 +62,23 @@ alter table public.profiles
     or child_focus in ('hunter', 'hacker')
   );
 
+update public.profiles as profile
+set registered_role = case
+      when lower(coalesce(auth_user.raw_user_meta_data ->> 'registered_role', '')) = 'parent' then 'parent'::public.team_role
+      when lower(coalesce(auth_user.raw_user_meta_data ->> 'registered_role', '')) in ('child', 'student') then 'child'::public.team_role
+      else profile.registered_role
+    end,
+    registration_completed_at = coalesce(
+      profile.registration_completed_at,
+      nullif(auth_user.raw_user_meta_data ->> 'registration_completed_at', '')::timestamptz
+    )
+from auth.users as auth_user
+where auth_user.id = profile.id
+  and (
+    profile.registered_role is null
+    or profile.registration_completed_at is null
+  );
+
 create table if not exists public.teams (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -94,6 +111,19 @@ create table if not exists public.team_memberships (
   unique (user_id)
 );
 
+alter table public.team_memberships
+  add column if not exists role public.team_role;
+alter table public.team_memberships
+  add column if not exists status public.membership_status not null default 'pending';
+alter table public.team_memberships
+  add column if not exists reviewed_by uuid references public.profiles (id) on delete set null;
+alter table public.team_memberships
+  add column if not exists reviewed_at timestamptz;
+alter table public.team_memberships
+  add column if not exists created_at timestamptz not null default timezone('utc', now());
+alter table public.team_memberships
+  add column if not exists updated_at timestamptz not null default timezone('utc', now());
+
 create table if not exists public.child_pool_entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null unique references public.profiles (id) on delete cascade,
@@ -104,6 +134,30 @@ create table if not exists public.child_pool_entries (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.child_pool_entries
+  add column if not exists focus text;
+alter table public.child_pool_entries
+  add column if not exists status text not null default 'open';
+alter table public.child_pool_entries
+  add column if not exists team_id uuid references public.teams (id) on delete set null;
+alter table public.child_pool_entries
+  add column if not exists matched_by uuid references public.profiles (id) on delete set null;
+alter table public.child_pool_entries
+  add column if not exists created_at timestamptz not null default timezone('utc', now());
+alter table public.child_pool_entries
+  add column if not exists updated_at timestamptz not null default timezone('utc', now());
+
+alter table public.child_pool_entries
+  drop constraint if exists child_pool_entries_focus_check;
+alter table public.child_pool_entries
+  add constraint child_pool_entries_focus_check
+  check (focus is null or focus in ('hunter', 'hacker'));
+alter table public.child_pool_entries
+  drop constraint if exists child_pool_entries_status_check;
+alter table public.child_pool_entries
+  add constraint child_pool_entries_status_check
+  check (status is null or status in ('open', 'matched', 'withdrawn'));
 
 create table if not exists public.parent_registration_invites (
   id uuid primary key default gen_random_uuid(),
@@ -119,6 +173,38 @@ create table if not exists public.parent_registration_invites (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.parent_registration_invites
+  add column if not exists token text;
+alter table public.parent_registration_invites
+  add column if not exists child_name text;
+alter table public.parent_registration_invites
+  add column if not exists parent_email text;
+alter table public.parent_registration_invites
+  add column if not exists child_focus text;
+alter table public.parent_registration_invites
+  add column if not exists status text not null default 'pending';
+alter table public.parent_registration_invites
+  add column if not exists claimed_by uuid references public.profiles (id) on delete set null;
+alter table public.parent_registration_invites
+  add column if not exists claimed_team_id uuid references public.teams (id) on delete set null;
+alter table public.parent_registration_invites
+  add column if not exists claimed_at timestamptz;
+alter table public.parent_registration_invites
+  add column if not exists created_at timestamptz not null default timezone('utc', now());
+alter table public.parent_registration_invites
+  add column if not exists updated_at timestamptz not null default timezone('utc', now());
+
+alter table public.parent_registration_invites
+  drop constraint if exists parent_registration_invites_child_focus_check;
+alter table public.parent_registration_invites
+  add constraint parent_registration_invites_child_focus_check
+  check (child_focus is null or child_focus in ('hunter', 'hacker'));
+alter table public.parent_registration_invites
+  drop constraint if exists parent_registration_invites_status_check;
+alter table public.parent_registration_invites
+  add constraint parent_registration_invites_status_check
+  check (status is null or status in ('pending', 'claimed', 'cancelled'));
 
 create or replace function public.enforce_team_member_limit()
 returns trigger

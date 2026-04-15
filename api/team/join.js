@@ -3,13 +3,14 @@ import { allowMethods, readJsonBody, sendError, statusFromError } from '../_lib/
 import { assertNormalParticipationOpen } from '../_lib/launch.js';
 import {
   assertAllowedEmail,
-  assertRegisteredRole,
   cancelPendingParentInvitesForUser,
   getApprovedMemberCount,
   getMembershipByUserId,
+  getProfileByUserId,
   getTeamLimitMessage,
   getTeamByCode,
   MAX_TEAM_SIZE,
+  requireRegistration,
   sanitizeFullName,
   sanitizeChildFocus,
   sanitizeStudyYear,
@@ -27,7 +28,8 @@ export default async function handler(req, res) {
     assertNormalParticipationOpen(req);
     const user = await requireUser(req);
     assertAllowedEmail(user.email);
-    await assertRegisteredRole(user, 'child');
+    const profile = await getProfileByUserId(user.id);
+    const registration = requireRegistration(user, profile);
 
     const body = readJsonBody(req);
     const fullName = sanitizeFullName(body.fullName);
@@ -50,7 +52,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (!childFocus) {
+    if (registration.role === 'child' && !childFocus) {
       sendError(res, 400, 'Choose Hunter or Hacker before continuing');
       return;
     }
@@ -90,7 +92,7 @@ export default async function handler(req, res) {
     }
 
     await upsertProfile(user, fullName, studyYear, {
-      childFocus,
+      ...(registration.role === 'child' ? { childFocus } : {}),
     });
 
     const supabase = getServiceClient();
@@ -98,7 +100,7 @@ export default async function handler(req, res) {
       {
         user_id: user.id,
         team_id: team.id,
-        role: 'child',
+        role: registration.role,
         status: 'pending',
         reviewed_by: null,
         reviewed_at: null,
@@ -112,11 +114,13 @@ export default async function handler(req, res) {
       throw new Error(error.message);
     }
 
-    try {
-      await withdrawChildPoolEntryForUser(user.id);
-      await cancelPendingParentInvitesForUser(user.id);
-    } catch (cleanupError) {
-      console.error(cleanupError);
+    if (registration.role === 'child') {
+      try {
+        await withdrawChildPoolEntryForUser(user.id);
+        await cancelPendingParentInvitesForUser(user.id);
+      } catch (cleanupError) {
+        console.error(cleanupError);
+      }
     }
 
     res.status(200).json({
@@ -127,6 +131,7 @@ export default async function handler(req, res) {
         approvedCount,
         maxMembers: MAX_TEAM_SIZE,
       },
+      requestedRole: registration.role,
       status: 'pending',
     });
   } catch (error) {
