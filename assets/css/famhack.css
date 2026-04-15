@@ -1694,9 +1694,13 @@ button.role-card {
 /* Invite Link Section */
 .invite-section {
   background-color: rgba(255, 233, 206, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   padding: 30px;
   margin-bottom: 40px;
   position: relative;
+  min-width: 0;
 }
 
 .invite-label {
@@ -1705,17 +1709,21 @@ button.role-card {
   color: #ffe9ce;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin: 0 0 15px;
+  margin: 0;
 }
 
 .invite-link-wrapper {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
   align-items: stretch;
+  min-width: 0;
 }
 
 .invite-link-input {
   flex: 1;
+  width: 100%;
+  min-width: 0;
   font-family: 'Azeret Mono', monospace;
   font-size: 0.875rem;
   padding: 15px 20px;
@@ -1726,8 +1734,13 @@ button.role-card {
 }
 
 .copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   font-family: 'Azeret Mono', monospace;
   font-size: 0.75rem;
+  min-height: 54px;
   padding: 15px 25px;
   background-color: #fc2f20;
   border: none;
@@ -1756,13 +1769,12 @@ button.role-card {
 }
 
 .invite-section-action {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .email-invite-btn {
   width: 100%;
+  margin-top: auto;
   justify-content: center;
 }
 
@@ -1934,9 +1946,10 @@ button.role-card {
 
 .invite-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 20px;
   margin-bottom: 12px;
+  align-items: stretch;
 }
 
 .ctf-launch-card {
@@ -3795,7 +3808,7 @@ button.button-link:disabled {
   }
 
   .invite-link-wrapper {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .dashboard-inner {
