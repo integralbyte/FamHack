@@ -1038,9 +1038,17 @@ body.home-entry-scroll-locked {
   margin: 0 auto;
 }
 
+.register-inner-wide {
+  max-width: 1180px;
+}
+
 .register-content {
   position: relative;
   padding: 60px;
+}
+
+.register-content-wide {
+  padding: clamp(32px, 4vw, 64px);
 }
 
 .flow-shell {
@@ -1290,6 +1298,24 @@ body.home-entry-scroll-locked {
 
 .register-step[data-step="child-choice"] .register-form {
   max-width: 760px;
+}
+
+.join-flow-content .register-step[data-step="email"] .register-form,
+.join-flow-content .register-step[data-step="otp"] .register-form {
+  max-width: 720px;
+}
+
+.join-flow-content .register-step[data-step="child-choice"] .register-form,
+.join-flow-content .register-step[data-step="child-route"] .register-form,
+.join-flow-content .register-step[data-step="join-team"] .register-form,
+.join-flow-content .register-step[data-step="join-pool"] .register-form,
+.join-flow-content .register-step[data-step="invite-parent"] .register-form {
+  max-width: 900px;
+}
+
+.join-flow-content .register-step[data-step="child-route"] .role-grid,
+.join-flow-content .register-step[data-step="child-choice"] .role-grid {
+  gap: 24px;
 }
 
 .role-grid {
@@ -3902,6 +3928,20 @@ button.button-link:disabled {
   .dashboard-choice-card,
   .dashboard-roadmap {
     padding: 24px 20px;
+  }
+
+  .register-inner-wide {
+    max-width: 100%;
+  }
+
+  .join-flow-content .register-step[data-step="email"] .register-form,
+  .join-flow-content .register-step[data-step="otp"] .register-form,
+  .join-flow-content .register-step[data-step="child-choice"] .register-form,
+  .join-flow-content .register-step[data-step="child-route"] .register-form,
+  .join-flow-content .register-step[data-step="join-team"] .register-form,
+  .join-flow-content .register-step[data-step="join-pool"] .register-form,
+  .join-flow-content .register-step[data-step="invite-parent"] .register-form {
+    max-width: none;
   }
 
   .invite-grid {
