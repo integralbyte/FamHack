@@ -284,13 +284,13 @@ const FamHack = {
     const subheadingElement = document.getElementById('register-subheading');
 
     if (headingElement) {
-      headingElement.textContent = heading || '';
-      headingElement.hidden = !heading;
+      headingElement.textContent = '';
+      headingElement.hidden = true;
     }
 
     if (subheadingElement) {
-      subheadingElement.textContent = subheading || '';
-      subheadingElement.hidden = !subheading;
+      subheadingElement.textContent = '';
+      subheadingElement.hidden = true;
     }
   },
 
