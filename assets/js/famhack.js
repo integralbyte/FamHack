@@ -280,8 +280,18 @@ const FamHack = {
       return;
     }
 
-    this.setText('register-heading', heading);
-    this.setText('register-subheading', subheading);
+    const headingElement = document.getElementById('register-heading');
+    const subheadingElement = document.getElementById('register-subheading');
+
+    if (headingElement) {
+      headingElement.textContent = heading || '';
+      headingElement.hidden = !heading;
+    }
+
+    if (subheadingElement) {
+      subheadingElement.textContent = subheading || '';
+      subheadingElement.hidden = !subheading;
+    }
   },
 
   setRegisterEmailMode(mode = 'parent') {
@@ -1953,7 +1963,7 @@ const FamHack = {
 
   async initPrelaunchRegisterPage() {
     this.state.registerIntent = 'role';
-    this.setRegisterIntro('Join FamHack in 4 steps', 'Choose your role, verify your university email, then continue to family setup.');
+    this.setRegisterIntro('', '');
     this.setRegisterEmailMode('register');
     this.syncRegisterEmailInput({ lockToSession: Boolean(this.state.session) });
     this.setRegisteredConfirmation(this.state.registration);
@@ -2294,7 +2304,7 @@ const FamHack = {
     if (this.getCurrentLaunchState().isRegistrationOpen) {
       this.state.registerIntent = 'role';
       this.setRegisterEmailMode('register');
-      this.setRegisterIntro('Join FamHack in 4 steps', 'Choose your role, verify your university email, then continue to family setup.');
+      this.setRegisterIntro('', '');
       this.updateRegisterRoleSummary();
       this.showStep('role');
       return;
