@@ -1768,16 +1768,6 @@ button.role-card {
   background-color: rgba(255, 233, 206, 0.08);
 }
 
-.invite-section-action {
-  justify-content: flex-start;
-}
-
-.email-invite-btn {
-  width: 100%;
-  margin-top: auto;
-  justify-content: center;
-}
-
 /* Team Members Section */
 .members-section {
   position: relative;

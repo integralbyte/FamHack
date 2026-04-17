@@ -2154,7 +2154,6 @@ const FamHack = {
   async initDashboardPage() {
     document.getElementById('copy-invite-btn')?.addEventListener('click', () => this.copyFieldValue('invite-link-input', 'copy-invite-btn'));
     document.getElementById('copy-code-btn')?.addEventListener('click', () => this.copyFieldValue('join-code-display', 'copy-code-btn'));
-    document.getElementById('email-invite-btn')?.addEventListener('click', () => this.openInviteEmail());
     document.getElementById('sign-out-btn')?.addEventListener('click', () => this.handleSignOut());
     document.getElementById('leave-team-btn')?.addEventListener('click', () => this.handleLeaveTeam());
     document.getElementById('danger-toggle-btn')?.addEventListener('click', () => this.toggleDangerPanel());
@@ -2686,7 +2685,7 @@ const FamHack = {
       document.querySelector('.otp-digit')?.focus();
       this.showPageMessage(
         this.state.page === 'register' ? 'register-page-message' : 'join-page-message',
-        'Verification code sent. Check your inbox.'
+        ''
       );
     } catch (error) {
       console.error(error);
@@ -4640,7 +4639,7 @@ const FamHack = {
         statusBanner.hidden = !(dashboard.viewer.role === 'parent' && dashboard.viewer.status === 'approved');
         statusBanner.textContent = dashboard.team.kind === 'volunteer'
           ? 'Volunteer families are saved for later FamHack assignment.'
-          : 'Share the family code, child letter link, or email invite below.';
+          : 'Share the family code or child letter link below.';
       }
     }
 
@@ -5094,27 +5093,6 @@ const FamHack = {
       button.disabled = false;
       button.textContent = originalText;
     }
-  },
-
-  openInviteEmail() {
-    const dashboard = this.state.dashboard;
-    if (!dashboard?.team?.joinCode) {
-      return;
-    }
-
-    const inviteLink = `${window.location.origin}/join?code=${encodeURIComponent(dashboard.team.joinCode)}&familyInvite=1`;
-    const subject = encodeURIComponent(`Join my FamHack family: ${dashboard.team.name}`);
-    const body = encodeURIComponent([
-      'Hi,',
-      '',
-      `Join my FamHack family "${dashboard.team.name}".`,
-      `Family code: ${dashboard.team.joinCode}`,
-      `Child letter link: ${inviteLink}`,
-      '',
-      'Open the link or paste the code into the FamHack join flow, then send your request for approval.',
-    ].join('\n'));
-
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   },
 
   async handleAddPoolChild(button, poolEntryId) {
