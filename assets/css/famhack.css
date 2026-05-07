@@ -1302,7 +1302,7 @@ body.home-entry-scroll-locked {
 
 .join-flow-content .register-step[data-step="email"] .register-form,
 .join-flow-content .register-step[data-step="otp"] .register-form {
-  max-width: 720px;
+  max-width: 900px;
 }
 
 .join-flow-content .register-step[data-step="child-choice"] .register-form,
@@ -1316,6 +1316,23 @@ body.home-entry-scroll-locked {
 .join-flow-content .register-step[data-step="child-route"] .role-grid,
 .join-flow-content .register-step[data-step="child-choice"] .role-grid {
   gap: 24px;
+}
+
+.join-flow-content > .join-heading,
+.join-flow-content > #join-subheading,
+.join-flow-content > .page-message,
+.join-flow-content > .team-preview {
+  width: min(100%, 900px);
+  margin-inline: auto;
+}
+
+.join-flow-content > .page-message {
+  margin-bottom: 12px;
+}
+
+.join-flow-content > .team-preview {
+  margin-bottom: 32px;
+  padding: 24px 28px;
 }
 
 .role-grid {
