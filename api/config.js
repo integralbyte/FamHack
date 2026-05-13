@@ -341,7 +341,7 @@ function buildParentInviteEmail({ childName, parentInviteLink, focusLabel, focus
           There will be free pizza, snacks, games, a scavenger hunt, coding, and awesome prizes for the whole family. ${childName} picked <strong style="color:#ffe9ce;">${focusLabel}</strong> and is ${focusDescription.toLowerCase()}.
         </p>
         <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:rgba(255,233,206,0.78);">
-          Please register for FamHack on 28 March through the link below and FamHack will add ${childName} automatically when you create the family.
+          Please register for FamHack by 28 March through the link below and FamHack will add ${childName} automatically when you create the family.
         </p>
         <a href="${parentInviteLink}" style="display:inline-block;padding:14px 20px;background:#fc2f20;color:#ffe9ce;text-decoration:none;text-transform:uppercase;letter-spacing:0.1em;font-size:12px;">Register A Family</a>
         <p style="margin:24px 0 0;font-size:12px;line-height:1.8;color:rgba(255,233,206,0.55);">
@@ -493,7 +493,7 @@ async function handleChildInviteParent(req, res) {
       focusLabel,
       focusDescription,
     }),
-    text: `${invite.child_name} wants to attend FamHack and needs you and the family to register so it can happen.\n\nThere will be free pizza, snacks, games, a scavenger hunt, coding, and prizes for the whole family.\n\n${invite.child_name} picked ${focusLabel} and is ${focusDescription.toLowerCase()}.\n\nPlease register for FamHack on 28 March here: ${parentInviteLink}`,
+    text: `${invite.child_name} wants to attend FamHack and needs you and the family to register so it can happen.\n\nThere will be free pizza, snacks, games, a scavenger hunt, coding, and prizes for the whole family.\n\n${invite.child_name} picked ${focusLabel} and is ${focusDescription.toLowerCase()}.\n\nPlease register for FamHack by 28 March here: ${parentInviteLink}`,
   });
 
   res.status(200).json({

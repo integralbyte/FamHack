@@ -523,6 +523,11 @@ const FamHack = {
     return ['code', 'pool', 'invite'].includes(mode) ? mode : '';
   },
 
+  shouldEditJoinPreferences() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('preferences') === '1';
+  },
+
   getActiveChildRoute(status = this.state.registrationStatus) {
     const poolEntry = status?.childPoolEntry || null;
     const parentInvite = status?.parentInvite || null;
@@ -2478,6 +2483,7 @@ const FamHack = {
     const status = this.state.registrationStatus || await this.fetchRegistrationStatus({ suppressMissing: true });
     const role = status?.registration?.role || this.getJoinRegistrationRole();
     const joinMode = this.getJoinModeParam();
+    const editingPreferences = this.shouldEditJoinPreferences();
     const activeRoute = this.getActiveChildRoute(status);
     const hasJoinCode = Boolean(this.getJoinCodeValue());
     const currentFocus = this.getSelectedChildFocus();
@@ -2511,6 +2517,15 @@ const FamHack = {
 
     if (savedMode) {
       this.setChildJoinMode(savedMode);
+    }
+
+    if (editingPreferences && role === 'child') {
+      this.showJoinChoiceStep(
+        currentFocus
+          ? 'Update your track, then continue to choose how you want to join.'
+          : 'Choose your track first.'
+      );
+      return;
     }
 
     if (explicitMode === 'pool' && currentFocus) {
@@ -4714,7 +4729,7 @@ const FamHack = {
       heading = 'Random Family Pool';
       copy = 'You are in the random-family pool.';
       statusCopy = 'Assignment pending.';
-      linkHref = '/join';
+      linkHref = '/join?preferences=1';
       linkLabel = 'Change My Preferences';
       routeTitleText = 'Random Family Pool';
       routeHelperText = 'FamHack will assign you later.';
@@ -4727,7 +4742,7 @@ const FamHack = {
       statusCopy = parentEmail
         ? `Waiting for ${parentEmail}.`
         : 'Waiting for your parent.';
-      linkHref = '/join';
+      linkHref = '/join?preferences=1';
       linkLabel = 'Change My Preferences';
       routeTitleText = 'Parent Invite';
       routeHelperText = parentEmail

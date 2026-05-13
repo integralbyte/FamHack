@@ -1313,9 +1313,12 @@ body.home-entry-scroll-locked {
   max-width: 900px;
 }
 
-.join-flow-content .register-step[data-step="child-route"] .role-grid,
 .join-flow-content .register-step[data-step="child-choice"] .role-grid {
   gap: 24px;
+}
+
+.join-flow-content .register-step[data-step="child-route"] .role-grid {
+  gap: 16px;
 }
 
 .join-flow-content > .join-heading,
